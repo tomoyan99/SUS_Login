@@ -1,0 +1,78 @@
+"use strict";
+/* 
+	[crypt.js]
+	info.jsonの中身を暗号化するjsvascriptファイル
+ */
+
+const fs = require('fs');
+
+//cryptオブジェクトをエクスポート
+exports.crypt = {
+	//文字列を1文字ずつ文字コードにして足し算
+	strToDec: async function strToDec(str) {
+		let codesum = 0x0;
+		for (let i = 0; i < str.length; i++) {
+			const charcode = str.slice(i, i + 1).charCodeAt(0);
+			codesum += charcode;
+		}
+		return codesum;
+	},
+	//暗号化
+	encrypt: async function encrypt(hirabun, dec) {
+		let str = [];
+		str[0] = hirabun; //平文
+		let i;
+		const dec2 = parseInt(dec / 35); //繰り返し回数
+		for (i = 0; i < dec2; i++) {
+			str[i + 1] = "";
+			for (let j = 0; j < str[i].length; j++) {
+				const hiracode = str[i].charCodeAt(j) ^ (dec + i);//文字列を1文字ずつコードと排他的論理和
+				const angou = String.fromCharCode(hiracode); //hiracodeを文字化
+				// const angou = hiracode;
+				str[i + 1] += angou + i;//暗号化文字にiの値を付け加えて増量
+				// console.log(i);
+			}
+		}
+		try {
+			return str[i];//成功したらstrを返す
+		} catch (e) {
+			console.log("暗号化に失敗しました");
+			throw "暗号化エラー";
+		}
+	},
+
+	//復号
+	decrypt: async function decrypt(angou, dec) {
+		let str = [];
+		str[0] = angou;
+		let i;
+		let count = [];
+		count[0] = 0;
+		const dec2 = parseInt(dec / 35); //繰り返し回数
+		for (i = 0; i < dec2; i++) {
+			str[i + 1] = "";
+			const ilen = (dec2 -1 - i).toString().length;
+			// console.log(ilen);
+			for (let j = 0; j < str[i].length / (ilen + 1) ; j++) {
+				count[j + 1] = ilen;
+				const start = j * (ilen+1);
+				const end = j * (ilen+1) + 1;
+
+				// console.log(j + "/" + str[i].length + "," + ilen + "," + start + "," + end);
+				const ancode = str[i].slice(start, end).charCodeAt(0) ^ (dec + dec2 - 1 - i);
+				const hukugou = String.fromCharCode(ancode);
+				// console.log(start + "," + end + "   " + str[i].slice(start, end) + " : " + str[i].slice(start, end).charCodeAt(0)+"   " + ancode + " : "+hukugou);
+
+				// const hukugou = ancode;
+				str[i + 1] += hukugou;
+			}
+			// console.log(str[i + 1] + "\n");
+		}
+		try {
+			return str[i];
+		} catch (e) {
+			console.log("復号に失敗しました");
+			throw "復号エラー";
+		}
+	}
+}

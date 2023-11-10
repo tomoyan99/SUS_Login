@@ -1,0 +1,1 @@
+const search_url = "https://sola.sus.ac.jp/course/search.php?areaids=core_course-course&q="

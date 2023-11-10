@@ -1,0 +1,2 @@
+function matchtest(str){
+}
