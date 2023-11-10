@@ -1,1 +1,0 @@
-{"username":"","password":"","sclass":{"url":"https://s-class.admin.sus.ac.jp/up/faces/login/Com00504A.jsp","target":{"name":".inputText","pass":".inputSecret","submit":"input[type=image]"}},"sola":{"url":"https://sus.ex-tic.com/auth/session","target":{"name":"#identifier","pass":"#password","submit":"button[type=submit]","a":"a#a-2"}}}
