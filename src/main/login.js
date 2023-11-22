@@ -22,18 +22,18 @@
 */
 import {launch} from 'puppeteer'; //pupeteerのインポート
 import {appendFileSync, existsSync, writeFileSync} from 'fs'; //fsのインポート
-import {input} from './util/input.js'; //標準入力・パス入力
-import {choice} from "./util/choise.js"; //十字キー選択
-import {today} from './util/today.js'; //日付関連
-import {control as cl} from "./util/control.js"; //コンソール制御関連
-import {pause} from './util/pause.js'; //PAUSEコマンドの再現
+import {input} from '../lib/input.js'; //標準入力・パス入力
+import {choice} from "../lib/choise.js"; //十字キー選択
+import {today} from '../lib/today.js'; //日付関連
+import {control as cl} from "../lib/control.js"; //コンソール制御関連
+import {pause} from '../lib/pause.js'; //PAUSEコマンドの再現
 import {execSync} from "child_process"; //コンソールコマンドの実行
-import {isNetConnected} from "./util/checkInternet.js"
+import {isNetConnected} from "../lib/checkInternet.js"
 import {clearInterval} from "timers";
 import {SelectOptions} from "./classes/SelectOptions.js"
-import {importJSON} from "./util/importJSON.js"
-import {makeSchedule} from "./util/makeSchedule.js";
-import {crypt} from "./util/crypt.js";
+import {importJSON} from "../lib/importJSON.js"
+import {makeSchedule} from "../lib/makeSchedule.js";
+import {crypt} from "../lib/crypt.js";
 import {hostname} from "os";
 
 /* sleep関数 */
@@ -329,8 +329,8 @@ export async function login(version = "",data,sola_link) {
                     console.log(`${cl.fg_yellow}※ 科目データの更新には、回線の都合上3分ほどかかる場合がありますので、このままお待ち下さい${cl.fg_reset}`);
                     try {
                         const sola_link = await makeSchedule(data);
-                        writeJSON("resource/data/info.json", await crypt.encrypt(data));//info.jsonを暗号化して書き込み
-                        writeJSON("resource/data/sola_link.json", await crypt.encrypt(sola_link));//info.jsonを暗号化して書き込み
+                        writeJSON("src/data/info.json", await crypt.encrypt(data));//info.jsonを暗号化して書き込み
+                        writeJSON("src/data/sola_link.json", await crypt.encrypt(sola_link));//info.jsonを暗号化して書き込み
                     }catch (e){
                         throw new Error(`${cl.fg_red}\n科目データの更新に失敗しました。${cl.fg_reset}\nネットワークの接続状況を確認して、再実行してください。それでも失敗するようでしたら、${cl.fg_cyan}infoClear.exe${cl.fg_reset}を実行して初期化ののちもう一度最初から登録を行ってください。\n`);
                     }

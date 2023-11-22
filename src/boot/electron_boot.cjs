@@ -5,7 +5,6 @@ const pkg = require('../../package.json');
 
 let mainWindow;
 let ptyProcess;
-const inputFilePath = "./bless_main.js"
 // const inputFilePath = "./sample/sample.js"
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -13,14 +12,14 @@ function createWindow() {
         height: 640,
         webPreferences:{
             nodeIntegration: true,
-            preload:path.join(__dirname,"/preload.js"),
+            preload:path.join(__dirname,"/preload.cjs"),
             // devTools:false
         },
         useContentSize:true,
         resizable:false,
         title:"SUS_Login"
     });
-    mainWindow.loadURL(`file://${__dirname}/render/index.html`);
+    mainWindow.loadURL(`file://${__dirname}/../public/render/index.html`);
     mainWindow.on("closed", function() {
         mainWindow = null;
     });

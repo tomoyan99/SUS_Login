@@ -27,10 +27,10 @@ const version = "2.0";
 			const yesno = await input("初期化しますか？[Y/N]\n");
 			switch (true) {
 				case /[Yy]/.test(yesno):
-					console.log("resource/data/info.jsonを初期化します");
+					console.log("src/data/info.jsonを初期化します");
 					return 0;
 				case /[Nn]/.test(yesno):
-					console.log("resource/data/info.jsonは初期化しません");
+					console.log("src/data/info.jsonは初期化しません");
 					return 1;
 				default:
 					console.log("Yy/Nnで入力してください");
@@ -41,16 +41,16 @@ const version = "2.0";
 		if (count === 1) {
 			pause();
 		}else{
-			process.stdout.write("resource/data/info.jsonを初期化しています");
+			process.stdout.write("src/data/info.jsonを初期化しています");
 
 			for (let i = 0; i < 4; ++i) {
 				await sleep(500);
 				process.stdout.write("・");
 			}
-			if (await  reset("resource/data/info.json") === "done"){
-				console.log("\nresource/data/info.jsonの初期化が完了しました");
+			if (await  reset("src/data/info.json") === "done"){
+				console.log("\nsrc/data/info.jsonの初期化が完了しました");
 			}else{
-				console.log("\nresource/data/info.jsonの初期化に失敗しました");
+				console.log("\nsrc/data/info.jsonの初期化に失敗しました");
 			}
 			pause();
 		}

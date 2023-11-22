@@ -2,17 +2,23 @@
   "name": "sus_login",
   "version": "4.6.0",
   "description": "",
-  "main": "resource/main.js",
+  "main": "src/boot/electron_boot.cjs",
   "keywords": [],
   "scripts": {
-    "start": "node .",
-    "upd": "ncu -u && npm i"
+    "start": "electron .",
+    "rebuild": "electron-rebuild -m",
+    "upd": "ncu -u && npm i",
+    "build": "electron-builder --win --x64 --dir",
+    "build_installer": "electron-builder --win --x64",
+    "postinstall": "electron-builder install-app-deps --platform win32 --arch x64"
   },
   "author": "Tomoya Sano",
   "license": "ISC",
   "dependencies": {
     "electron": "^27.1.0",
-    "nexe": "^4.0.0-rc.2",
+    "electron-builder": "^24.6.4",
+    "electron-rebuild": "^3.2.9",
+    "nexe": "^1.1.6",
     "node-pty": "^1.0.0",
     "puppeteer": "^21.5.2",
     "puppeteer-cluster": "^0.23.0",
@@ -28,5 +34,26 @@
     "electron-packager": "^17.1.2",
     "node": "^21.1.0"
   },
-  "type": "module"
+  "type": "module",
+  "homepage": "./",
+  "build": {
+    "productName": "%npm_package_version%",
+    "appId": "com.electron.SUS_Login",
+    "directories": {
+      "output": "build/dist"
+    },
+    "files": [
+      "src",
+      "package.json"
+    ],
+    "win": {
+      "icon": "src/assets/icon.ico",
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true
+    }
+  }
 }

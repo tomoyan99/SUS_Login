@@ -1,5 +1,5 @@
 import {compile} from "nexe"
-import {importJSON} from "./util/importJSON.js";
+import {importJSON} from "./lib/importJSON.js";
 import rcedit from "rcedit";
 
 const pkg = importJSON("package.json");

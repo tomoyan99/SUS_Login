@@ -1,22 +1,22 @@
 "use strict";
 /*
-	[electron_main.js]
+	[electron_boot.cjs]
 	フォルダの作成、login.jsの実行などの総合的な制御を行う。
 */
 import fs, {writeFileSync} from 'fs';
 import {login} from './login.js';
-import {reset} from './util/reset.js';
-import pkg from "../package.json" assert {type: "json"};
+import {reset} from '../lib/reset.js';
+import pkg from "../../package.json" assert {type: "json"};
 import {hostname} from "os";
-import {existChromePath} from "./util/existChromePath.js";
-import {control as cl} from "./util/control.js";
-import {importJSON} from "./util/importJSON.js";
-import {input} from "./util/input.js";
-import {makeSchedule} from "./util/makeSchedule.js";
-import {crypt} from "./util/crypt.js";
-import {today} from "./util/today.js";
-import {pause} from "./util/pause.js";
-import {sleep,writeJSON} from './util/myUtils.js';
+import {existChromePath} from "../lib/existChromePath.js";
+import {control as cl} from "../lib/control.js";
+import {importJSON} from "../lib/importJSON.js";
+import {input} from "../lib/input.js";
+import {makeSchedule} from "../lib/makeSchedule.js";
+import {crypt} from "../lib/crypt.js";
+import {today} from "../lib/today.js";
+import {pause} from "../lib/pause.js";
+import {sleep,writeJSON} from '../lib/myUtils.js';
 
 
 //main
@@ -28,22 +28,22 @@ import {sleep,writeJSON} from './util/myUtils.js';
         const PCname = hostname();//PCのホスト名
 
         try {
-            // resource または resource/dataフォルダがあるか判定。なければ作成
-            if (!fs.existsSync("./resource") || !fs.existsSync("./resource/data")) {
-                fs.mkdirSync("resource/data", { recursive: true });
+            // src または src/dataフォルダがあるか判定。なければ作成
+            if (!fs.existsSync("./src") || !fs.existsSync("./src/data")) {
+                fs.mkdirSync("src/data", { recursive: true });
             }
             //info.jsonがあるか判定。なければ作成
-            if (!fs.existsSync("./resource/data/info.json")) {
-                await reset("./resource/data/info.json");
+            if (!fs.existsSync("./src/data/info.json")) {
+                await reset("./src/data/info.json");
             }
             // imagesフォルダがあるか判定。なければ作成
-            if (!fs.existsSync(".resource/images")) {
+            if (!fs.existsSync(".src/images")) {
                 fs.mkdirSync("./images");
             }
             // logsフォルダがあるか判定。なければ作成
-            if (!fs.existsSync(".resource/logs")) {
-                fs.mkdirSync("./resource/logs");
-                fs.writeFileSync("./resource/logs/euc.log", "");
+            if (!fs.existsSync(".src/logs")) {
+                fs.mkdirSync("./src/logs");
+                fs.writeFileSync("./src/logs/euc.log", "");
             }
             console.log(`${cl.bg_yellow}セットアップ中です・・・・・・${cl.bg_reset}`);
             const data = await input_name_and_pass(version,PCname);//初回起動なら学籍番号とパスワードを入力 info.jsonの中身をdataに格納
@@ -52,15 +52,15 @@ import {sleep,writeJSON} from './util/myUtils.js';
                 await pause("exit","[何かキーを押して終了します]");
             }
             //sola_link.jsonがなかったら再生成
-            if (!fs.existsSync("./resource/data/sola_link.json")){
+            if (!fs.existsSync("./src/data/sola_link.json")){
                 const sola_link = await makeSchedule(data).catch(async() => {
                     console.log(`${cl.fg_red}[登録エラー] 履修科目データの登録に失敗しました。パスワードなどが正しいか確認してもう一度やり直してください${cl.fg_reset}`);
                     await pause("exit","[何かキーを押して終了します]");
                 });
-                writeJSON("resource/data/sola_link.json", await crypt.encrypt(sola_link));//sola_link.jsonの暗号化
+                writeJSON("src/data/sola_link.json", await crypt.encrypt(sola_link));//sola_link.jsonの暗号化
             }
 
-            const sola_link = await crypt.decrypt("resource/data/sola_link.json");//info.jsonの中身を復号して変換
+            const sola_link = await crypt.decrypt("src/data/sola_link.json");//info.jsonの中身を復号して変換
 
             /* 前期後期の入れ替わり(4月と10月)にsola_link.jsonの更新 */
             if (today.isStartNend(data.last_upd) === true) {
@@ -70,8 +70,8 @@ import {sleep,writeJSON} from './util/myUtils.js';
                 console.log(`${cl.fg_yellow}※ 科目データの更新には、回線の都合上3分ほどかかる場合がありますので、このままお待ち下さい${cl.fg_reset}`);
                 try {
                     const sola_link = await makeSchedule(data);
-                    writeJSON("resource/data/info.json", await crypt.encrypt(data));//info.jsonを暗号化して書き込み
-                    writeJSON("resource/data/sola_link.json", await crypt.encrypt(sola_link));//info.jsonを暗号化して書き込み
+                    writeJSON("src/data/info.json", await crypt.encrypt(data));//info.jsonを暗号化して書き込み
+                    writeJSON("src/data/sola_link.json", await crypt.encrypt(sola_link));//info.jsonを暗号化して書き込み
                 }catch (e){
                     throw new Error(`${cl.fg_red}\n科目データの更新に失敗しました。${cl.fg_reset}\nネットワークの接続状況を確認して、再実行してください。それでも失敗するようでしたら、${cl.fg_cyan}infoClear.exe${cl.fg_reset}を実行して初期化ののちもう一度最初から登録を行ってください。\n`);
                 }
@@ -138,12 +138,12 @@ async function input_name_and_pass(version,PCname) {
         /* 履修データの登録 */
         console.log("続いて、履修科目データの登録を行います");
         console.log(`${cl.fg_yellow}※ 科目データの登録には、回線の都合上3分ほどかかる場合がありますので、このままお待ち下さい${cl.fg_reset}`);
-        /* makeSchedule関数：resource/data/sola_link.jsonの作成 */
+        /* makeSchedule関数：src/data/sola_link.jsonの作成 */
         try {
             const sola_link = await makeSchedule(data_can_write);
             console.log("認証ファイルの暗号化を行います・・・");
-            writeJSON("resource/data/info.json", await crypt.encrypt(data_can_write));//info.jsonを暗号化して書き込み
-            writeJSON("resource/data/sola_link.json", await crypt.encrypt(sola_link));//sola_link.jsonの暗号化
+            writeJSON("src/data/info.json", await crypt.encrypt(data_can_write));//info.jsonを暗号化して書き込み
+            writeJSON("src/data/sola_link.json", await crypt.encrypt(sola_link));//sola_link.jsonの暗号化
             await sleep(2000);
             console.log("\n設定が完了しました。次回起動時から本機能が使用可能になります。");
         }catch (e){
@@ -158,6 +158,6 @@ async function input_name_and_pass(version,PCname) {
         return 1;
     } catch (e) {
         //info.jsonがすでに暗号化されていてjsonとして取り込めなかったとき
-        return await crypt.decrypt('resource/data/info.json', PCname);//info.jsonの中身を復号して変換
+        return await crypt.decrypt('src/data/info.json', PCname);//info.jsonの中身を復号して変換
     }
 }

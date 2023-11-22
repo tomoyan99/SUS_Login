@@ -1,6 +1,8 @@
 const {contextBridge, ipcRenderer} = require("electron");
-const {Terminal} = require("xterm");
-const { FitAddon } = require('xterm-addon-fit');
+const {Terminal} = require("xterm")
+const {FitAddon} = require("xterm-addon-fit")
+
+
 const term = new Terminal({
     cols:80,
     rows:32,
