@@ -5,7 +5,6 @@
 */
 
 export const today = {
-	value:new Date().valueOf(),
 	year: new Date().getFullYear(),
 	month: new Date().getMonth()+1,
 	date: new Date().getDate(),
@@ -26,6 +25,14 @@ export const today = {
 		} 
 		return parseInt(nend.toString().slice(-2));
 	},
+	//始まりか否か
+	isStartNend: function isStartNend(data){
+		if (data.year < this.year && this.month >= 6 && (this.hour < 2 && this.hour > 5)) {
+			return true;
+		} else {
+			false;
+		}
+	},
 	//前期か後期か
 	whichTerm:function whichTerm() {
 		if ( this.month >= 4 && this.month <= 9) {
@@ -33,16 +40,5 @@ export const today = {
 		} else {
 			return "af"; //10月から3月の間はaf(後期)
 		}
-	},
-	//学期始まりか否か
-	isStartNend: function isStartNend(lastUpdate={year:0,month:0,hour:0,value:0,lastterm:""}){
-		const half_year_msec = 2629800000 * 6;
-		const newValue = this.value;
-		const oldValue = lastUpdate.value;
-		//最終更新から6ヶ月以上が過ぎたときや、最終更新のときと学期が違うときに更新
-		if (newValue - oldValue >= half_year_msec){
-			return true;
-		}else return lastUpdate.lastterm !== this.whichTerm();
-
 	}
 }

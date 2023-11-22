@@ -1,6 +1,6 @@
 "use strict";
 /* 
-	[resetInfo.mjs]
+	[resetInfo.js]
 	reset.jsをウィザード化。独立したexeファイルとしてアプリ化する
 */
 
@@ -10,7 +10,7 @@ import {reset} from './reset.js';
 /* sleep関数 */
 const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
 /* pause関数 */
-function pause(){
+function pause() {
 	console.log('何かキーを押して終了します');
 	process.stdin.setRawMode(true);
 	process.stdin.resume();
@@ -41,17 +41,14 @@ const version = "2.0";
 		if (count === 1) {
 			pause();
 		}else{
+			await reset("resource/data/info.json");
 			process.stdout.write("resource/data/info.jsonを初期化しています");
 
 			for (let i = 0; i < 4; ++i) {
 				await sleep(500);
 				process.stdout.write("・");
 			}
-			if (await  reset("resource/data/info.json") === "done"){
-				console.log("\nresource/data/info.jsonの初期化が完了しました");
-			}else{
-				console.log("\nresource/data/info.jsonの初期化に失敗しました");
-			}
+			console.log("\nresource/data/info.jsonの初期化が完了しました");
 			pause();
 		}
 })();	

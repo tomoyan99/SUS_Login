@@ -9,14 +9,14 @@ const nowrite = "\b\x1b[0K";
 const inputKey = (prompt) => new Promise(resolve => {
 	const stdin = process.stdin;
 	const isRow = stdin.isRaw;
-	const callBack = (key = "") => {
+	const callBack = (key="") => {
 		stdin.off("data", callBack);
 		stdin.pause();
 		stdin.setRawMode(isRow);
 		//上キーとかのエスケープで始まる文字は非表示
-		if (key.charCodeAt(0) === 27) {
+		if (key.charCodeAt(0) === 27 ) {
 			resolve("");//promiseの返り値としてkeyを返す
-		} else {
+		}else{
 			for (const i of key) {
 				process.stdout.write("*");
 			}
@@ -30,7 +30,7 @@ const inputKey = (prompt) => new Promise(resolve => {
 
 
 // 標準入力の受け取り
-export async function input(prompt, ishide = false) {
+async function input(prompt, ishide = false) {
 	if (ishide === false) {
 		//readlineの入出力インターフェースを指定
 		const readInterface = createInterface({
@@ -48,14 +48,14 @@ export async function input(prompt, ishide = false) {
 		process.stdout.write(prompt);
 		let str = "";
 		//ENTARキーが押されるまでforループ
-		for (; ;) {
+		for (;;) {
 			key = await inputKey();//入力したキーを孵す
 			// console.log(key.charCodeAt(0));
 			//ヌル文字～ユニット区切り文字は許さない
 			if (key.charCodeAt(0) - 31 <= 0 && //ヌル文字～まで
 				(key.charCodeAt(0) !== 13 && //スペース
-					key.charCodeAt(0) !== 8 && //バックスペース
-					key.charCodeAt(0) !== 3	 //Ctrl+C
+				 key.charCodeAt(0) !== 8  && //バックスペース
+				 key.charCodeAt(0) !== 3	 //Ctrl+C
 				)) {
 				process.stdout.write(nowrite);
 			}
@@ -65,7 +65,7 @@ export async function input(prompt, ishide = false) {
 				console.log();
 				return str;
 			}
-			if (key === CtrlC) {
+			if (key === CtrlC){
 				process.stdout.write(nowrite);
 				process.exit(-1);//Ctrl+Cでプロセスの終了
 			}
@@ -84,7 +84,7 @@ export async function input(prompt, ishide = false) {
 			if (key === "\t") {
 				//一文字消去して何もさせない
 				// process.stdout.write(nowrite);
-				key = "";
+				key="";
 				continue;
 			}
 			str += key;

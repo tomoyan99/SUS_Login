@@ -1,6 +1,5 @@
-import {writeFileSync} from "fs";
-
-/*
+import fs from "fs";
+/* 
 	[reset.js]
 	info.jsonをリセットする
 */
@@ -20,7 +19,7 @@ export async function reset(path) {
 			}
 		},
 		"sola": {
-			"url": "https://sola.sus.ac.jp/",
+			"url": "https://sus.ex-tic.com/auth/session",
 			"target": {
 				"name": "#identifier",
 				"pass": "#password",
@@ -30,10 +29,6 @@ export async function reset(path) {
 		"last_upd": ""
 	};
 
-	try {
-		writeFileSync(path, JSON.stringify(info_json_raw));//info.jsonの初期化
-		return "done"
-	}catch (e){
-		throw "fault"
-	}
+	fs.writeFileSync(path, JSON.stringify(info_json_raw));//info.jsonの初期化
+	return;
 }

@@ -3,15 +3,15 @@
 	[control.js]
 	制御文字一般を扱う。コンソール操作用
 */
+
 export const control = {
 	/* 制御文字一覧 */
 	CtrlC: "\u0003", 		//コントロール+C
 	erathe: "\b\b\x1b[0K",	//一文字消す
 	nowrite: "\b\x1b[0K",	//書き込まない
 	rightClear: "\x1b[0K",	//カーソルより行の右側消去
-	lineClear: "\x1b[2K",	//行消去
 	startLine : (r = 1, n = 1) => `\x1b[${r};${n}H`,//スタート位置の決定
-	initialLine : (n = 1)=> `\x1b[${n}G`,//指定行目の行頭に移動
+	setStartLine:(r = 1 , n = 1)=>{process.stdout.write(control.startLine(r,n))},
 
 	/* 方向キー */
 	up: 	"\x1b[A",//上

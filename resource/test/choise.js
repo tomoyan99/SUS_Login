@@ -1,60 +1,50 @@
-"use strict";
-/* 
-	[choice.js]
-	head,main,bottomを引数として受け取り、mainの選択肢を十字キーで選択。
-	index等パックしたstateを返す
-*/
-import { control as cl } from "../util/control.js";
-
-//エンコードをutf8に
 process.stdin.setEncoding('utf8');
+import {control as cl} from "../util/control.js";
+
 // 標準入力の受け取り
-export async function choice(args = { head: [""], main: [""], bottom: [""] }) {
+async function choice(args = { head: [""], main: [""], bottom: [""] }) {
 	let key = "";
-	const mainStartNum = await printPrompt(args);//main領域開始行数
-	const mainEndNum = args.main.length + mainStartNum -1; //main領域終了行数
-	const bottomLineNum = mainEndNum+1 + args.bottom[0].split(/\n/g).length - 1;
+	const mainStartNum = await printPrompt(args);
+	const mainEndNum = args.main.length + mainStartNum;
+	// const bottomLineNum = mainEndNum;
 	const promptStartNum = args.bottom[0].length + 5;
 	const state = {
 		option: args,
-		index: [0, 0],
-		chosing:()=>{
-			return {
-				index:[state.index[0],state.index[1]],
-				str:state.option.main[state.index[0]][state.index[1]]
-			};
-		},
-		indexMax: () => {
+		index:[0,0],
+		indexMax:()=>{
 			return state.option.main.length - 1;
 		},
-		main_start: mainStartNum,
-		main_end: mainEndNum,
-		main_line: () => mainStartNum + state.index[0],
-		printCyan: (start = 1, end = 1) => {
+		main_start:mainStartNum,
+		main_end:mainEndNum,
+		main_line:()=>mainStartNum+state.index[0],
+		printCyan:(start=1,end=1)=>{
 			const str = state.option.main[state.index[0]];
 			process.stdout.write(`${cl.startLine(start)}`);
-			str.forEach((s, i) => {
-				const whichColor = (i == state.index[1]) ? cl.fg_cyan : cl.fg_reset;
-				process.stdout.write(`${whichColor}${s}${cl.fg_reset}\t`);
+			str.forEach((s,i)=>{
+				const whichColor = (i==state.index[1])? cl.fg_cyan : cl.fg_reset;
+				process.stdout.write(`${whichColor}${s}${cl.fg_reset}  `);
 			});
 			process.stdout.write(`${cl.startLine(end)}\n`);
 		},
-		printChoice: (linestart = 1) => {
+		printChoice: (linestart = 1)=>{
 			//選択している項目の表示
-			process.stdout.write(`${cl.startLine(linestart, promptStartNum)}`);
+			process.stdout.write(`${cl.startLine(linestart,promptStartNum)}`);
 			process.stdout.write(`${state.option.main[state.index[0]][state.index[1]]}`);
 			process.stdout.write(`${cl.rightClear}`);
 		}
 	}
-	state.printCyan(state.main_line(), state.main_end);
-	state.printChoice(bottomLineNum);
+	state.printCyan(state.main_line(),state.main_end);
+	state.printChoice(mainEndNum);
 	// process.exit();
 	for (; key.charCodeAt(0) !== 13;) {
 		key = await inputKey(state);
 		// process.exit();
 		await printPrompt(args);
 		state.printCyan(state.main_line(), state.main_end);
-		state.printChoice(bottomLineNum);
+		state.printChoice(mainEndNum);
+		// console.log();
+		// console.log(state.option.main[state.index[0]].length);
+		// console.log(state.index);
 	}
 	console.log("\n");
 	return state;
@@ -75,10 +65,10 @@ const inputKey = (state) => new Promise(resolve => {
 					state.index[0]--;
 					//オーバーフローしたら下端へ
 					if (state.index[0] < 0) {
-						state.index[0] = state.indexMax();
+						state.index[0]=state.indexMax();
 					}
 					//横はリセット
-					state.index[1] = 0;
+					state.index[1]=0;
 				},
 			"\x1b[B":
 				function down() {
@@ -97,9 +87,9 @@ const inputKey = (state) => new Promise(resolve => {
 					if (state.option.main[state.index[0]].length > 1) {
 						//右端に行くまでOK
 
-						if (state.index[1] < state.option.main[state.index[0]].length - 1) {
+						if (state.index[1] < state.option.main[state.index[0]].length -1) {
 							state.index[1]++;
-						} else {
+						}else{
 							;
 						}
 					}
@@ -140,13 +130,13 @@ async function printPrompt(args = { head: [""], main: [""], bottom: [""] }) {
 	const bottomEndNum = bottomStartNum + bottomLineNum;
 
 	console.clear();
-	args.head.forEach((i) => {
+	args.head.forEach((i)=>{
 		process.stdout.write(i);
 	})
-	args.main.forEach((i, ind) => {
+	args.main.forEach((i,ind) => {
 		for (let j = 0; j < i.length; j++) {
 			// process.stdout.write(mainStartNum+ind+"  "+i[j]);
-			process.stdout.write(`${i[j]}\t`);
+			process.stdout.write(`${i[j]}  `);
 		}
 		console.log();
 	});
@@ -157,12 +147,12 @@ async function printPrompt(args = { head: [""], main: [""], bottom: [""] }) {
 }
 
 
-// (async () => {
-// 	const options = {
-// 		head: [`SUS_login_v3.1\n${cl.fg_green}十字キーで開きたい項目を選択してね${cl.fg_reset}\n\n`],
-// 		main: [["1.euc"], ["2.sola", ">>List"], ["3.sclass"], ["4.sclassとsola"]],
-// 		bottom: ["選択?>"]
-// 	}
-// 	const state = await choice(options);
-// 	const whatchoose = state.option.main[state.index[0]][state.index[1]];
-// })();
+(async () => {
+	const options = {
+		head: [`SUS_login_v3.1\n${cl.fg_green}十字キーで開きたい項目を選択してね${cl.fg_reset}\n\n`],
+		main: [["1.euc"], ["2.sola", ">>List"], ["3.sclass"], ["4.sclassとsola"]],
+		bottom: ["選択?>"]
+	}
+	const state = await choice(options);
+	const whatchoose = state.option.main[state.index[0]][state.index[1]];
+})();
