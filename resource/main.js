@@ -1,6 +1,6 @@
 "use strict";
 /*
-	[main.js]
+	[electron_main.js]
 	フォルダの作成、login.jsの実行などの総合的な制御を行う。
 */
 import fs, {writeFileSync} from 'fs';

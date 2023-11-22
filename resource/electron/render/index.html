@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        SUS_Login
+    </title>
+    <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css">
+    <script src="../node_modules/xterm/lib/xterm.js"></script>
+    <style>
+        html {
+            height: 100%;
+        }
+    
+        body {
+            height: 100%;
+            margin: 0;
+        }
+        body *::-webkit-scrollbar{
+            display: none;
+        }
+        /* .fullheight{
+            height: 100%;
+        } */
+    </style>
+    <script>
+        window.addEventListener("load",()=>{
+            window.testapi.termer();
+        });
+    </script>
+</head>
+<body>
+    <div id="terminal" class="fullheight"></div>    
+</body>
+</html> 
