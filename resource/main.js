@@ -6,7 +6,7 @@
 import fs, {writeFileSync} from 'fs';
 import {login} from './login.js';
 import {reset} from './util/reset.js';
-import pkg from "./package.json" assert {type: "json"};
+import pkg from "../package.json" assert {type: "json"};
 import {hostname} from "os";
 import {existChromePath} from "./util/existChromePath.js";
 import {control as cl} from "./util/control.js";
