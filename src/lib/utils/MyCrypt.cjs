@@ -6,10 +6,10 @@ export class MyCrypt {
     #ALGO = "aes-256-cbc"
     #PASSWORD = undefined
     #SALT = undefined
-    #MESSAGE = ""
+    #PATH = ""
     #IV=undefined
     #BUF=undefined
-    constructor(target_str) {
+    constructor(path) {
         const long_name = (str)=>{
             let a = "";
             for (let i = 0; i < str.length*50; i++) {
@@ -22,8 +22,7 @@ export class MyCrypt {
         const mll = process.moduleLoadList.join("");
         this.#PASSWORD =  this.#createHush512(longhost+Buffer.from(mll,"binary").toString("base64"));
         this.#SALT = this.#createHush512(longmem+Buffer.from(mll,"binary").toString("hex"));
-        const buftxt = Buffer.from(target_str).toString("binary");
-        this.#MESSAGE = buftxt;
+        this.#PATH = path;
     }
     // 暗号化メソッド
     #encrypt(algorithm, password, salt, data) {
@@ -66,19 +65,29 @@ export class MyCrypt {
         this.#IV  = undefined;
     }
     //暗号書くやつ
-    writeCrypt(path){
-        const A = this.#encrypt(this.#ALGO,this.#PASSWORD,this.#SALT,this.#MESSAGE);
-        this.#IV  = A.iv;
-        this.#BUF = A.encryptedData;
-        const data = `${this.#IV.toString("binary")}$$$$${this.#BUF.toString("binary")}`
-        writeFileSync(path,data,{encoding:"binary"});
-        this.#clearMember();
+    async writeCrypt(inputData){
+        return new Promise((resolve, reject)=>{
+            if (typeof inputData !== "string"){
+                inputData = JSON.stringify(inputData);
+            }
+            const buftxt = Buffer.from(inputData).toString("binary");
+            const A = this.#encrypt(this.#ALGO,this.#PASSWORD,this.#SALT);
+            this.#IV  = A.iv;
+            this.#BUF = A.encryptedData;
+            const outputData = `${this.#IV.toString("binary")}$$$$${this.#BUF.toString("binary")}`
+            writeFileSync(this.#PATH,outputData,{encoding:"binary"});
+            this.#clearMember();
+            resolve();
+        })
     }
 
     //平文出すやつ
-    readPlane(path){
-        this.#readBuffer(path);
-        const DE = this.#decrypt(this.#ALGO,this.#PASSWORD,this.#SALT,this.#IV,this.#BUF);
-        return Buffer.from(DE.toString(),"binary").toString("utf8")
+    async readPlane(){
+        return new Promise((resolve)=>{
+            this.#readBuffer(this.#PATH);
+            const DE = this.#decrypt(this.#ALGO,this.#PASSWORD,this.#SALT,this.#IV,this.#BUF);
+            const Plane = Buffer.from(DE.toString(),"binary").toString("utf8");
+            resolve(Plane);
+        })
     }
 }
