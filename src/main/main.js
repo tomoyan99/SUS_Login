@@ -5,18 +5,18 @@
 */
 import fs, {writeFileSync} from 'fs';
 import {login} from './login.js';
-import {reset} from '../lib/reset.js';
+import {reset} from '../lib/utils/reset.js';
 import pkg from "../../package.json" assert {type: "json"};
 import {hostname} from "os";
-import {existChromePath} from "../lib/existChromePath.js";
-import {control as cl} from "../lib/control.js";
-import {importJSON} from "../lib/importJSON.js";
-import {input} from "../lib/input.js";
-import {makeSchedule} from "../lib/makeSchedule.js";
+import {existChromePath} from "../lib/utils/existChromePath.js";
+import {control as cl} from "../lib/utils/control.js";
+import {importJSON} from "../lib/utils/importJSON.js";
+import {input} from "../lib/utils/input.js";
+import {makeSchedule} from "../lib/utils/makeSchedule.js";
 import {crypt} from "../lib/crypt.js";
-import {today} from "../lib/today.js";
-import {pause} from "../lib/pause.js";
-import {sleep,writeJSON} from '../lib/myUtils.js';
+import {today} from "../lib/utils/today.js";
+import {pause} from "../lib/utils/pause.js";
+import {sleep,writeJSON} from '../lib/utils/myUtils.js';
 
 
 //main

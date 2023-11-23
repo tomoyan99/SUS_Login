@@ -22,17 +22,17 @@
 */
 import {launch} from 'puppeteer'; //pupeteerのインポート
 import {appendFileSync, existsSync, writeFileSync} from 'fs'; //fsのインポート
-import {input} from '../lib/input.js'; //標準入力・パス入力
-import {choice} from "../lib/choise.js"; //十字キー選択
-import {today} from '../lib/today.js'; //日付関連
-import {control as cl} from "../lib/control.js"; //コンソール制御関連
-import {pause} from '../lib/pause.js'; //PAUSEコマンドの再現
+import {input} from '../lib/utils/input.js'; //標準入力・パス入力
+import {choice} from "../lib/utils/choise.js"; //十字キー選択
+import {today} from '../lib/utils/today.js'; //日付関連
+import {control as cl} from "../lib/utils/control.js"; //コンソール制御関連
+import {pause} from '../lib/utils/pause.js'; //PAUSEコマンドの再現
 import {execSync} from "child_process"; //コンソールコマンドの実行
-import {isNetConnected} from "../lib/checkInternet.js"
+import {isNetConnected} from "../lib/utils/checkInternet.js"
 import {clearInterval} from "timers";
 import {SelectOptions} from "./classes/SelectOptions.js"
-import {importJSON} from "../lib/importJSON.js"
-import {makeSchedule} from "../lib/makeSchedule.js";
+import {importJSON} from "../lib/utils/importJSON.js"
+import {makeSchedule} from "../lib/utils/makeSchedule.js";
 import {crypt} from "../lib/crypt.js";
 import {hostname} from "os";
 

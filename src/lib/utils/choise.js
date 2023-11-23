@@ -4,7 +4,7 @@
 	head,body,footを引数として受け取り、bodyの選択肢を十字キーで選択。
 	index等パックしたstateを返す
 */
-import {control as cl} from ".//control.js";
+import {control as cl} from "./control.js";
 
 //エンコードをutf8に
 process.stdin.setEncoding('utf8');
