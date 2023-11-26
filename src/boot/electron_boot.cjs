@@ -5,7 +5,10 @@ const pkg = require('../../package.json');
 
 let mainWindow;
 let ptyProcess;
-// const inputFilePath = "./sample/sample.js"
+
+process.env.browserPath = "node_modules/electron/dist/electron.exe";
+process.env.infoPath = path.join(__dirname,"data/info.json")
+
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 816,
@@ -30,8 +33,9 @@ function createWindow() {
             ipcMain.removeAllListeners("network.changed")
         }
         try {
-            // ptyProcess = pty.spawn("node.exe", [inputFilePath], {
-                ptyProcess = pty.spawn("bash.exe",[], {
+            const inputFilePath = path.join(__dirname,"../main/main.js")
+            ptyProcess = pty.spawn("node.exe", [inputFilePath], {
+                // ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",
                 useConpty:true,
                 cols: 80,

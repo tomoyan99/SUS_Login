@@ -1,8 +1,11 @@
-const crypto = require('crypto')
-const {hostname, cpus, homedir, totalmem} = require("os");
-const {writeFile, writeFileSync, readFileSync} = require("fs");
+import crypto from "crypto";
 
-export class MyCrypt {
+import {cpus, homedir, hostname, totalmem} from "os";
+
+import {readFileSync, writeFile, writeFileSync} from "fs";
+
+
+class MyCrypt {
     #ALGO = "aes-256-cbc"
     #PASSWORD = undefined
     #SALT = undefined
@@ -91,3 +94,5 @@ export class MyCrypt {
         })
     }
 }
+
+export default MyCrypt;

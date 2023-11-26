@@ -19,7 +19,8 @@ export async function makeSchedule(data) {
 		headless: "new", //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
 		slowMo: 5, //タイピング・クリックなどの各動作間の速度
 		defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
-		channel: "chrome",//chromeを探し出して開く
+		// channel: "chrome",//chromeを探し出して開く
+		executablePath:process.env.browserPath
 	});
 	try {
 		const sclass_schedule = await searchSclass(browser, data);
