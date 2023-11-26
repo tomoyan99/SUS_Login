@@ -15,7 +15,6 @@ export async function makeSchedule(data) {
 	data.last_upd = { year: today.year, month: today.month, date: today.date,value:today.value,lastterm:today.whichTerm()};
 	/* ブラウザの立ち上げ */
 	const browser = await launch({
-		// headless: false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
 		headless: "new", //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
 		slowMo: 5, //タイピング・クリックなどの各動作間の速度
 		defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止

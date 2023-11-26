@@ -2,10 +2,12 @@ const {app, BrowserWindow, ipcMain,Menu} = require("electron");
 const pty = require("node-pty");
 const path = require('path');
 const pkg = require('../../package.json');
+const pie = require("puppeteer-in-electron");
+const puppeteer = require("puppeteer");
 
 let mainWindow;
 let ptyProcess;
-// const inputFilePath = "./sample/sample.js"
+
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 816,
@@ -20,9 +22,12 @@ function createWindow() {
         title:"SUS_Login"
     });
     mainWindow.loadURL(`file://${__dirname}/../public/render/index.html`);
+    // mainWindow.loadURL("https://www.google.co.jp/");
     mainWindow.on("closed", function() {
-        mainWindow = null;
+        app.quit();
     });
+
+
     mainWindow.webContents.on("dom-ready",()=>{
         //イベントの重複登録による
         if (ptyProcess){
@@ -30,8 +35,11 @@ function createWindow() {
             ipcMain.removeAllListeners("network.changed")
         }
         try {
-            // ptyProcess = pty.spawn("node.exe", [inputFilePath], {
-                ptyProcess = pty.spawn("bash.exe",[], {
+            const inputFilePath = "src/test/test1.cjs"
+            // const inputFilePath = "src/main/main.js"
+            // ptyProcess = pty.spawn("electron", [inputFilePath], {
+            ptyProcess = pty.spawn("node.exe", [inputFilePath], {
+            //     ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",
                 useConpty:true,
                 cols: 80,
@@ -46,7 +54,6 @@ function createWindow() {
             ipcMain.on("terminal.keystroke",(event, key) => {
                 ptyProcess.write(key);
             })
-
             ptyProcess.onExit(() => {
                 // process.exit(0)
             });
@@ -65,14 +72,3 @@ const menu = Menu.buildFromTemplate(mainMenu);
 Menu.setApplicationMenu(menu);
 
 app.on("ready", createWindow);
-app.on("window-all-closed", function() {
-    if (process.platform !== "darwin") {
-        app.quit();
-    }
-});
-
-app.on("activate", function() {
-    if (mainWindow === null) {
-        createWindow();
-    }
-});
