@@ -7,9 +7,7 @@
 import {launch} from 'puppeteer'; //pupeteerのインポート
 import {today} from './today.js';
 import {control as cl} from "./control.js";
-
-/* sleep関数 */
-const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
+import {sleep} from "./myUtils.js";
 
 export async function makeSchedule(data) {
 	data.last_upd = { year: today.year, month: today.month, date: today.date,value:today.value,lastterm:today.whichTerm()};
@@ -19,8 +17,7 @@ export async function makeSchedule(data) {
 		headless: "new", //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
 		slowMo: 5, //タイピング・クリックなどの各動作間の速度
 		defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
-		// channel: "chrome",//chromeを探し出して開く
-		executablePath:process.env.browserPath
+		channel: "chrome",//chromeを探し出して開く
 	});
 	try {
 		const sclass_schedule = await searchSclass(browser, data);
@@ -33,13 +30,12 @@ export async function makeSchedule(data) {
 }
 
 async function searchSclass(browser, data) {
-	const info = data.sclass; //sclassのデータを取得
 	const user_name = data.username;
 	const password = data.password;
 
 	const page = await browser.newPage();//新規ページを作成
 
-	const url = info.url; //sclassのurl
+	const url = "https://s-class.admin.sus.ac.jp/up/faces/login/Com00504A.jsp"; //sclassのurl
 
 	// CSSをOFFにして高速化
 	await page.setRequestInterception(true);
@@ -53,9 +49,9 @@ async function searchSclass(browser, data) {
 	try {
 		await page.goto(url, { waitUntil: 'load', timeout: 0 }); //sclassに遷移
 
-		const target_name_ID = info.target.name;//username入力要素のID
-		const target_pass_ID = info.target.pass;//password入力要素のID
-		const target_submit_ID = info.target.submit;//submitボタンのID
+		const target_name_ID = ".inputText";//username入力要素のID
+		const target_pass_ID = ".inputSecret";//password入力要素のID
+		const target_submit_ID = "input[type=image]";//submitボタンのID
 
 		(await browser.pages())[0].close();
 		await page.waitForSelector(target_submit_ID, { timeout: 10000 });
@@ -145,18 +141,17 @@ async function searchSclass(browser, data) {
 }
 
 async function searchSola(browser, data, schedule) {
-	const info = data.sola; //dataからsolaの情報を取得
 	const user_name = data.username;
 	const password = data.password;
+	const url = "https://sola.sus.ac.jp"//solaのurl
 
 
 	const page = await browser.newPage();//新規ページを作成
-	const url = "https://sola.sus.ac.jp"//solaのurl
 	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 0 });//ページ遷移
 
-	const target_name_ID = info.target.name; //username入力要素のID
-	const target_pass_ID = info.target.pass; //password入力要素のID
-	const target_submit_ID = info.target.submit; //submitボタンのID
+	const target_name_ID = "#identifier"; //username入力要素のID
+	const target_pass_ID = "#password"; //password入力要素のID
+	const target_submit_ID = "button[type=submit]"; //submitボタンのID
 	const target_a_ID = "a#a-2"; //solaのリンクのID
 
 	const pages = await browser.pages(); //ページリスト取得(Exitcポータルの削除のため)

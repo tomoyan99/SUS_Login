@@ -3,6 +3,7 @@ import {input} from "./input.js";
 import {makeSchedule} from "./makeSchedule.js";
 import {existsSync} from "fs";
 import MyCrypt from "./MyCrypt.js";
+import {sleep} from "./myUtils.js";
 
 //初回起動設定
 async function inputNamePass() {
@@ -12,7 +13,7 @@ async function inputNamePass() {
         const mc = new MyCrypt(info_path);
         const data = {};
         //info.jsonの存在をチェック
-        if (existsSync(info_path)){
+        if (!existsSync(info_path)){
             console.log(`初回起動を確認しました・・・`);
             await sleep(1000);
             console.clear();
