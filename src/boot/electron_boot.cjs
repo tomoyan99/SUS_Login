@@ -7,7 +7,7 @@ let mainWindow;
 let ptyProcess;
 
 process.env.browserPath = "node_modules/electron/dist/electron.exe";
-process.env.infoPath = path.join(__dirname,"data/info.json")
+process.env.infoPath = "data/info.json"
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -52,7 +52,7 @@ function createWindow() {
             })
 
             ptyProcess.onExit(() => {
-                // process.exit(0)
+                process.exit(0)
             });
         } catch (error) {
             mainWindow.webContents.send("terminal.incomingData",error+"\n");

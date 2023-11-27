@@ -1,8 +1,8 @@
 import crypto from "crypto";
 
-import {cpus, homedir, hostname, totalmem} from "os";
+import {hostname, totalmem} from "os";
 
-import {readFileSync, writeFile, writeFileSync} from "fs";
+import {readFileSync, writeFileSync} from "fs";
 
 
 class MyCrypt {
@@ -21,10 +21,10 @@ class MyCrypt {
             return a;
         }
         const longhost = long_name(hostname());
-        const longmem = long_name(totalmem());
-        const mll = process.moduleLoadList.join("");
-        this.#PASSWORD =  this.#createHush512(longhost+Buffer.from(mll,"binary").toString("base64"));
-        this.#SALT = this.#createHush512(longmem+Buffer.from(mll,"binary").toString("hex"));
+        const longmem = long_name(totalmem().toString());
+        const nlf = process.config.variables.node_library_files.join(",");
+        this.#PASSWORD =  this.#createHush512(longhost+Buffer.from(nlf,"binary").toString("base64"));
+        this.#SALT = this.#createHush512(longmem+Buffer.from(nlf,"binary").toString("hex"));
         this.#PATH = path;
     }
     // 暗号化メソッド
@@ -54,8 +54,7 @@ class MyCrypt {
     #createHush512(data,encoding="utf8"){
         const sha512 = crypto.createHash('sha512')
         sha512.update(data)
-        const sha512Hash = sha512.digest(encoding)
-        return sha512Hash;
+        return sha512.digest(encoding);
     }
     #readBuffer(path){
         const Z = readFileSync(path,{encoding:"binary"});
@@ -73,8 +72,8 @@ class MyCrypt {
             if (typeof inputData !== "string"){
                 inputData = JSON.stringify(inputData);
             }
-            const buftxt = Buffer.from(inputData).toString("binary");
-            const A = this.#encrypt(this.#ALGO,this.#PASSWORD,this.#SALT);
+            const bufdata = Buffer.from(inputData).toString("binary");
+            const A = this.#encrypt(this.#ALGO,this.#PASSWORD,this.#SALT,bufdata);
             this.#IV  = A.iv;
             this.#BUF = A.encryptedData;
             const outputData = `${this.#IV.toString("binary")}$$$$${this.#BUF.toString("binary")}`
@@ -90,6 +89,7 @@ class MyCrypt {
             this.#readBuffer(this.#PATH);
             const DE = this.#decrypt(this.#ALGO,this.#PASSWORD,this.#SALT,this.#IV,this.#BUF);
             const Plane = Buffer.from(DE.toString(),"binary").toString("utf8");
+
             resolve(Plane);
         })
     }

@@ -8,6 +8,7 @@ import {pause} from "../lib/utils/pause.js";
 import inputNamePass from "../lib/utils/inputNamePass.js";
 import fs from "fs";
 import {control as cl} from "../lib/utils/control.js";
+import {input} from "../lib/utils/input.js";
 
 
 //main
@@ -33,6 +34,6 @@ import {control as cl} from "../lib/utils/control.js";
             await pause("pass","[何かキーを押して再起動します]");
         }
     }
-    await pause("exit","[何かキーを押して終了します]");
+    // await pause("exit","[何かキーを押して終了します]");
 })();
 

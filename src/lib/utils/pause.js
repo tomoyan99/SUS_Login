@@ -1,54 +1,42 @@
-process.stdin.setEncoding('utf8');
-const CtrlC = "\u0003";
-const erathe = "\b\b\x1b[0K";
-const nowrite = "\b\x1b[0K";
+import EventEmitter from "events";
+import * as readline from "readline";
 
-const inputKey = (prompt) => new Promise(resolve => {
-	const stdin = process.stdin;
-	const isRow = stdin.isRaw;
-	const callBack = (key = "") => {
-		stdin.off("data", callBack);
-		stdin.pause();
-		stdin.setRawMode(isRow);
-		//上キーとかのエスケープで始まる文字は非表示
-		if (key === "\x0d" || key === CtrlC) {
-			resolve(key);//promiseの返り値としてkeyを返す
-		} else {
-			resolve("");
-		}
-	};
-	stdin.setRawMode(true);//エンター以外の各キーを押したときもstdin.onを実行するようにする
-	stdin.resume();//標準入力の待機状態にする
-	stdin.on("data", callBack);//キー入力を受け取る。キー内容はコールバック関数の第一引数として渡される
-});
-
-
-// エンター待機
-export async function pause(mode="exit",prompt="[何かキーを押して終了します]") {
-	let key = "";
-	process.stdout.write(`${prompt}\n`);
-	//ENTARキーが押されるまでforループ
-	for (; ;) {
-		key = await inputKey();//入力したキーを返す
-		if (key === "") {
-			continue;
-		}
-		//ENTERキーが押されたら終了
-		if (key === "\x0d") {
-			process.stdout.write(nowrite);
-			console.log();
-			break;
-		}
-		if (key === CtrlC) {
-			// process.stdout.write(nowrite);
-			process.exit(-1);//Ctrl+Cでプロセスの終了
-		}
+class KeyInputEmitter extends EventEmitter {
+	constructor() {
+		super();
+		this.init();
 	}
-	if (mode === "exit"){
-		process.exit(0);
-	}else if(mode === "pass"){
-		return 0;
-	}else{
-		throw new Error("modeはpassかexitで設定してください")
+	init() {
+		// 標準入力の設定
+		const rl = readline.createInterface({
+			input: process.stdin,
+			output: process.stdout,
+		});
+		// キー入力を受け取った時の処理
+		rl.input.on('keypress', (char, key) => {
+			this.emit("keypress")
+			// 何かしらが入力されたら終了
+			rl.close();
+		});
+
+		// キー入力をリッスン
+		rl.input.setRawMode(true);
+		rl.resume();
 	}
 }
+
+export async function pause(mode="pause",prompt = "[何かキーを押して終了]"){
+	return new Promise((resolve)=>{
+		// KeyInputEmitterのインスタンスを作成
+		const keyInputEmitter = new KeyInputEmitter();
+		// キー入力のイベントをリッスンして表示
+		keyInputEmitter.on('keypress', (char, key) => {
+			process.exit(0);
+		});
+		process.on("exit",()=>{
+			console.log("exit")
+		})
+		console.log(prompt);
+	});
+}
+

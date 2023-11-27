@@ -7,7 +7,7 @@
 import {launch} from 'puppeteer'; //pupeteerのインポート
 import {today} from './today.js';
 import {control as cl} from "./control.js";
-import {sleep} from "./myUtils.js";
+import {sleep, writeJSON} from "./myUtils.js";
 
 export async function makeSchedule(data) {
 	data.last_upd = { year: today.year, month: today.month, date: today.date,value:today.value,lastterm:today.whichTerm()};
@@ -30,8 +30,8 @@ export async function makeSchedule(data) {
 }
 
 async function searchSclass(browser, data) {
-	const user_name = data.username;
-	const password = data.password;
+	const user_name = data.user.name;
+	const password = data.user.password;
 
 	const page = await browser.newPage();//新規ページを作成
 
@@ -64,7 +64,7 @@ async function searchSclass(browser, data) {
 			page.waitForSelector(target_submit_ID, { timeout: 10000 }),
 			page.click(target_submit_ID)//submitクリック
 		]);
-		console.log("sclassログイン完了");
+		console.log(cl.bg_green+"sclassログイン完了"+cl.bg_reset);
 		const target_risyuu_ID = "div#pmenu4"; //sclassの上のバーの「履修関連」
 
 		await page.evaluate(() => { window.scroll(0, 0); });
@@ -136,13 +136,13 @@ async function searchSclass(browser, data) {
 		return schedule;
 	} catch (e) {
 		console.log(e)
-		throw new Error(cl.fg_red + "[保存] データの保存に失敗しました。暗号化にバグが生じている可能性があるため、暇なときにでも佐野まで報告してもらえると助かります(笑)" + cl.fg_reset);
+		throw new Error(cl.fg_red + "[保存] データの保存に失敗しました。暗号化にバグが生じている可能性があります" + cl.fg_reset);
 	}
 }
 
 async function searchSola(browser, data, schedule) {
-	const user_name = data.username;
-	const password = data.password;
+	const user_name = data.user.name;
+	const password = data.user.password;
 	const url = "https://sola.sus.ac.jp"//solaのurl
 
 
@@ -170,12 +170,13 @@ async function searchSola(browser, data, schedule) {
 			return target;
 		}
 	});
-	console.log("SOLAログイン完了");
+	console.log(cl.bg_green+"SOLAログイン完了"+cl.bg_reset);
 	// ここからSOLAが開かれたあとの処理
 
 	await Promise.all(
 		schedule.bf.map(async (t, i) => {
 			await sleep(i * 800);
+			t.event = "sora";
 			t.url = await sola_scrp(browser, t);
 		})
 	);
@@ -183,13 +184,30 @@ async function searchSola(browser, data, schedule) {
 	await Promise.all(
 		schedule.af.map(async (t, i) => {
 			await sleep(i * 800);
+			t.event = "sora";
 			t.url = await sola_scrp(browser, t);
 		})
 	);
+	const formated_schedule = {
+		"前期":{},
+		"後期":{}
+	};
+	for (const scheduleKey in schedule) {
+		for (const elem of schedule[scheduleKey]) {
+			formated_schedule[(scheduleKey==="bf")?"前期":"後期"][elem.name]
+				= {
+				"name": elem.name,
+				"event": elem.event,
+				"code": elem.code,
+				"url": elem.url
+			}
+		}
+	}
+
 	console.log(cl.fg_green + "後期科目ページURL取得完了" + cl.fg_reset);
 	await browser.close();
 
-	return schedule;
+	return formated_schedule;
 }
 
 async function sola_scrp(browser, data) {
