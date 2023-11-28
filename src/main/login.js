@@ -37,8 +37,10 @@ import MainHome from "../lib/MainHome.js";
 	ここでは開きたいサイトのコマンドを標準入力で受け取ったり、
 	openSUS関数の実行をしたりしてます。
 */
-export async function login(version = "",data) {
-    const MB = new MainHome([data.main,data.solaLink]);
+export async function login(data) {
+    return new Promise((resolve,reject)=>{
+        const MC = new MainHome([data.user,data.main,data.solaLink]);
+    })
 }
 
 /*

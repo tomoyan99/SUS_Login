@@ -26,7 +26,8 @@ async function inputNamePass() {
             if (!existsSync(info_path)){
                 console.log(`初回起動を確認しました・・・`);
                 await sleep(1000);
-                console.clear();
+                // console.clear();
+
                 console.log(`OpenSUS_v${version} へようこそ！`);
                 console.log(`ユーザー名(学籍番号)とパスワードの設定を行います。`);
                 //学籍番号の入力
@@ -75,7 +76,6 @@ async function inputNamePass() {
                     "{red-fg}QUIT{/}":{event:"quit"},
                 }
 
-
                 /* 履修データの登録 */
                 console.log("続いて、履修科目データの登録を行います");
                 console.log(`${cl.fg_yellow}※ 科目データの登録には、回線の都合上3分ほどかかる場合がありますので、このままお待ち下さい${cl.fg_reset}`);
@@ -113,7 +113,7 @@ async function inputNamePass() {
                 }
             }
         }while (true);
-        resolve(plane);
+        resolve(JSON.parse(plane));
     });
 }
 

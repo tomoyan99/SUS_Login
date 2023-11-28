@@ -5,40 +5,31 @@
 */
 import pkg from "../../package.json" assert {type: "json"};
 import {pause} from "../lib/utils/pause.js";
-import inputNamePass from "../lib/utils/inputNamePass.js";
 import fs from "fs";
 import {control as cl} from "../lib/utils/control.js";
+import inputNamePass from "../lib/utils/inputNamePass.js";
 import {login} from "./login.js";
 
 //main
 (async function main() {
     process.env.APPversion = pkg.version;
-    // imagesフォルダを作成
+// imagesフォルダを作成
     fs.mkdirSync("data/images", { recursive: true });
-    // logsフォルダを作成
+// logsフォルダを作成
     fs.mkdirSync("data/logs",{recursive:true});
     console.log(`${cl.bg_yellow}セットアップ中です・・・・・・${cl.bg_reset}`);
+    console.clear();
     while (true){
-        console.clear();
         try {
             const data = await inputNamePass();
             if (!data){break;}
-
-            //login関数に入る
             await login(data);
             break;
-        } catch (e) {
+        }catch (e) {
             console.clear();
             console.log("[ERROR]");
             console.log(e);
-            await pause("pause","[何かキーを押して再起動します]");
-            await pause("pause","[何かキーを押して再起動します]");
-            await pause("pause","[何かキーを押して再起動します]");
+            pause("pause","[何かキーを押して再起動します]");
         }
     }
-    process.on("exit",()=>{
-        console.log("exit!")
-    })
-    await pause("exit","[何かキーを押して終了します]");
 })();
-

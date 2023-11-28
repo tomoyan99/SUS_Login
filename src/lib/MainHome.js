@@ -1,11 +1,14 @@
 import Blessed from "neo-blessed";
 import contrib from "neo-blessed-contrib";
 import EventEmitter from "events";
+import {openContext, openEuc, openSclass, openSola} from "./puppeteer/Openers.js";
+import {launch} from "puppeteer";
 
 class FormatData{
-    data = {
+    _data = {
+        user:{},
         main:{},
-        sub :{}
+        sub :{},
     }
     /**
      * @param {Object} args
@@ -13,8 +16,10 @@ class FormatData{
      * @param {Object} args.sub
      * */
     constructor(args) {
-        this.data.main = this.#parseListData(args[0]);
-        this.data.sub  = this.#parseListData(args[1]);
+        this._data.user = args[0];
+        this._data.main = this.#parseListData(args[1]);
+        args[1]["{yellow-fg}戻る{/}"] = { event: "return" };
+        this._data.sub  = this.#parseListData(args[2]);
     }
     /**
      * @name parseListData
@@ -239,7 +244,11 @@ class SetComponents extends Members{
         this.setInfo = (value)=>{
             info.resetScroll();
             info.setContent(value);
-            info.render();
+            this.components.screen.render();
+        }
+        this.appendInfo = (value)=>{
+            const append = info.getContent()+value;
+            this.setInfo(append);
         }
         this.components.info = info;
     }
@@ -300,7 +309,7 @@ class SetComponents extends Members{
             tags:true
         });
         //データをセット
-        main.setData(this.data.main);
+        main.setData(this._data.main);
         this.components.mainTree = main;
     }
     /**
@@ -335,7 +344,7 @@ class MainHome extends SetComponents{
         blessed:{}
     };
     constructor(args) {
-        //this.dataの作成
+        //this._dataの作成
         super(args);
         this.#onAllEvents();
         //最初はコマンド選択部をフォーカス
@@ -408,7 +417,10 @@ class MainHome extends SetComponents{
                     this.setFocus(this.status.focus.bef);
                 }
             },
-            screenCtrC:()=>{process.exit(0)}
+            screenCtrC:()=>{process.exit(0)},
+            netWork:()=>{
+
+            }
         }
         l.origin = {
             euc:()=>{
@@ -416,18 +428,18 @@ class MainHome extends SetComponents{
                 const f = c.form;
                 c.form.once("focus",()=>{
                     c.form.once("submit",()=>{
-                        const value = this.status.inputs;
-                        this.setInfo(value);
+                        const value = this.status.inputValue;
+                        this.event.emit("change input",value);
                     });
                     c.form.on("keypress",(ch,key)=>{
                         const keyn = key.name;
 
                         switch (keyn) {
                             case "backspace":
-                                if (this.status.inputs.length === 0){
+                                if (this.status.inputValue.length === 0){
                                     c.form.setValue("入力 >>  ");
                                 }else{
-                                    this.status.inputs = this.status.inputs.slice(0,-1);
+                                    this.status.inputValue = this.status.inputValue.slice(0,-1);
                                 }
                                 break;
                             case "escape":
@@ -445,35 +457,57 @@ class MainHome extends SetComponents{
                             default:
                                 //制御文字とバックスラッシュは除外
                                 const cond = (
-                                    key.full.length === 1
-                                    && key.full.charCodeAt(0) >= 33
+                                       key.full.charCodeAt(0) >= 33
                                     && key.full.charCodeAt(0) <= 126
+                                    && key.full.charCodeAt(0) !== 92
+                                    && key.full !== "space"
                                 );
                                 if (cond){
-                                    this.status.inputs += (key.sequence)?key.sequence:key.ch;
+                                    this.status.inputValue += (key.sequence)?key.sequence:key.ch;
                                 }
                                 break;
                         }
                     })
                     c.form.setValue("入力 >> ");
-                    this.status.inputs = "";
+                    this.status.inputValue = "";
                     this.components.screen.render();
                 })
                 c.form.once("blur",()=>{
                     c.form.removeAllListeners("keypress")
                 })
                 this.setFocus(f);
+                this.event.on("change input",async(euc)=>{
+                    return new Promise(async(resolve, reject)=>{
+                        const context = await openContext("EUC");
+                        await openEuc(context,this._data.user,euc,this.appendInfo).catch(async(reason)=>{
+                            await context.close();
+                            this.event.emit("error",new Error(`[EUC ERROR]\n${reason}`));
+                        })
+                    });
+                });
             },
             sclass:()=>{
-                this.setInfo("sclass!");
+                return new Promise(async(resolve, reject)=>{
+                    const context = await openContext("SCLASS");
+                    await openSclass(context,this._data.user,false,this.appendInfo).catch(async(reason)=>{
+                        await context.close();
+                        this.event.emit("error",new Error(`[SCLAS SERROR]\n${reason}`));
+                    })
+                });
             },
             sola:()=>{
-                this.setInfo("sola!")
+                return new Promise(async(resolve, reject)=>{
+                    const context = await openContext("SOLA");
+                    await openSola(context,this._data.user,false,this.appendInfo).catch(async(reason)=>{
+                        await context.close();
+                        this.event.emit("error",new Error(`[SOLA ERROR]\n${reason}`));
+                    });
+                });
             },
             pageEnter:()=>{
                 const c = this.components;
                 this.setFocus(c.subTree);
-                c.subTree.setData(this.data.sub);
+                c.subTree.setData(this._data.sub);
                 c.subTree.rows.select(0);
             },
             pageReturn:()=>{

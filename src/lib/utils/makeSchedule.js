@@ -37,7 +37,7 @@ export async function makeSchedule(data) {
 
 async function searchSclass(browser, user) {
 	return new Promise(async(resolve, reject)=>{
-		const page = await openSclass(browser,user);
+		const page = await openSclass(browser,user,true);
 		const target_risyuu_ID = "div#pmenu4"; //sclassの上のバーの「履修関連」
 
 		try {
@@ -114,9 +114,9 @@ async function searchSclass(browser, user) {
 
 async function searchSola(browser, user, schedule) {
 	return new Promise(async(resolve, reject)=>{
-		// ここからSOLAが開かれたあとの処理
-
 		try {
+			//一回solaを開いておくことでログイン状態を保持
+			await openSola(browser,user,true);
 			//前期科目ページURL取得
 			await Promise.all(
 				schedule.bf.map(async (t, i) => {

@@ -1,14 +1,46 @@
 import {control as cl} from "../utils/control.js";
 import {today} from "../utils/today.js";
 import {appendFileSync, existsSync, writeFileSync} from "fs";
-import {Browser} from "puppeteer";
+import {Browser, BrowserContext, launch} from "puppeteer";
 
 /**
- * @param {Browser} browser
+ * @param {('EUC'|'SCLASS'|'SOLA')} mode
+ * */
+export async function openContext(mode){
+    /* ブラウザの立ち上げ */
+    const browser = await launch({
+        headless: (mode === "EUC") ? "new" : false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
+        slowMo: (mode === "EUC") ? 0 : 0, //タイピング・クリックなどの各動作間の速度
+        defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
+        channel: "chrome",//chromeを探し出して開く
+        ignoreHTTPSErrors: true,
+        ignoreDefaultArgs: [
+            "--disable-extensions",
+            "--enable-automation",
+        ],
+        args: [
+            "--proxy-server='direct://'",
+            "--proxy-bypass-list=*"
+        ]
+    }).catch(()=>{
+        this.event.emit("error",new Error(`[BROWSER ERROR]\n${new Error("ブラウザが開けませんでした。chromeがインストールされていることを確認してください")}`));
+    });
+    const context = await browser.createIncognitoBrowserContext();//シークレットモードで開くため
+    const pagesB = await browser.pages();//ブラウザのページリストを取得。(0がabout:brankでこれを消すため)
+    if (mode !== "EUC") {
+        await pagesB[0].close();//about:brankを削除
+        await context.newPage();
+    }
+    return context;
+}
+
+/**
+ * @param {Browser|BrowserContext} browser
  * @param {{name:string,password:string}} user
  * @param {boolean} headless
+ * @param {function} func
  * */
-export async function openSclass(browser, user,headless=false) {
+export async function openSclass(browser, user,headless=false,func = console.log) {
     const user_name = user.name;
     const password  = user.password;
     const url = "https://s-class.admin.sus.ac.jp/up/faces/login/Com00504A.jsp"; //sclassのurl
@@ -20,6 +52,10 @@ export async function openSclass(browser, user,headless=false) {
     return new Promise(async(resolve,reject)=>{
         //新規ページを開く
         const page = await browser.newPage();
+        const pages = await browser.pages();
+        if (pages.length > 1){
+            await pages[0].close();
+        }
         if (headless){
             // CSSをOFFにして高速化
             await page.setRequestInterception(true);
@@ -37,7 +73,7 @@ export async function openSclass(browser, user,headless=false) {
         }); //ページ遷移
 
         //アクセスが完了したらドットを打つのをやめてアクセス完了の文字を出力
-        process.stdout.write(`${cl.lineClear}${cl.initialLine()}${cl.fg_green}アクセス完了${cl.fg_reset}\n`);
+        func(`${cl.fg_green}アクセス完了${cl.fg_reset}\n`);
 
         try {
             await page.waitForSelector(target_submit_ID, {visible: true, timeout: 15000});
@@ -60,18 +96,20 @@ export async function openSclass(browser, user,headless=false) {
         if (isError){
             reject("Input Error : 不正な領域にユーザー名あるいはパスワードが入力されたためsclass側でエラーが出ました。");//rejectを返す
         }
-        console.log(`\n${cl.bg_green}sclassログイン完了${cl.fg_reset}`);
+        func(`\n${cl.bg_green}sclassログイン完了${cl.fg_reset}`);
         resolve(page);
     });
 }
 /**
- * @param {Browser} browser
+ * @param {Browser|BrowserContext} browser
  * @param {{name:string,password:string}} user
+ * @param {boolean} headless
+ * @param {function} func
  * */
-export async function openSola(browser, user) {
+export async function openSola(browser, user,headless=false,func = console.log) {
     const user_name = user.name;
     const password  = user.password;
-    const url = "https://s-class.admin.sus.ac.jp/up/faces/login/Com00504A.jsp"; //sclassのurl
+    const url = "https://sola.sus.ac.jp/"; //sclassのurl
 
     const target_name_ID = "#identifier"; //username入力要素のID
     const target_pass_ID = "#password"; //password入力要素のID
@@ -80,8 +118,23 @@ export async function openSola(browser, user) {
 
     return new Promise(async(resolve, reject)=>{
         const page = await browser.newPage();//新規ページを作成
+        const pages = await browser.pages();
+        if (pages.length > 1){
+            await pages[0].close();
+        }
+        if (headless){
+            // CSSをOFFにして高速化
+            await page.setRequestInterception(true);
+            page.on('request', (request) => {
+                if (['image', 'stylesheet', 'font'].indexOf(request.resourceType()) !== -1) {
+                    request.abort();
+                } else {
+                    request.continue();
+                }
+            });
+        }
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 0 });//ページ遷移
-        process.stdout.write(`${cl.lineClear}${cl.fg_green}${cl.initialLine()}アクセス完了${cl.fg_reset}\n`);
+        func(`${cl.fg_green}アクセス完了${cl.fg_reset}\n`);
 
         try {
             await page.waitForSelector(target_name_ID, {visible: true, timeout: 30000});
@@ -94,7 +147,7 @@ export async function openSola(browser, user) {
             await page.waitForNavigation({waitUntil: "load", timeout: 2000}).catch(async () => {
                 await page.click(target_submit_ID, {delay: 800});//submitクリック
             });
-            console.log(`\n${cl.bg_green}SOLAログイン完了${cl.fg_reset}`);
+            func(`\n${cl.bg_green}SOLAログイン完了${cl.fg_reset}`);
             resolve(page);
         }catch (e){
             reject(e);
@@ -102,15 +155,16 @@ export async function openSola(browser, user) {
     });
 }
 /**
- * @param {Browser} browser
+ * @param {Browser|BrowserContext} browser
  * @param {{name:string,password:string}} user
  * @param {number} EUC
+ * @param {function} func
  * */
-export async function openEuc(browser, user, EUC) {
+export async function openEuc(browser, user, EUC,func = console.log) {
 
    return new Promise(async(resolve, reject)=>{
        //SCLSSにヘッドレスでアクセス
-       const page = await openSclass(browser,user,true);
+       const page = await openSclass(browser,user,true,func);
        //スクロールを一番上に
        await page.evaluate(() => {window.scroll(0, 0);});
 
@@ -118,6 +172,7 @@ export async function openEuc(browser, user, EUC) {
            const target_risyuu_ID = "div#pmenu4"; //sclassの上のバーの「履修関連」
            await page.waitForSelector(target_risyuu_ID, {visible: true, timeout: 30000});
            await page.hover(target_risyuu_ID);//「履修関連」をホバー
+           //「履修登録」のタブが増えてたりしたときのため
            const target_EUC_ID = await page.$eval(target_risyuu_ID,(div)=>{
                return `#${Array.from(div.children).filter((c) => c.text === "EUC学生出欠登録")[0].id}`
            });
@@ -145,7 +200,7 @@ export async function openEuc(browser, user, EUC) {
            const tex = await page.$eval("td span#form1\\3A htmlTorokukekka", (tar) => {
                return tar.textContent;
            });
-           console.log(cl.fg_cyan + nam + "\n" + cl.fg_reset + cl.fg_red + tex + cl.fg_reset); //結果をコンソールに表示
+           func(cl.fg_cyan + nam + "\n" + cl.fg_reset + cl.fg_red + tex + cl.fg_reset); //結果をコンソールに表示
            //「文章が異なります。」が出なかったらスクショ
            if (tex !== "番号が異なります。") {
                const shot_target = await page.$("table.sennasi");
