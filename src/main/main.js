@@ -8,8 +8,7 @@ import {pause} from "../lib/utils/pause.js";
 import inputNamePass from "../lib/utils/inputNamePass.js";
 import fs from "fs";
 import {control as cl} from "../lib/utils/control.js";
-import {input} from "../lib/utils/input.js";
-
+import {login} from "./login.js";
 
 //main
 (async function main() {
@@ -24,16 +23,22 @@ import {input} from "../lib/utils/input.js";
         try {
             const data = await inputNamePass();
             if (!data){break;}
+
             //login関数に入る
-            // await login(version,data);
+            await login(data);
             break;
         } catch (e) {
             console.clear();
-            console.log("[ERROR]")
+            console.log("[ERROR]");
             console.log(e);
-            await pause("pass","[何かキーを押して再起動します]");
+            await pause("pause","[何かキーを押して再起動します]");
+            await pause("pause","[何かキーを押して再起動します]");
+            await pause("pause","[何かキーを押して再起動します]");
         }
     }
-    // await pause("exit","[何かキーを押して終了します]");
+    process.on("exit",()=>{
+        console.log("exit!")
+    })
+    await pause("exit","[何かキーを押して終了します]");
 })();
 

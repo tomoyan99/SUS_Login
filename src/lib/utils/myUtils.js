@@ -12,3 +12,6 @@ export function writeJSON(dir, data) {
 export function importJSON(path=""){
 	return JSON.parse(readFileSync(path,"utf8"));
 }
+export function isNumberInRange(number, min, max) {
+	return number >= min && number <= max;
+}

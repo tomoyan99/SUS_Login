@@ -1,8 +1,6 @@
-const Blessed = require('neo-blessed');
-const contrib = require('neo-blessed-contrib');
-const EventEmitter = require('events');
-const {decycle} = require("json-cyclic");
-
+import Blessed from "neo-blessed";
+import contrib from "neo-blessed-contrib";
+import EventEmitter from "events";
 
 class FormatData{
     data = {
@@ -330,7 +328,7 @@ class SetComponents extends Members{
         });
     }
 }
-class MainBlessed extends SetComponents{
+class MainHome extends SetComponents{
     event = new EventEmitter();
     listeners = {
         origin: {},
@@ -538,42 +536,4 @@ class MainBlessed extends SetComponents{
     }
 }
 
-const commandList = {
-    "SUS_LOGIN":{
-        "{#0f0-fg}EUC{/}":{
-            event:"euc"
-        },
-        "SCLASS":{
-            event:"sclass"
-        },
-        "SOLA":{
-            event:"sola",
-            "{#3aa-fg}PAGE_LIST{/}":{event:"page"}
-        },
-        "履修仮組みツール":{event:"completion"}
-    },
-    "LOG":{event:"log"},
-    "IMAGE":{event:"image"},
-    "{red-fg}QUIT{/}":{event:"quit"},
-}
-const pageList = {
-    "前期":{
-        "1":{event:"sola",url:"1"},
-        "2":{event:"sola",url:"2"},
-        "3":{event:"sola",url:"3"},
-        "4":{event:"sola",url:"4"},
-        "5":{event:"sola",url:"5"},
-        "6":{event:"sola",url:"6"},
-    },
-    "後期":{
-        "7":{event:"sola",url:"7"},
-        "8":{event:"sola",url:"8"},
-        "9":{event:"sola",url:"9"},
-        "a":{event:"sola",url:"a"},
-        "b":{event:"sola",url:"b"},
-        "c":{event:"sola",url:"c"},
-    },
-    "{yellow-fg}戻る{/}":{event:"return"}
-}
-
-const MB1 = new MainBlessed([commandList,pageList]);
+export default MainHome;

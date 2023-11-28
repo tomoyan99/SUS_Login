@@ -52,7 +52,7 @@ function createWindow() {
             })
 
             ptyProcess.onExit(() => {
-                process.exit(0)
+                // process.exit(0)
             });
         } catch (error) {
             mainWindow.webContents.send("terminal.incomingData",error+"\n");

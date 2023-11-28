@@ -2,9 +2,9 @@ import {control as cl} from "../utils/control.js";
 import {clearInterval} from "timers";
 
 class WaitAccessMessage{
-    constructor(data) {
-        this.max_dot_quant = data.access_dot.max_quant;
-        this.waitmsec = data.access_dot.waitmsec;
+    constructor(max_quant,waitmsec) {
+        this.max_dot_quant = max_quant;
+        this.waitmsec = waitmsec;
         this.waitAccess = undefined;
     }
     //アクセスメッセージの開始

@@ -15,10 +15,13 @@
   "author": "Tomoya Sano",
   "license": "ISC",
   "dependencies": {
+    "@inquirer/prompts": "^3.3.0",
     "bcrypt": "^5.1.1",
     "electron": "^27.1.0",
     "electron-builder": "^24.6.4",
     "electron-rebuild": "^3.2.9",
+    "neo-blessed": "^0.2.0",
+    "neo-blessed-contrib": "^4.9.0",
     "nexe": "^1.1.6",
     "node-pty": "^1.0.0",
     "puppeteer": "^21.5.2",
