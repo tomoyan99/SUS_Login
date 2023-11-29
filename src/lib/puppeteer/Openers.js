@@ -2,36 +2,45 @@ import {control as cl} from "../utils/control.js";
 import {today} from "../utils/today.js";
 import {appendFileSync, existsSync, writeFileSync} from "fs";
 import {Browser, BrowserContext, launch} from "puppeteer";
+import WaitAccessMessage from "./WaitAccessMessage.js";
 
 /**
  * @param {('EUC'|'SCLASS'|'SOLA')} mode
  * */
 export async function openContext(mode){
-    /* ブラウザの立ち上げ */
-    const browser = await launch({
-        headless: (mode === "EUC") ? "new" : false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
-        slowMo: (mode === "EUC") ? 0 : 0, //タイピング・クリックなどの各動作間の速度
-        defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
-        channel: "chrome",//chromeを探し出して開く
-        ignoreHTTPSErrors: true,
-        ignoreDefaultArgs: [
-            "--disable-extensions",
-            "--enable-automation",
-        ],
-        args: [
-            "--proxy-server='direct://'",
-            "--proxy-bypass-list=*"
-        ]
-    }).catch(()=>{
-        this.event.emit("error",new Error(`[BROWSER ERROR]\n${new Error("ブラウザが開けませんでした。chromeがインストールされていることを確認してください")}`));
-    });
-    const context = await browser.createIncognitoBrowserContext();//シークレットモードで開くため
-    const pagesB = await browser.pages();//ブラウザのページリストを取得。(0がabout:brankでこれを消すため)
-    if (mode !== "EUC") {
-        await pagesB[0].close();//about:brankを削除
-        await context.newPage();
-    }
-    return context;
+    return new Promise(async(resolve, reject)=>{
+        try {
+            /* ブラウザの立ち上げ */
+            const browser = await launch({
+                headless: (mode === "EUC") ? "new" : false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
+                slowMo: (mode === "EUC") ? 0 : 0, //タイピング・クリックなどの各動作間の速度
+                defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
+                channel: "chrome",//chromeを探し出して開く
+                ignoreHTTPSErrors: true,
+                ignoreDefaultArgs: [
+                    "--disable-extensions",
+                    "--enable-automation",
+                ],
+                args: [
+                    "--window-position=0,0",
+                    " --window-size=200,150",
+                    "--proxy-server='direct://'",
+                    "--proxy-bypass-list=*"
+                ]
+            }).catch(()=>{
+                reject("ブラウザが開けませんでした。chromeがインストールされていることを確認してください");
+            });
+            const context = await browser.createIncognitoBrowserContext();//シークレットモードで開くため
+            const pagesB = await browser.pages();//ブラウザのページリストを取得。(0がabout:brankでこれを消すため)
+            if (mode !== "EUC") {
+                await pagesB[0].close();//about:brankを削除
+                await context.newPage();
+            }
+            resolve(context);
+        }catch (e) {
+            reject(e)
+        }
+    })
 }
 
 /**
@@ -50,32 +59,34 @@ export async function openSclass(browser, user,headless=false,func = console.log
     const target_pass_ID = ".inputSecret";//password入力要素のID
 
     return new Promise(async(resolve,reject)=>{
-        //新規ページを開く
-        const page = await browser.newPage();
-        const pages = await browser.pages();
-        if (pages.length > 1){
-            await pages[0].close();
-        }
-        if (headless){
-            // CSSをOFFにして高速化
-            await page.setRequestInterception(true);
-            page.on('request', (request) => {
-                if (['image', 'stylesheet', 'font', 'script'].indexOf(request.resourceType()) !== -1) {
-                    request.abort();
-                } else {
-                    request.continue();
-                }
-            });
-        }
-        //アクセス待機メッセージ
-        await page.goto(url, {waitUntil: 'networkidle2', timeout: 0}).catch(()=>{
-            reject("ページ遷移エラー")
-        }); //ページ遷移
-
-        //アクセスが完了したらドットを打つのをやめてアクセス完了の文字を出力
-        func(`${cl.fg_green}アクセス完了${cl.fg_reset}\n`);
-
         try {
+            //新規ページを開く
+            const page = await browser.newPage();
+            const pages = await browser.pages();
+            if (pages.length > 1){
+                await pages[0].close();
+            }
+            if (headless){
+                // CSSをOFFにして高速化
+                await page.setRequestInterception(true);
+                page.on('request', (request) => {
+                    if (['image', 'stylesheet', 'font', 'script'].indexOf(request.resourceType()) !== -1) {
+                        request.abort();
+                    } else {
+                        request.continue();
+                    }
+                });
+            }
+            //アクセス待機メッセージ
+            const wa = new WaitAccessMessage(1000,func);
+            await wa.consoleOn();
+            await page.goto(url, {waitUntil: 'networkidle2', timeout: 0}).catch(async()=>{
+                await wa.consoleOff();
+                reject(new Error("[SCLASS] ページ遷移エラー"));
+            }); //ページ遷移
+            await wa.consoleOff();
+            //アクセスが完了したらアクセス完了の文字を出力
+            func(`${cl.fg_green}[SCLASS] アクセス完了${cl.fg_reset}\n`);
             await page.waitForSelector(target_submit_ID, {visible: true, timeout: 15000});
             await page.click(target_submit_ID); //submitクリック
             await page.waitForSelector(target_name_ID, {visible: true, timeout: 15000});
@@ -86,18 +97,18 @@ export async function openSclass(browser, user,headless=false,func = console.log
             await page.type(target_pass_ID, password); //password入力
             await page.waitForSelector(target_submit_ID, {visible: true, timeout: 15000});
             await page.click(target_submit_ID); //submitクリック
+            const isError = await page.waitForSelector("span#htmlErrorMessage", {visible: true, timeout: 2500})
+                .then(()=>true)
+                .catch(()=>false);
+            //エラーメッセージが取れてしまったときは失敗を返す
+            if (isError){
+                reject(new Error("Input Error : 不正な領域にユーザー名あるいはパスワードが入力されたためsclass側でエラーが出ました。"));//errorを返す
+            }
+            func(`${cl.bg_green}[SCLASS] ログイン完了${cl.fg_reset}`);
+            resolve(page);
         }catch (e) {
             reject(e);
         }
-        const isError = await page.waitForSelector("span#htmlErrorMessage", {visible: true, timeout: 2500})
-            .then(()=>true)
-            .catch(()=>false);
-        //エラーメッセージが取れてしまったときは失敗を返す
-        if (isError){
-            reject("Input Error : 不正な領域にユーザー名あるいはパスワードが入力されたためsclass側でエラーが出ました。");//rejectを返す
-        }
-        func(`\n${cl.bg_green}sclassログイン完了${cl.fg_reset}`);
-        resolve(page);
     });
 }
 /**
@@ -117,6 +128,7 @@ export async function openSola(browser, user,headless=false,func = console.log) 
 
 
     return new Promise(async(resolve, reject)=>{
+    try {
         const page = await browser.newPage();//新規ページを作成
         const pages = await browser.pages();
         if (pages.length > 1){
@@ -133,25 +145,32 @@ export async function openSola(browser, user,headless=false,func = console.log) 
                 }
             });
         }
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 0 });//ページ遷移
-        func(`${cl.fg_green}アクセス完了${cl.fg_reset}\n`);
+        //アクセス待機メッセージ
+        const wa = new WaitAccessMessage(1000,func);
+        await wa.consoleOn();
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 0 }).catch(async()=>{
+            await wa.consoleOff();
+            throw new Error("[SOLA] ページ遷移エラー");
+        });//ページ遷移
+        await wa.consoleOff();
 
-        try {
-            await page.waitForSelector(target_name_ID, {visible: true, timeout: 30000});
-            await page.type(target_name_ID, user_name);//username入力
-            await page.click(target_submit_ID);//submitクリック
-            await page.waitForSelector(target_pass_ID, {visible: true, timeout: 30000});
-            await page.type(target_pass_ID, password);//password入力
-            await page.click(target_pass_ID);//passwordクリック(確実にsubmitするため)
-            await page.click(target_submit_ID, {delay: 800});//submitクリック
-            await page.waitForNavigation({waitUntil: "load", timeout: 2000}).catch(async () => {
-                await page.click(target_submit_ID, {delay: 800});//submitクリック
-            });
-            func(`\n${cl.bg_green}SOLAログイン完了${cl.fg_reset}`);
-            resolve(page);
-        }catch (e){
-            reject(e);
-        }
+        func(`${cl.fg_green}[SOLA] アクセス完了${cl.fg_reset}\n`);
+
+        await page.waitForSelector(target_name_ID, {visible: true, timeout: 30000});
+        await page.type(target_name_ID, user_name);//username入力
+        await page.click(target_submit_ID);//submitクリック
+        await page.waitForSelector(target_pass_ID, {visible: true, timeout: 30000});
+        await page.type(target_pass_ID, password);//password入力
+        await page.click(target_pass_ID);//passwordクリック(確実にsubmitするため)
+        await page.click(target_submit_ID, {delay: 800});//submitクリック
+        await page.waitForNavigation({waitUntil: "load", timeout: 2000}).catch(async () => {
+        await page.click(target_submit_ID, {delay: 800});//submitクリック
+        });
+        func(`\n${cl.bg_green}[SOLA] ログイン完了${cl.fg_reset}`);
+        resolve(page);
+    }catch (e){
+        reject(e);
+    }
     });
 }
 /**
@@ -163,12 +182,11 @@ export async function openSola(browser, user,headless=false,func = console.log) 
 export async function openEuc(browser, user, EUC,func = console.log) {
 
    return new Promise(async(resolve, reject)=>{
-       //SCLSSにヘッドレスでアクセス
-       const page = await openSclass(browser,user,true,func);
-       //スクロールを一番上に
-       await page.evaluate(() => {window.scroll(0, 0);});
-
        try {
+           //SCLSSにヘッドレスでアクセス
+           const page = await openSclass(browser,user,true,func);
+           //スクロールを一番上に
+           await page.evaluate(() => {window.scroll(0, 0);});
            const target_risyuu_ID = "div#pmenu4"; //sclassの上のバーの「履修関連」
            await page.waitForSelector(target_risyuu_ID, {visible: true, timeout: 30000});
            await page.hover(target_risyuu_ID);//「履修関連」をホバー
@@ -222,7 +240,29 @@ export async function openEuc(browser, user, EUC,func = console.log) {
             resolve()
        }catch (e){
             await browser.close();
-            reject(e);
+            reject(new Error(e));
        }
    });
+}
+
+/**
+ * @param {Page} page
+ * @param {[number,number]} wh
+ * */
+export function resizeWindow(page,[w, h]) {
+    return new Promise(async(resolve, reject)=>{
+        try {
+            const session = await page.target().createCDPSession();
+            const {windowId} = await session.send('Browser.getWindowForTarget');
+            await session.send('Browser.setWindowBounds', {
+                bounds: {
+                    height: h,
+                    width: w
+                },
+                windowId:windowId,
+            });
+        }catch (e) {
+            reject(e)
+        }
+    })
 }

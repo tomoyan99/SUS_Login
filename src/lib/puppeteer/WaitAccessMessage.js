@@ -2,31 +2,22 @@ import {control as cl} from "../utils/control.js";
 import {clearInterval} from "timers";
 
 class WaitAccessMessage{
-    constructor(max_quant,waitmsec) {
-        this.max_dot_quant = max_quant;
+    constructor(waitmsec,func=console.log) {
         this.waitmsec = waitmsec;
         this.waitAccess = undefined;
+        this.func = func;
     }
     //アクセスメッセージの開始
-    async on(){
+    async consoleOn(){
         //アクセス待機メッセージ
-        process.stdout.write("アクセス中です");
-        let dot_count = 0;
         this.waitAccess = setInterval(()=>{
-            if (dot_count === this.max_dot_quant){
-                process.stdout.write(`\x1b[${dot_count*2}D${cl.rightClear}`);
-                dot_count=0;
-            }else{
-                process.stdout.write("・");
-                dot_count++
-            }
+            this.func("アクセス中...\n");
         },this.waitmsec);
         return this.waitAccess;
     }
     //アクセスメッセージの終了
-    async off(){
+    async consoleOff(){
         if (typeof this.waitAccess){
-            process.stdout.write(`${cl.lineClear}${cl.initialLine()}`);
             clearInterval(this.waitAccess)
         }
     }

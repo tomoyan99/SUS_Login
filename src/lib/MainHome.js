@@ -1,8 +1,8 @@
 import Blessed from "neo-blessed";
 import contrib from "neo-blessed-contrib";
 import EventEmitter from "events";
-import {openContext, openEuc, openSclass, openSola} from "./puppeteer/Openers.js";
-import {launch} from "puppeteer";
+import {openContext, openEuc, openSclass, openSola, resizeWindow} from "./puppeteer/Openers.js";
+import {control as cl} from "./utils/control.js";
 
 class FormatData{
     _data = {
@@ -18,7 +18,7 @@ class FormatData{
     constructor(args) {
         this._data.user = args[0];
         this._data.main = this.#parseListData(args[1]);
-        args[1]["{yellow-fg}戻る{/}"] = { event: "return" };
+        args[2]["{yellow-fg}戻る{/}"] = { event: "return" };
         this._data.sub  = this.#parseListData(args[2]);
     }
     /**
@@ -52,6 +52,7 @@ class Members extends FormatData{
             bef:undefined,
             now:undefined
         },
+        miss_count:0
     }
     colors={
         fg:"#ffffff",
@@ -241,6 +242,7 @@ class SetComponents extends Members{
         info.key("up",()=>{
             info.scroll(-1);
         })
+
         this.setInfo = (value)=>{
             info.resetScroll();
             info.setContent(value);
@@ -249,6 +251,12 @@ class SetComponents extends Members{
         this.appendInfo = (value)=>{
             const append = info.getContent()+value;
             this.setInfo(append);
+            this.components.screen.render();
+        }
+        this.changeLabel = (value = "INFO")=>{
+            this.setInfo("");
+            info.setLabel(value);
+            this.components.screen.render();
         }
         this.components.info = info;
     }
@@ -366,6 +374,7 @@ class MainHome extends SetComponents{
                 let content = node.name.replace(reg,"$1");
                 let colored_content = `選択 >> {${this.colors.choice.fg}-fg}{${this.colors.choice.bg}-bg}${content}{/}{/}`;
                 this.setChoice(colored_content);
+                this.changeLabel(content);
                 //イベントをエミット
                 try {
                     this.event.emit(node.event);
@@ -450,7 +459,7 @@ class MainHome extends SetComponents{
                             case "enter":
                                 c.form.submit();
                                 c.form.clearValue();
-                                this.setFocus(this.components.mainTree)
+                                this.setFocus(this.components.info)
                                 break;
                             case "return":
                                 break;
@@ -477,22 +486,40 @@ class MainHome extends SetComponents{
                 })
                 this.setFocus(f);
                 this.event.on("change input",async(euc)=>{
-                    return new Promise(async(resolve, reject)=>{
+                    return new Promise(async(resolve, reject)=> {
                         const context = await openContext("EUC");
-                        await openEuc(context,this._data.user,euc,this.appendInfo).catch(async(reason)=>{
-                            await context.close();
-                            this.event.emit("error",new Error(`[EUC ERROR]\n${reason}`));
+                        await openEuc(context, this._data.user, euc, this.appendInfo).catch(async (reason) => {
+                            this.event.emit("error", new Error(`[EUC ERROR]\n${reason}`));
                         })
                     });
                 });
             },
             sclass:()=>{
                 return new Promise(async(resolve, reject)=>{
-                    const context = await openContext("SCLASS");
-                    await openSclass(context,this._data.user,false,this.appendInfo).catch(async(reason)=>{
-                        await context.close();
-                        this.event.emit("error",new Error(`[SCLAS SERROR]\n${reason}`));
-                    })
+                    this.setInfo("");
+                    do {
+                        let context ;
+                        try {
+                            context = await openContext("SCLASS");
+                            if (context){
+                                const page = await openSclass(context,this._data.user,false,this.appendInfo)
+                                await resizeWindow(page,[800,600]);
+                            }else{
+                                break;
+                            }
+                        }catch (e) {
+                            if (context){
+                                await context.close();
+                            }
+                            this.appendInfo(`[SCLASS　ERROR] ${cl.bg_yellow}${cl.fg_black}※ 接続エラー${cl.bg_reset}${cl.fg_reset}(${this.status.miss_count+1})\n`);
+                            this.status.miss_count++;
+                            if (this.status.miss_count === 4){
+                                this.event.emit("error",`[SCLASS　ERROR]\n${cl.bg_red}※ 4度接続を試みましたが失敗しました。${cl.bg_reset}\n${cl.bg_red}ネットワークを確認してください${cl.bg_reset}\n${e.stack}`);
+                                this.status.miss_count = 0;
+                                return;
+                            }
+                        }
+                    }while (true);
                 });
             },
             sola:()=>{
@@ -529,7 +556,13 @@ class MainHome extends SetComponents{
                 this.setInfo("completion!")
             },
             error:(e)=>{
-                this.setInfo(e.stack.toString());
+                let message ;
+                if (typeof e === "object"){
+                    message = e.stack.toString();
+                }else if(typeof e === "string"){
+                    message = e;
+                }
+                this.setInfo(message);
                 l.blessed.screenTab();
             },
         }
@@ -547,7 +580,7 @@ class MainHome extends SetComponents{
         c.screen.key("tab",l.screenTab)
         c.screen.key("escape", l.screenEsc)
         c.screen.key(['C-[', 'C-c'],l.screenCtrC);
-
+        c.info.key("enter",l.screenTab)
     }
     #setOriginalEvents(){
         const e = this.event;

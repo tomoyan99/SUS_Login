@@ -9,7 +9,7 @@ const term = new Terminal({
     cursorStyle:"bar",
     fontFamily:"Cascadia Mono",
     fontSize:17,
-    fontWeight:"200",
+    fontWeight:"300",
     cursorBlink:false,
     theme:{
         background:"rgb(0,0,0)"
