@@ -121,7 +121,7 @@ async function searchSola(browser, user, schedule) {
 			await Promise.all(
 				schedule.bf.map(async (t, i) => {
 					await sleep(i * 800);
-					t.event = "sora";
+					t.event = "sola";
 					t.url = await sola_scrp(browser, t);
 				})
 			);
@@ -130,7 +130,7 @@ async function searchSola(browser, user, schedule) {
 			await Promise.all(
 				schedule.af.map(async (t, i) => {
 					await sleep(i * 800);
-					t.event = "sora";
+					t.event = "sola";
 					t.url = await sola_scrp(browser, t);
 				})
 			);

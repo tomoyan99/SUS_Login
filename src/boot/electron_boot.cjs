@@ -11,12 +11,12 @@ process.env.infoPath = "data/info.json"
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 816,
-        height: 640,
+        width: 821,
+        height: 638,
         webPreferences:{
             nodeIntegration: true,
             preload:path.join(__dirname,"/preload.cjs"),
-            // devTools:false
+            devTools:false
         },
         useContentSize:true,
         resizable:false,
@@ -26,6 +26,9 @@ function createWindow() {
     mainWindow.on("closed", function() {
         mainWindow = null;
     });
+    // mainWindow.on("resize",(event)=>{
+    //     console.log(mainWindow.getContentBounds())
+    // })
     mainWindow.webContents.on("dom-ready",()=>{
         //イベントの重複登録による
         if (ptyProcess){
@@ -38,8 +41,8 @@ function createWindow() {
                 // ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",
                 useConpty:true,
-                cols: 80,
-                rows: 32,
+                cols: 82,
+                rows: 33,
                 cwd: process.cwd(),
                 env:process.env
             });
@@ -62,7 +65,7 @@ function createWindow() {
 // ElectronのMenuの設定
 const mainMenu = [
     {label: '再起動', role:"reload"},
-    {label: 'DevTool', role:"toggleDevTools"},
+    // {label: 'DevTool', role:"toggleDevTools"},
 ];
 
 const menu = Menu.buildFromTemplate(mainMenu);

@@ -3,6 +3,7 @@ import contrib from "neo-blessed-contrib";
 import EventEmitter from "events";
 import {openContext, openEuc, openSclass, openSola, resizeWindow} from "./puppeteer/Openers.js";
 import {control as cl} from "./utils/control.js";
+import {isObjEmpty} from "./utils/myUtils.js";
 
 class FormatData{
     _data = {
@@ -249,7 +250,7 @@ class SetComponents extends Members{
             this.components.screen.render();
         }
         this.appendInfo = (value)=>{
-            const append = info.getContent()+value;
+            const append = info.getContent()+value+"\n";
             this.setInfo(append);
             this.components.screen.render();
         }
@@ -377,7 +378,9 @@ class MainHome extends SetComponents{
                 this.changeLabel(content);
                 //イベントをエミット
                 try {
-                    this.event.emit(node.event);
+                    this.setInfo(node.event)
+                    this.setFocus(c.info);
+                    this.event.emit(node.event,node);
                 }catch (e){
                     this.event.emit("error",e);
                 }finally {
@@ -417,7 +420,7 @@ class MainHome extends SetComponents{
                 if (this.status.focus.now.name !== "info"){
                     this.setFocus(this.components.info);
                 }else{
-                    this.setFocus(this.status.focus.bef);
+                    this.setFocus(this.components.mainTree);
                 }
             },
             screenEsc:()=>{
@@ -432,13 +435,15 @@ class MainHome extends SetComponents{
             }
         }
         l.origin = {
-            euc:()=>{
+            euc:(n)=>{
                 const c = this.components;
                 const f = c.form;
+                this.status.miss_count = 0;
                 c.form.once("focus",()=>{
                     c.form.once("submit",()=>{
                         const value = this.status.inputValue;
-                        this.event.emit("change input",value);
+                        this.event.emit("change input",n,value);
+                        this.status.inputValue = "";
                     });
                     c.form.on("keypress",(ch,key)=>{
                         const keyn = key.name;
@@ -457,8 +462,10 @@ class MainHome extends SetComponents{
                                 this.setFocus(this.components.mainTree)
                                 break;
                             case "enter":
-                                c.form.submit();
-                                c.form.clearValue();
+                                if (this.status.inputValue.length > 0){
+                                    c.form.submit();
+                                    c.form.clearValue();
+                                }
                                 this.setFocus(this.components.info)
                                 break;
                             case "return":
@@ -485,36 +492,31 @@ class MainHome extends SetComponents{
                     c.form.removeAllListeners("keypress")
                 })
                 this.setFocus(f);
-                this.event.on("change input",async(euc)=>{
-                    return new Promise(async(resolve, reject)=> {
-                        const context = await openContext("EUC");
-                        await openEuc(context, this._data.user, euc, this.appendInfo).catch(async (reason) => {
-                            this.event.emit("error", new Error(`[EUC ERROR]\n${reason}`));
-                        })
-                    });
-                });
-            },
-            sclass:()=>{
-                return new Promise(async(resolve, reject)=>{
+                this.event.once("change input",async(n,euc)=>{
                     this.setInfo("");
+                    let context;
+                    try{
+                        context = await openContext("EUC");
+                    }catch (e) {
+                        this.event.emit("error","[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります");
+                        return;
+                    }
                     do {
-                        let context ;
                         try {
-                            context = await openContext("SCLASS");
-                            if (context){
-                                const page = await openSclass(context,this._data.user,false,this.appendInfo)
-                                await resizeWindow(page,[800,600]);
-                            }else{
-                                break;
-                            }
-                        }catch (e) {
-                            if (context){
+                            if (isObjEmpty(context)){
+                                const page = await openEuc(context,this._data.user,euc,this.appendInfo)
                                 await context.close();
                             }
-                            this.appendInfo(`[SCLASS　ERROR] ${cl.bg_yellow}${cl.fg_black}※ 接続エラー${cl.bg_reset}${cl.fg_reset}(${this.status.miss_count+1})\n`);
+                            return;
+                        }catch (e) {
+                            if (isObjEmpty(context)){
+                                return;
+                            }
+                            this.appendInfo(`[EUC　ERROR] ${cl.bg_yellow}${cl.fg_black}※ 接続エラー${cl.bg_reset}${cl.fg_reset}(${this.status.miss_count+1})\n`);
                             this.status.miss_count++;
                             if (this.status.miss_count === 4){
-                                this.event.emit("error",`[SCLASS　ERROR]\n${cl.bg_red}※ 4度接続を試みましたが失敗しました。${cl.bg_reset}\n${cl.bg_red}ネットワークを確認してください${cl.bg_reset}\n${e.stack}`);
+                                this.event.emit("error",
+                                    `[EUC　ERROR]\n${cl.bg_red}※ 4度接続を試みましたが失敗しました。${cl.bg_reset}\n${cl.bg_red}ネットワークを確認してください${cl.bg_reset}\n${e.stack}`);
                                 this.status.miss_count = 0;
                                 return;
                             }
@@ -522,14 +524,69 @@ class MainHome extends SetComponents{
                     }while (true);
                 });
             },
-            sola:()=>{
-                return new Promise(async(resolve, reject)=>{
-                    const context = await openContext("SOLA");
-                    await openSola(context,this._data.user,false,this.appendInfo).catch(async(reason)=>{
-                        await context.close();
-                        this.event.emit("error",new Error(`[SOLA ERROR]\n${reason}`));
-                    });
-                });
+            sclass:async(n)=>{
+                this.setInfo("");
+                this.status.miss_count = 0;
+                let context;
+                try{
+                    context = await openContext("SCLASS");
+                }catch (e) {
+                    this.event.emit("error","[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります");
+                    return;
+                }
+                do {
+                    try {
+                        if (isObjEmpty(context)){
+                            const page = await openSclass(context,this._data.user,false,this.appendInfo)
+                            await resizeWindow(page,[1200,700]);
+                            await context.close();
+                        }
+                        return;
+                    }catch (e) {
+                        if (isObjEmpty(context)){
+                            return;
+                        }
+                        this.appendInfo(`[SCLASS　ERROR] ${cl.bg_yellow}${cl.fg_black}※ 接続エラー${cl.bg_reset}${cl.fg_reset}(${this.status.miss_count+1})\n`);
+                        this.status.miss_count++;
+                        if (this.status.miss_count === 4){
+                            this.event.emit("error",`[SCLASS　ERROR]\n${cl.bg_red}※ 4度接続を試みましたが失敗しました。${cl.bg_reset}\n${cl.bg_red}ネットワークを確認してください${cl.bg_reset}\n${e.stack}`);
+                            this.status.miss_count = 0;
+                            return;
+                        }
+                    }
+                }while (true);
+            },
+            sola:async(n)=>{
+                this.setInfo("");
+                this.status.miss_count = 0;
+                let context;
+                try{
+                    context = await openContext("SOLA")
+                }catch (e) {
+                    this.event.emit("error","[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります");
+                    return;
+                }
+                do {
+                    try {
+                        if (isObjEmpty(context)){
+                            const page = await openSola(context,this._data.user,false,n.url,this.appendInfo)
+                            await resizeWindow(page,[1200,700]);
+                            await context.close();
+                        }
+                        return;
+                    }catch (e) {
+                        if (isObjEmpty(context)){
+                            return;
+                        }
+                        this.appendInfo(`[SOLA　ERROR] ${cl.bg_yellow}${cl.fg_black}※ 接続エラー${cl.bg_reset}${cl.fg_reset}(${this.status.miss_count+1})\n`);
+                        this.status.miss_count++;
+                        if (this.status.miss_count === 4){
+                            this.event.emit("error",`[SOLA　ERROR]\n${cl.bg_red}※ 4度接続を試みましたが失敗しました。${cl.bg_reset}\n${cl.bg_red}ネットワークを確認してください${cl.bg_reset}\n${e.stack}`);
+                            this.status.miss_count = 0;
+                            return;
+                        }
+                    }
+                }while (true);
             },
             pageEnter:()=>{
                 const c = this.components;
@@ -543,8 +600,7 @@ class MainHome extends SetComponents{
                 c.subTree.setData({});
             },
             quit:()=>{
-                throw new Error("テストエラー")
-                // process.exit(0);
+                process.exit(0);
             },
             logs:()=>{
                 this.setInfo("log!!")

@@ -23,7 +23,7 @@ export async function openContext(mode){
                 ],
                 args: [
                     "--window-position=0,0",
-                    " --window-size=200,150",
+                    " --window-size=200,200",
                     "--proxy-server='direct://'",
                     "--proxy-bypass-list=*"
                 ]
@@ -58,69 +58,66 @@ export async function openSclass(browser, user,headless=false,func = console.log
     const target_name_ID = ".inputText";//username入力要素のID
     const target_pass_ID = ".inputSecret";//password入力要素のID
 
-    return new Promise(async(resolve,reject)=>{
-        try {
-            //新規ページを開く
-            const page = await browser.newPage();
-            const pages = await browser.pages();
-            if (pages.length > 1){
-                await pages[0].close();
-            }
-            if (headless){
-                // CSSをOFFにして高速化
-                await page.setRequestInterception(true);
-                page.on('request', (request) => {
-                    if (['image', 'stylesheet', 'font', 'script'].indexOf(request.resourceType()) !== -1) {
-                        request.abort();
-                    } else {
-                        request.continue();
-                    }
-                });
-            }
-            //アクセス待機メッセージ
-            const wa = new WaitAccessMessage(1000,func);
-            await wa.consoleOn();
-            await page.goto(url, {waitUntil: 'networkidle2', timeout: 0}).catch(async()=>{
-                await wa.consoleOff();
-                reject(new Error("[SCLASS] ページ遷移エラー"));
-            }); //ページ遷移
-            await wa.consoleOff();
-            //アクセスが完了したらアクセス完了の文字を出力
-            func(`${cl.fg_green}[SCLASS] アクセス完了${cl.fg_reset}\n`);
-            await page.waitForSelector(target_submit_ID, {visible: true, timeout: 15000});
-            await page.click(target_submit_ID); //submitクリック
-            await page.waitForSelector(target_name_ID, {visible: true, timeout: 15000});
-            await page.click(target_name_ID); //usernameクリック
-            await page.type(target_name_ID, user_name); //username入力
-            await page.waitForSelector(target_pass_ID, {visible: true, timeout: 15000});
-            await page.click(target_pass_ID); //passwordクリック
-            await page.type(target_pass_ID, password); //password入力
-            await page.waitForSelector(target_submit_ID, {visible: true, timeout: 15000});
-            await page.click(target_submit_ID); //submitクリック
-            const isError = await page.waitForSelector("span#htmlErrorMessage", {visible: true, timeout: 2500})
-                .then(()=>true)
-                .catch(()=>false);
-            //エラーメッセージが取れてしまったときは失敗を返す
-            if (isError){
-                reject(new Error("Input Error : 不正な領域にユーザー名あるいはパスワードが入力されたためsclass側でエラーが出ました。"));//errorを返す
-            }
-            func(`${cl.bg_green}[SCLASS] ログイン完了${cl.fg_reset}`);
-            resolve(page);
-        }catch (e) {
-            reject(e);
+    try {
+        //新規ページを開く
+        const page = await browser.newPage();
+        const pages = await browser.pages();
+        if (pages.length > 1){
+            await pages[0].close();
         }
-    });
+        if (headless){
+            // CSSをOFFにして高速化
+            await page.setRequestInterception(true);
+            page.on('request', (request) => {
+                if (['image', 'stylesheet', 'font', 'script'].indexOf(request.resourceType()) !== -1) {
+                    request.abort();
+                } else {
+                    request.continue();
+                }
+            });
+        }
+        //アクセス待機メッセージ
+        const wa = new WaitAccessMessage(1000,func);
+        await wa.consoleOn();
+        await page.goto(url, {waitUntil: 'domcontentloaded', timeout: 0}).catch(async()=>{
+            await wa.consoleOff();
+            throw new Error("[SCLASS] ページ遷移エラー");
+        }); //ページ遷移
+        await wa.consoleOff();
+        //アクセスが完了したらアクセス完了の文字を出力
+        func(`${cl.fg_green}[SCLASS] アクセス完了${cl.fg_reset}`);
+        await page.waitForSelector(target_submit_ID, {timeout: 15000});
+        await page.click(target_submit_ID); //submitクリック
+        let misscount = 0;
+        await page.waitForSelector(target_name_ID, {timeout: 15000});
+        await page.click(target_name_ID); //usernameクリック
+        await page.type(target_name_ID, user_name); //username入力
+        await page.waitForSelector(target_pass_ID, {timeout: 15000});
+        await page.click(target_pass_ID); //passwordクリック
+        await page.type(target_pass_ID, password+"a"); //password入力
+        await page.waitForSelector(target_submit_ID, {timeout: 15000});
+        await page.click(target_submit_ID); //submitクリック
+        if (page.url().match("https://s-class.admin.sus.ac.jp/up/faces/up/xu/")){
+            func(`${cl.bg_green}[SCLASS] ログイン完了${cl.fg_reset}`);
+            return page;
+        }else if(page.url() === "https://s-class.admin.sus.ac.jp/up/faces/login/Com00505A.jsp"){
+            throw new Error("Input Error : 不正な領域にユーザー名あるいはパスワードが入力されたためsclass側でエラーが出ました。");//errorを返す
+        }
+    }catch (e) {
+        throw e;
+    }
 }
 /**
  * @param {Browser|BrowserContext} browser
  * @param {{name:string,password:string}} user
  * @param {boolean} headless
+ * @param {string} URL
  * @param {function} func
  * */
-export async function openSola(browser, user,headless=false,func = console.log) {
+export async function openSola(browser, user,headless=false,URL="https://sola.sus.ac.jp/",func = console.log) {
     const user_name = user.name;
     const password  = user.password;
-    const url = "https://sola.sus.ac.jp/"; //sclassのurl
+    const url = URL; //sclassのurl
 
     const target_name_ID = "#identifier"; //username入力要素のID
     const target_pass_ID = "#password"; //password入力要素のID
@@ -154,24 +151,32 @@ export async function openSola(browser, user,headless=false,func = console.log) 
         });//ページ遷移
         await wa.consoleOff();
 
-        func(`${cl.fg_green}[SOLA] アクセス完了${cl.fg_reset}\n`);
+        func(`${cl.fg_green}[SOLA] アクセス完了${cl.fg_reset}`);
 
-        await page.waitForSelector(target_name_ID, {visible: true, timeout: 30000});
+        await page.waitForSelector(target_name_ID, {timeout: 30000});
         await page.type(target_name_ID, user_name);//username入力
         await page.click(target_submit_ID);//submitクリック
-        await page.waitForSelector(target_pass_ID, {visible: true, timeout: 30000});
+        await page.waitForSelector(target_pass_ID, {timeout: 30000});
+        await page.waitForSelector(target_submit_ID, {timeout: 30000});
         await page.type(target_pass_ID, password);//password入力
-        await page.click(target_pass_ID);//passwordクリック(確実にsubmitするため)
-        await page.click(target_submit_ID, {delay: 800});//submitクリック
-        await page.waitForNavigation({waitUntil: "load", timeout: 2000}).catch(async () => {
-        await page.click(target_submit_ID, {delay: 800});//submitクリック
-        });
-        func(`\n${cl.bg_green}[SOLA] ログイン完了${cl.fg_reset}`);
+        await page.click(target_pass_ID);
+        while(true){
+            try{
+                await page.click(target_submit_ID,{delay:300});
+                await page.waitForNavigation({waitUntil: "domcontentloaded", timeout: 2000})
+                break;
+            }catch (e) {
+                continue;
+            }
+        }
+        while (!page.url().match("https://sola.sus.ac.jp/")){
+            await page.waitForNavigation({waitUntil: "domcontentloaded"})
+        }
+        func(`${cl.bg_green}[SOLA] ログイン完了${cl.fg_reset}`);
         resolve(page);
     }catch (e){
         reject(e);
-    }
-    });
+    }});
 }
 /**
  * @param {Browser|BrowserContext} browser
@@ -218,7 +223,7 @@ export async function openEuc(browser, user, EUC,func = console.log) {
            const tex = await page.$eval("td span#form1\\3A htmlTorokukekka", (tar) => {
                return tar.textContent;
            });
-           func(cl.fg_cyan + nam + "\n" + cl.fg_reset + cl.fg_red + tex + cl.fg_reset); //結果をコンソールに表示
+           func(`${cl.fg_cyan}${nam}\n${cl.fg_reset}${cl.fg_red}${tex}${cl.fg_reset}`); //結果をコンソールに表示
            //「文章が異なります。」が出なかったらスクショ
            if (tex !== "番号が異なります。") {
                const shot_target = await page.$("table.sennasi");

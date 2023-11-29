@@ -26,9 +26,9 @@ async function inputNamePass() {
             if (!existsSync(info_path)){
                 console.log(`初回起動を確認しました・・・`);
                 await sleep(1000);
-                // console.clear();
+                console.clear();
 
-                console.log(`OpenSUS_v${version} へようこそ！`);
+                console.log(`${cl.bg_green}SUS_LOGIN_${cl.fg_red}v${version} ${cl.fg_reset}${cl.bg_green}へようこそ！${cl.bg_reset}`);
                 console.log(`ユーザー名(学籍番号)とパスワードの設定を行います。`);
                 //学籍番号の入力
                 const NAME = await input({ message: "UserName?>" });

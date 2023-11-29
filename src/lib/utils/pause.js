@@ -1,5 +1,9 @@
 import {KeyInputEmitter} from "./KeyInputEmitter.js";
 
+/**
+ * @param {("pause"|"exit")} mode
+ * @param {("[何かキーを押して終了]"|"[何かキーを押して続ける]"|string)} prompt
+ * */
 export function pause(mode="pause",prompt = "[何かキーを押して終了]"){
 	return new Promise((resolve)=>{
 		// KeyInputEmitterのインスタンスを作成

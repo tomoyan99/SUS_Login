@@ -4,13 +4,14 @@ const {FitAddon} = require("xterm-addon-fit")
 
 
 const term = new Terminal({
-    cols:80,
-    rows:32,
+    cols:82,
+    rows:33,
     cursorStyle:"bar",
-    fontFamily:"Cascadia Mono",
+    fontFamily:"UDEV Gothic JPDOC",
     fontSize:17,
-    fontWeight:"300",
+    fontWeight:"400",
     cursorBlink:false,
+    letterSpacing:2,
     theme:{
         background:"rgb(0,0,0)"
     }

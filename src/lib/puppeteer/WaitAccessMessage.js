@@ -1,5 +1,6 @@
 import {control as cl} from "../utils/control.js";
 import {clearInterval} from "timers";
+process.stdout.setEncoding("utf8");
 
 class WaitAccessMessage{
     constructor(waitmsec,func=console.log) {
@@ -11,7 +12,7 @@ class WaitAccessMessage{
     async consoleOn(){
         //アクセス待機メッセージ
         this.waitAccess = setInterval(()=>{
-            this.func("アクセス中...\n");
+            this.func("アクセス中...");
         },this.waitmsec);
         return this.waitAccess;
     }

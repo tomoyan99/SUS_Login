@@ -15,3 +15,7 @@ export function importJSON(path=""){
 export function isNumberInRange(number, min, max) {
 	return number >= min && number <= max;
 }
+
+export function isObjEmpty(obj){
+	return Object.keys(obj).length === 0
+}
