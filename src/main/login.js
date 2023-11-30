@@ -27,7 +27,7 @@ import {today} from '../lib/utils/today.js'; //日付関連
 import {control as cl} from "../lib/utils/control.js"; //コンソール制御関連
 import {pause} from '../lib/utils/pause.js'; //PAUSEコマンドの再現
 import {execSync} from "child_process"; //コンソールコマンドの実行
-import {isNetConnected} from "../lib/utils/checkInternet.js"
+import {isNetConnected} from "../lib/utils/isNetConnected.js"
 import {clearInterval} from "timers";
 import {makeSchedule} from "../lib/utils/makeSchedule.js";
 import MainHome from "../lib/MainHome.js";

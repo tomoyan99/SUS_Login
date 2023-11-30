@@ -4,12 +4,15 @@ import EventEmitter from "events";
 import {openContext, openEuc, openSclass, openSola, resizeWindow} from "./puppeteer/Openers.js";
 import {control as cl} from "./utils/control.js";
 import {isObjEmpty} from "./utils/myUtils.js";
+import {readFileSync} from "fs";
+import {isNetConnected} from "./utils/isNetConnected.js";
 
 class FormatData{
     _data = {
         user:{},
         main:{},
         sub :{},
+        description:{}
     }
     /**
      * @param {Object} args
@@ -21,6 +24,7 @@ class FormatData{
         this._data.main = this.#parseListData(args[1]);
         args[2]["{yellow-fg}戻る{/}"] = { event: "return" };
         this._data.sub  = this.#parseListData(args[2]);
+        this._data.description = JSON.parse(readFileSync("src/assets/description.json","utf8"));
     }
     /**
      * @name parseListData
@@ -47,13 +51,16 @@ class FormatData{
 }
 class Members extends FormatData{
     status={
-        network:undefined,
         inputValue:"",
         focus:{
             bef:undefined,
             now:undefined
         },
         miss_count:0
+    }
+    network={
+        id:undefined,
+        status:undefined
     }
     colors={
         fg:"#ffffff",
@@ -162,13 +169,12 @@ class SetComponents extends Members{
      * @description コンポーネントの作成(ネットワーク表示部)
      * */
     #makeNet(){
-        this.components.net = this.components.grid.set(...this.position.net, Blessed.text, {
+        const net = this.components.grid.set(...this.position.net, Blessed.text, {
             keys: false, // キー入力
             parent: this.components.screen, // 必ず指定
             name: "net",
             label: 'NETWORK_STATUS', // 表示する名称
             align: 'left',
-            content: `接続ステータス：${this.status.network}`,
             border: {type: 'line'},
             style: {
                 fg: this.colors.fg, // 通常時の文字色
@@ -179,6 +185,13 @@ class SetComponents extends Members{
             tags: true, // 色付けする場合
             wrap: false,
         });
+        this.components.net = net;
+        this.changeNetStatus = (cond)=>{
+            net.setContent(`接続状況：${(cond)?"{green-bg}良好{/}":"{red-bg}不良{/}"}`);
+            this.event.emit("network change",cond);
+            this.components.screen.render();
+        }
+
     }
     /**
      * @name makeChoice
@@ -247,6 +260,7 @@ class SetComponents extends Members{
         this.setInfo = (value)=>{
             info.resetScroll();
             info.setContent(value);
+            info.setScrollPerc(100);
             this.components.screen.render();
         }
         this.appendInfo = (value)=>{
@@ -254,7 +268,7 @@ class SetComponents extends Members{
             this.setInfo(append);
             this.components.screen.render();
         }
-        this.changeLabel = (value = "INFO")=>{
+        this.changeInfoLabel = (value = "INFO")=>{
             this.setInfo("");
             info.setLabel(value);
             this.components.screen.render();
@@ -360,6 +374,8 @@ class MainHome extends SetComponents{
         this.setFocus(this.components.mainTree);
         //mainTree一番上の要素を選択
         this.components.mainTree.rows.emit("select item");
+        //ネットワーク判定タイマーを作動
+        this.event.emit("network")
         //画面のレンダリング
         this.components.screen.render();
     }
@@ -373,12 +389,11 @@ class MainHome extends SetComponents{
                 //選択した要素からエスケープを取り除き、選択時の色を付けて表示
                 const reg = /{.+?}(.+?){\/}/g;
                 let content = node.name.replace(reg,"$1");
-                let colored_content = `選択 >> {${this.colors.choice.fg}-fg}{${this.colors.choice.bg}-bg}${content}{/}{/}`;
+                let colored_content = `>>{${this.colors.choice.fg}-fg}{${this.colors.choice.bg}-bg}${content}{/}{/}`;
                 this.setChoice(colored_content);
-                this.changeLabel(content);
+                this.changeInfoLabel(content);
                 //イベントをエミット
                 try {
-                    this.setInfo(node.event)
                     this.setFocus(c.info);
                     this.event.emit(node.event,node);
                 }catch (e){
@@ -390,10 +405,22 @@ class MainHome extends SetComponents{
             treeSelect:(t)=>{
                 const root = t.rows;
                 const node = t.nodeLines[root.getItemIndex(root.selected)];
+                const desc = this._data.description;
                 if (node){
-                    let content = `選択 >> {blink}${node.name}{/}`
+                    const reg = /{.+?}(.+?){\/}/g;
+                    const name_noESC = node.name.replace(reg,"$1");
+                    const content = `>>{blink}${name_noESC}{/}`
                     //選択したものを点滅させながら選択表示部に表示
                     this.setChoice(content);
+                    if (desc[name_noESC]){
+                        this.changeInfoLabel();
+                        this.setInfo(desc[name_noESC]);
+                    }
+                    const fn = this.status.focus.now;
+                    if (fn.name === "subTree" && !desc[name_noESC]){
+                        this.changeInfoLabel();
+                        this.setInfo(`『{#006be6-bg}${name_noESC}{/}』のページを開きます`);
+                    }
                 }
             },
             treeRight:(t)=>{
@@ -420,7 +447,7 @@ class MainHome extends SetComponents{
                 if (this.status.focus.now.name !== "info"){
                     this.setFocus(this.components.info);
                 }else{
-                    this.setFocus(this.components.mainTree);
+                    this.setFocus(this.status.focus.bef);
                 }
             },
             screenEsc:()=>{
@@ -430,9 +457,6 @@ class MainHome extends SetComponents{
                 }
             },
             screenCtrC:()=>{process.exit(0)},
-            netWork:()=>{
-
-            }
         }
         l.origin = {
             euc:(n)=>{
@@ -465,8 +489,11 @@ class MainHome extends SetComponents{
                                 if (this.status.inputValue.length > 0){
                                     c.form.submit();
                                     c.form.clearValue();
+                                    this.setFocus(this.components.mainTree);
+                                    this.setFocus(this.components.info);
+                                }else{
+                                    this.setFocus(this.components.mainTree)
                                 }
-                                this.setFocus(this.components.info)
                                 break;
                             case "return":
                                 break;
@@ -503,13 +530,14 @@ class MainHome extends SetComponents{
                     }
                     do {
                         try {
-                            if (isObjEmpty(context)){
+                            if (!isObjEmpty(context.targets())){
                                 const page = await openEuc(context,this._data.user,euc,this.appendInfo)
                                 await context.close();
                             }
                             return;
                         }catch (e) {
-                            if (isObjEmpty(context)){
+                            if (isObjEmpty(context.targets())){
+                                this.setInfo("{yellow-fg}[BROWSER INFO]\nブラウザが閉じられたことで中断されました{/}");
                                 return;
                             }
                             this.appendInfo(`[EUC　ERROR] ${cl.bg_yellow}${cl.fg_black}※ 接続エラー${cl.bg_reset}${cl.fg_reset}(${this.status.miss_count+1})\n`);
@@ -530,26 +558,31 @@ class MainHome extends SetComponents{
                 let context;
                 try{
                     context = await openContext("SCLASS");
+                    context.on("close",()=>{
+
+                    })
                 }catch (e) {
                     this.event.emit("error","[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります");
                     return;
                 }
                 do {
                     try {
-                        if (isObjEmpty(context)){
+                        if (!isObjEmpty(context.targets())){
                             const page = await openSclass(context,this._data.user,false,this.appendInfo)
                             await resizeWindow(page,[1200,700]);
                             await context.close();
                         }
                         return;
                     }catch (e) {
-                        if (isObjEmpty(context)){
-                            return;
+                        if (isObjEmpty(context.targets())){
+                            this.setInfo("{yellow-fg}[BROWSER INFO]\nブラウザが閉じられたことで中断されました{/}");
+                            return
                         }
                         this.appendInfo(`[SCLASS　ERROR] ${cl.bg_yellow}${cl.fg_black}※ 接続エラー${cl.bg_reset}${cl.fg_reset}(${this.status.miss_count+1})\n`);
                         this.status.miss_count++;
                         if (this.status.miss_count === 4){
                             this.event.emit("error",`[SCLASS　ERROR]\n${cl.bg_red}※ 4度接続を試みましたが失敗しました。${cl.bg_reset}\n${cl.bg_red}ネットワークを確認してください${cl.bg_reset}\n${e.stack}`);
+                            await context.close();
                             this.status.miss_count = 0;
                             return;
                         }
@@ -568,20 +601,22 @@ class MainHome extends SetComponents{
                 }
                 do {
                     try {
-                        if (isObjEmpty(context)){
+                        if (!isObjEmpty(context.targets())){
                             const page = await openSola(context,this._data.user,false,n.url,this.appendInfo)
                             await resizeWindow(page,[1200,700]);
                             await context.close();
                         }
                         return;
                     }catch (e) {
-                        if (isObjEmpty(context)){
-                            return;
+                        if (isObjEmpty(context.targets())){
+                            this.setInfo("{yellow-fg}[BROWSER INFO]\nブラウザが閉じられたことで中断されました{/}");
+                            return
                         }
                         this.appendInfo(`[SOLA　ERROR] ${cl.bg_yellow}${cl.fg_black}※ 接続エラー${cl.bg_reset}${cl.fg_reset}(${this.status.miss_count+1})\n`);
                         this.status.miss_count++;
                         if (this.status.miss_count === 4){
                             this.event.emit("error",`[SOLA　ERROR]\n${cl.bg_red}※ 4度接続を試みましたが失敗しました。${cl.bg_reset}\n${cl.bg_red}ネットワークを確認してください${cl.bg_reset}\n${e.stack}`);
+                            await context.close();
                             this.status.miss_count = 0;
                             return;
                         }
@@ -621,6 +656,17 @@ class MainHome extends SetComponents{
                 this.setInfo(message);
                 l.blessed.screenTab();
             },
+            network:async()=>{
+                const n = this.network;
+                const ns = await isNetConnected();
+                this.changeNetStatus(ns);
+                n.id = setInterval(async()=>{
+                    const ns = await isNetConnected();
+                    if (n.status !== ns){
+                        this.changeNetStatus(ns);
+                    }
+                },500);
+            }
         }
     }
     #setBlessedEvents(){
@@ -651,6 +697,7 @@ class MainHome extends SetComponents{
         e.on("return",l.pageReturn);    //SOLA_PAGE_LISTから戻る
         e.on("quit",l.quit);            //QUIT(閉じる)
         e.on("error",l.error);
+        e.on("network",l.network);
     }
     #onAllEvents(){
         this.#setListnerList();

@@ -8,39 +8,34 @@ import WaitAccessMessage from "./WaitAccessMessage.js";
  * @param {('EUC'|'SCLASS'|'SOLA')} mode
  * */
 export async function openContext(mode){
-    return new Promise(async(resolve, reject)=>{
-        try {
-            /* ブラウザの立ち上げ */
-            const browser = await launch({
-                headless: (mode === "EUC") ? "new" : false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
-                slowMo: (mode === "EUC") ? 0 : 0, //タイピング・クリックなどの各動作間の速度
-                defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
-                channel: "chrome",//chromeを探し出して開く
-                ignoreHTTPSErrors: true,
-                ignoreDefaultArgs: [
-                    "--disable-extensions",
-                    "--enable-automation",
-                ],
-                args: [
-                    "--window-position=0,0",
-                    " --window-size=200,200",
-                    "--proxy-server='direct://'",
-                    "--proxy-bypass-list=*"
-                ]
-            }).catch(()=>{
-                reject("ブラウザが開けませんでした。chromeがインストールされていることを確認してください");
-            });
-            const context = await browser.createIncognitoBrowserContext();//シークレットモードで開くため
-            const pagesB = await browser.pages();//ブラウザのページリストを取得。(0がabout:brankでこれを消すため)
-            if (mode !== "EUC") {
-                await pagesB[0].close();//about:brankを削除
-                await context.newPage();
-            }
-            resolve(context);
-        }catch (e) {
-            reject(e)
-        }
-    })
+    try {
+        /* ブラウザの立ち上げ */
+        const browser = await launch({
+            headless: (mode === "EUC") ? "new" : false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
+            slowMo: (mode === "EUC") ? 0 : 0, //タイピング・クリックなどの各動作間の速度
+            defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
+            channel: "chrome",//chromeを探し出して開く
+            ignoreHTTPSErrors: true,
+            waitForInitialPage:true,
+            ignoreDefaultArgs: [
+                "--disable-extensions",
+                "--enable-automation",
+            ],
+            args: [
+                `--app=https://www.google.co.jp/`,
+                "--incognito",
+                "--window-position=0,0",
+                " --window-size=200,200",
+                "--proxy-server='direct://'",
+                "--proxy-bypass-list=*"
+            ]
+        }).catch(()=>{
+            throw "ブラウザが開けませんでした。chromeがインストールされていることを確認してください";
+        });
+        return browser;
+    }catch (e) {
+        throw e;
+    }
 }
 
 /**
@@ -59,17 +54,12 @@ export async function openSclass(browser, user,headless=false,func = console.log
     const target_pass_ID = ".inputSecret";//password入力要素のID
 
     try {
-        //新規ページを開く
-        const page = await browser.newPage();
-        const pages = await browser.pages();
-        if (pages.length > 1){
-            await pages[0].close();
-        }
+        const page = (await browser.pages())[0];
         if (headless){
             // CSSをOFFにして高速化
             await page.setRequestInterception(true);
             page.on('request', (request) => {
-                if (['image', 'stylesheet', 'font', 'script'].indexOf(request.resourceType()) !== -1) {
+                if (['image', 'stylesheet', 'font'].indexOf(request.resourceType()) !== -1) {
                     request.abort();
                 } else {
                     request.continue();
@@ -94,7 +84,7 @@ export async function openSclass(browser, user,headless=false,func = console.log
         await page.type(target_name_ID, user_name); //username入力
         await page.waitForSelector(target_pass_ID, {timeout: 15000});
         await page.click(target_pass_ID); //passwordクリック
-        await page.type(target_pass_ID, password+"a"); //password入力
+        await page.type(target_pass_ID, password); //password入力
         await page.waitForSelector(target_submit_ID, {timeout: 15000});
         await page.click(target_submit_ID); //submitクリック
         if (page.url().match("https://s-class.admin.sus.ac.jp/up/faces/up/xu/")){
@@ -123,14 +113,8 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
     const target_pass_ID = "#password"; //password入力要素のID
     const target_submit_ID = "button[type=submit]"; //submitボタンのID
 
-
-    return new Promise(async(resolve, reject)=>{
     try {
-        const page = await browser.newPage();//新規ページを作成
-        const pages = await browser.pages();
-        if (pages.length > 1){
-            await pages[0].close();
-        }
+        const page = (await browser.pages())[0];
         if (headless){
             // CSSをOFFにして高速化
             await page.setRequestInterception(true);
@@ -160,10 +144,10 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
         await page.waitForSelector(target_submit_ID, {timeout: 30000});
         await page.type(target_pass_ID, password);//password入力
         await page.click(target_pass_ID);
-        while(true){
+        while(page.url() === "https://sus.ex-tic.com/auth/session"){
             try{
                 await page.click(target_submit_ID,{delay:300});
-                await page.waitForNavigation({waitUntil: "domcontentloaded", timeout: 2000})
+                await page.waitForNavigation({waitUntil: "domcontentloaded", timeout: 1000})
                 break;
             }catch (e) {
                 continue;
@@ -173,10 +157,10 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
             await page.waitForNavigation({waitUntil: "domcontentloaded"})
         }
         func(`${cl.bg_green}[SOLA] ログイン完了${cl.fg_reset}`);
-        resolve(page);
+        return page;
     }catch (e){
-        reject(e);
-    }});
+        throw e;
+    }
 }
 /**
  * @param {Browser|BrowserContext} browser
@@ -186,7 +170,6 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
  * */
 export async function openEuc(browser, user, EUC,func = console.log) {
 
-   return new Promise(async(resolve, reject)=>{
        try {
            //SCLSSにヘッドレスでアクセス
            const page = await openSclass(browser,user,true,func);
@@ -204,7 +187,7 @@ export async function openEuc(browser, user, EUC,func = console.log) {
            const target_eucIn_ID = "input.inputText"; //EUCinput要素のID
            const target_eucSubmit_ID = "input.button";//EUCsubmit要素のID
            await page.waitForSelector(target_eucIn_ID, {visible: true, timeout: 0});
-           await page.type(target_eucIn_ID, EUC);//EUCの入力
+           await page.type(target_eucIn_ID, EUC.toString());//EUCの入力
 
            //ダイアログを押す
            page.on("dialog", async dialog => {
@@ -242,12 +225,11 @@ export async function openEuc(browser, user, EUC,func = console.log) {
                }
            }
             await browser.close();
-            resolve()
+            return ;
        }catch (e){
             await browser.close();
-            reject(new Error(e));
+            throw e;
        }
-   });
 }
 
 /**

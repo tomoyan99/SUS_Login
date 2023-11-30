@@ -59,7 +59,7 @@ async function inputNamePass() {
 
                 data.main ={
                     "SUS_LOGIN":{
-                        "{#0f0-fg}EUC{/}":{
+                        "{#00ff4c-fg}EUC{/}":{
                             event:"euc"
                         },
                         "SCLASS":{
@@ -67,7 +67,7 @@ async function inputNamePass() {
                         },
                         "SOLA":{
                             event:"sola",
-                            "{#3aa-fg}PAGE_LIST{/}":{event:"page"}
+                            "{#0077ff-fg}PAGE_LIST{/}":{event:"page"}
                         },
                         "履修仮組みツール":{event:"completion"}
                     },

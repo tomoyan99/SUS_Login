@@ -8,35 +8,39 @@ import {launch} from 'puppeteer'; //pupeteerのインポート
 import {today} from './today.js';
 import {control as cl} from "./control.js";
 import {sleep, writeJSON} from "./myUtils.js";
-import {openSclass, openSola} from "../puppeteer/Openers.js";
+import {openContext, openSclass, openSola} from "../puppeteer/Openers.js";
 
 export async function makeSchedule(data) {
-	data.last_upd = { year: today.year, month: today.month, date: today.date,value:today.value,lastterm:today.whichTerm()};
-	return new Promise(async(resolve, reject)=>{
+	data.last_upd = {
+		year 	: today.year,
+		month	: today.month,
+		date 	: today.date,
+		value   : today.value,
+		lastterm: today.whichTerm()
+	};
 		/* ブラウザの立ち上げ */
-		const browser = await launch({
-			// headless: false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
-			headless: "new", //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
-			slowMo: 5, //タイピング・クリックなどの各動作間の速度
-			defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
-			channel: "chrome",//chromeを探し出して開く
-		});
-		try {
-			const sclass_schedule = await searchSclass(browser, data.user);
-			console.log("続いて、SOLAから科目ページリンクの取得を行います");
-			const marge_schedule = await searchSola(browser, data.user, sclass_schedule);
-			console.log("履修科目データの登録が完了しました");
-			await browser.close();
-			resolve(marge_schedule);
-		}catch (e){
-			await browser.close();
-			reject(e);
-		}
-	});
+	let context;
+	try{
+		context = await openContext("EUC");
+	}catch (e) {
+		this.event.emit("error","[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります");
+		return;
+	}
+	try {
+		const sclass_schedule = await searchSclass(context, data.user);
+		console.log("続いて、SOLAから科目ページリンクの取得を行います");
+		const marge_schedule = await searchSola(context, data.user, sclass_schedule);
+		console.log("履修科目データの登録が完了しました");
+		await context.close();
+		return marge_schedule;
+	}catch (e){
+
+		await context.close();
+		throw e;
+	}
 }
 
 async function searchSclass(browser, user) {
-	return new Promise(async(resolve, reject)=>{
 		const page = await openSclass(browser,user,true);
 		const target_risyuu_ID = "div#pmenu4"; //sclassの上のバーの「履修関連」
 
@@ -105,15 +109,13 @@ async function searchSclass(browser, user) {
 				});
 			}
 			console.log(cl.fg_green+"履修科目コード及び科目名取得完了"+cl.fg_reset);
-			resolve(schedule);
+			return schedule;
 		}catch (e){
-			reject(e);
+			throw e;
 		}
-	});
 }
 
 async function searchSola(browser, user, schedule) {
-	return new Promise(async(resolve, reject)=>{
 		try {
 			//一回solaを開いておくことでログイン状態を保持
 			await openSola(browser,user,true);
@@ -152,12 +154,11 @@ async function searchSola(browser, user, schedule) {
 			}
 			console.log(cl.fg_green + "後期科目ページURL取得完了" + cl.fg_reset);
 			await browser.close();
-			resolve(formated_schedule);
+			return formated_schedule;
 		}catch (e) {
 			await browser.close();
-			reject(e);
+			throw e;
 		}
-	});
 }
 
 async function sola_scrp(browser, data) {
