@@ -409,7 +409,9 @@ class MainHome extends SetComponents{
         e.on("page",l.pageEnter);       //SOLA_PAGE_LIST
         e.on("return",l.pageReturn);    //SOLA_PAGE_LISTから戻る
         e.on("quit",l.quit);            //QUIT(閉じる)
-        e.on("error",l.error);
+        e.on("error",(e)=>{
+            l.error(this,e);
+        });// イベント内で発生したエラーを拾ってinfo内に表示
         e.on("network",l.network);
     }
     #onAllEvents(){

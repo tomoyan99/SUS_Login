@@ -1,10 +1,10 @@
-export function error(e) {
+export function error(self,error) {
     let message ;
-    if (typeof e === "object"){
-        message = e.stack.toString();
-    }else if(typeof e === "string"){
-        message = e;
+    if (typeof error === "object"){
+        message = error.stack.toString();
+    }else if(typeof error === "string"){
+        message = error;
     }
+    self.changeInfoLabel("ERROR");
     self.setInfo(message);
-    l.blessed.screenTab();
 }
