@@ -12,7 +12,7 @@ export async function openContext(mode){
         /* ブラウザの立ち上げ */
         const browser = await launch({
             headless: (mode === "EUC") ? "new" : false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
-            slowMo: (mode === "EUC") ? 0 : 20, //タイピング・クリックなどの各動作間の速度
+            slowMo: (mode === "EUC") ? 0 : 0, //タイピング・クリックなどの各動作間の速度
             defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
             channel: "chrome",//chromeを探し出して開く
             ignoreHTTPSErrors: true,
@@ -52,7 +52,7 @@ export async function openSclass(browser, user,headless=false,func = console.log
     const target_submit_ID = "input[type=image]";//submitボタンのID
     const target_name_ID = ".inputText";//username入力要素のID
     const target_pass_ID = ".inputSecret";//password入力要素のID
-
+    func("[SCLASSにログインします]");
     try {
         const page = (await browser.pages())[0];
         if (headless){
@@ -107,12 +107,12 @@ export async function openSclass(browser, user,headless=false,func = console.log
 export async function openSola(browser, user,headless=false,URL="https://sola.sus.ac.jp/",func = console.log) {
     const user_name = user.name;
     const password  = user.password;
-    const url = URL; //sclassのurl
+    const url = URL; //solaまたはsola_pageのurl
 
     const target_name_ID = "#identifier"; //username入力要素のID
     const target_pass_ID = "#password"; //password入力要素のID
     const target_submit_ID = "button[type=submit]"; //submitボタンのID
-
+    func("[SOLAにログインします]");
     try {
         const page = (await browser.pages())[0];
         if (headless){
@@ -169,8 +169,8 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
  * @param {function} func
  * */
 export async function openEuc(browser, user, EUC,func = console.log) {
-
-       try {
+    func("[EUC登録を行います]");
+    try {
            //SCLSSにヘッドレスでアクセス
            const page = await openSclass(browser,user,true,func);
            //スクロールを一番上に

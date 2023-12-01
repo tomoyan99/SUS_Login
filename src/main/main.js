@@ -19,7 +19,7 @@ const pkg = JSON.parse(readFileSync("./package.json","utf8"));
     // logsフォルダを作成
     fs.mkdirSync("data/logs",{recursive:true});
     console.log(`${cl.bg_yellow}セットアップ中です・・・・・・${cl.bg_reset}`);
-    await sleep(1000);
+    await sleep(500);
     console.clear();
     while (true){
         try {

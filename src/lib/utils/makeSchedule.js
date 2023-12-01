@@ -20,7 +20,7 @@ export async function makeSchedule(data) {
 		/* ブラウザの立ち上げ */
 	let context;
 	try{
-		context = await openContext("SCLASS");
+		context = await openContext("EUC");
 	}catch (e) {
 		this.event.emit("error","[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります");
 		return;
@@ -114,17 +114,18 @@ async function searchSclass(browser, user) {
 }
 
 async function searchSola(browser, user, schedule) {
-
-	const nb = await browser.defaultBrowserContext();
+	const context = await browser.createIncognitoBrowserContext();
+	await context.newPage();
+	await (await browser.pages())[0].close();
 	try {
 		//一回solaを開いておくことでログイン状態を保持
-		await openSola(nb,user);
+		await openSola(context,user,true);
 		//前期科目ページURL取得
 		await Promise.all(
 			schedule.bf.map(async (t, i) => {
 				await sleep(i * 800);
 				t.event = "sola";
-				t.url = await sola_scrp(browser, t);
+				t.url = await sola_scrp(context, t);
 			})
 		);
 		console.log(cl.fg_green + "前期科目ページURL取得完了" + cl.fg_reset);
@@ -133,7 +134,7 @@ async function searchSola(browser, user, schedule) {
 			schedule.af.map(async (t, i) => {
 				await sleep(i * 800);
 				t.event = "sola";
-				t.url = await sola_scrp(browser, t);
+				t.url = await sola_scrp(context, t);
 			})
 		);
 		const formated_schedule = {
