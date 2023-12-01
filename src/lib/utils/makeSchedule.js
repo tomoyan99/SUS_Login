@@ -6,7 +6,7 @@
 
 import {today} from './today.js';
 import {control as cl} from "./control.js";
-import {sleep, writeJSON} from "./myUtils.js";
+import {isObjEmpty, sleep, writeJSON} from "./myUtils.js";
 import {openContext, openSclass, openSola} from "../puppeteer/Openers.js";
 
 export async function makeSchedule(data) {
@@ -22,8 +22,7 @@ export async function makeSchedule(data) {
 	try{
 		context = await openContext("EUC");
 	}catch (e) {
-		this.event.emit("error","[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります");
-		return;
+		throw "[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります";
 	}
 	try {
 		const sclass_schedule = await searchSclass(context, data.user);
@@ -33,7 +32,9 @@ export async function makeSchedule(data) {
 		await context.close();
 		return marge_schedule;
 	}catch (e){
-		await context.close();
+		if (!isObjEmpty(await context)){
+			await context.close();
+		}
 		throw e;
 	}
 }

@@ -150,6 +150,7 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
                 await page.waitForNavigation({waitUntil: "domcontentloaded", timeout: 1000})
                 break;
             }catch (e) {
+                await page.evaluate(()=>{window.scrollBy(0,10)})
                 continue;
             }
         }
@@ -217,12 +218,8 @@ export async function openEuc(browser, user, EUC,func = console.log) {
                    quality: 100
                });
                // /logs/euc.logファイルがあるか判定。なければ作成あったら追記
-               const todayEUC = `授業名：${nam},日付：${today.getTodayJP()},EUC番号：${EUC},結果：${tex}\n`;
-               if (!existsSync("logs/euc.log")) {
-                   writeFileSync("logs/euc.log", todayEUC, "utf-8");
-               } else {
-                   appendFileSync("logs/euc.log", todayEUC, "utf-8");
-               }
+               const todayEUC = `日付:${today.getTodayJP()},授業名：${nam},EUC番号:${EUC},結果:${tex}\n`;
+               appendFileSync("data/logs/euc.log", todayEUC, "utf-8");
            }
             await browser.close();
             return ;

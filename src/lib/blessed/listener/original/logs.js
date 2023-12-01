@@ -1,3 +1,4 @@
-export function logs(self,t) {
-    self.setInfo("log!!")
+export function logs(self) {
+    self.setInfo("[EUC_LOGを開きます]");
+    
 }

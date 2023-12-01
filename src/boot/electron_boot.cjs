@@ -1,10 +1,11 @@
 const {app, BrowserWindow, ipcMain,Menu} = require("electron");
 const pty = require("node-pty");
 const path = require('path');
-const pkg = require('../../package.json');
 
 let mainWindow;
 let ptyProcess;
+let ptyData;
+let ptyExit;
 
 process.env.browserPath = "node_modules/electron/dist/electron.exe";
 process.env.infoPath = "data/info.json"
@@ -26,14 +27,16 @@ function createWindow() {
     mainWindow.on("closed", function() {
         mainWindow = null;
     });
-    // mainWindow.on("resize",(event)=>{
-    //     console.log(mainWindow.getContentBounds())
-    // })
     mainWindow.webContents.on("dom-ready",()=>{
-        //イベントの重複登録による
+        //DOMがリロードされたときにプロセス・イベントが多重起動しないようにする
         if (ptyProcess){
-            ipcMain.removeAllListeners("terminal.keystroke")
-            ipcMain.removeAllListeners("network.changed")
+            const PAUSE = "\x13";
+            ipcMain.removeAllListeners("terminal.keystroke");
+            ipcMain.removeAllListeners("network.changed");
+            ptyProcess.write(PAUSE);//フローを一旦止め、安全にプロセスをキル出来るように
+            ptyData.dispose();//onDataイベントを削除
+            ptyExit.dispose();//onExitイベントを削除
+            ptyProcess.kill();//プロセスをキル(タイマーなどが初期化される)
         }
         try {
             const inputFilePath = path.join(__dirname,"../main/main.js")
@@ -44,21 +47,20 @@ function createWindow() {
                 cols: 82,
                 rows: 33,
                 cwd: process.cwd(),
-                env:process.env
+                env:process.env,
             });
-            ptyProcess.onData((data) => {
+
+            ptyData = ptyProcess.onData((data) => {
                 if (mainWindow){
                     mainWindow.webContents.send("terminal.incomingData", data);
                 }
             });
-
+            ptyExit = ptyProcess.onExit(() => {
+                process.exit(0)
+            });
             ipcMain.on("terminal.keystroke",(event, key) => {
                 ptyProcess.write(key);
             })
-
-            ptyProcess.onExit(() => {
-                // process.exit(0)
-            });
         } catch (error) {
             mainWindow.webContents.send("terminal.incomingData",error+"\n");
         }
@@ -66,7 +68,7 @@ function createWindow() {
 }
 // ElectronのMenuの設定
 const mainMenu = [
-    {label: '再起動', role:"reload"},
+    {label: '再起動',role:"reload"}
     // {label: 'DevTool', role:"toggleDevTools"},
 ];
 

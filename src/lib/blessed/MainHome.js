@@ -306,7 +306,7 @@ class SetComponents extends Members{
         const main = this.components.grid.set(...this.position.mainTree,contrib.tree,{
             key:true,
             parent:this.components.screen,
-            keys:["right","left"],
+            keys:[],
             name:"mainTree",
             label:"COMMANDS",
             border: { type: 'line' },
@@ -340,7 +340,7 @@ class SetComponents extends Members{
         this.components.subTree = this.components.grid.set(...this.position.subTree, contrib.tree, {
             key: true,
             parent: this.components.screen,
-            keys: ["right", "left"],
+            keys: [],
             name: "subTree",
             label: "PAGES",
             border: {type: 'line'},
@@ -372,7 +372,8 @@ class MainHome extends SetComponents{
         //mainTree一番上の要素を選択
         this.components.mainTree.rows.emit("select item");
         //ネットワーク判定タイマーを作動
-        this.event.emit("network",this)
+        this.event.emit("network",this);
+        process.env.netWorkTimerID = this.network.id;
         //画面のレンダリング
         this.components.screen.render();
     }

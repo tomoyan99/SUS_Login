@@ -6,9 +6,8 @@ import {sleep} from "./myUtils.js";
 import {input, password} from '@inquirer/prompts';
 
 //初回起動設定
-async function inputNamePass() {
-    return new Promise(async(resolve, reject)=>{
-        const version = process.env.APPversion;
+async function setup() {
+        const version = process.env.npm_package_version;
         const info_path = process.env.infoPath;
         const mc = new MyCrypt(info_path);
         const data = {
@@ -48,7 +47,7 @@ async function inputNamePass() {
                             await sleep(1000);
                         }
                     }catch (e){
-                        reject(`${cl.fg_red}[登録エラー] ユーザー名及びパスワードの登録に失敗しました。もう一度再起動してください${cl.fg_reset}`);
+                        throw `${cl.fg_red}[登録エラー] ユーザー名及びパスワードの登録に失敗しました。もう一度再起動してください${cl.fg_reset}`;
                     }
                 }while (true);
 
@@ -91,7 +90,7 @@ async function inputNamePass() {
 
                     await sleep(2000);
                     console.log("\n設定が完了しました。次回起動時から本機能が使用可能になります。");
-                    resolve(false);
+                    return false;
                 }catch (e){
                     const errormes =
                         `${cl.fg_red}[登録エラー]\n`+
@@ -100,7 +99,7 @@ async function inputNamePass() {
                         `インターネットに接続されていない\n`+
                         `S-ClassまたはSOLAのサーバーが落ちているなどの不具合\n`+
                         `${cl.fg_reset}\n`;
-                    reject(e);
+                    throw e;
                 }
             }else{
                 //info.jsonが存在していたとき
@@ -113,8 +112,7 @@ async function inputNamePass() {
                 }
             }
         }while (true);
-        resolve(JSON.parse(plane));
-    });
+        return JSON.parse(plane);
 }
 
-export default inputNamePass;
+export default setup;
