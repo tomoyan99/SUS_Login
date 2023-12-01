@@ -12,7 +12,7 @@ export async function openContext(mode){
         /* ブラウザの立ち上げ */
         const browser = await launch({
             headless: (mode === "EUC") ? "new" : false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
-            slowMo: (mode === "EUC") ? 0 : 0, //タイピング・クリックなどの各動作間の速度
+            slowMo: (mode === "EUC") ? 0 : 20, //タイピング・クリックなどの各動作間の速度
             defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
             channel: "chrome",//chromeを探し出して開く
             ignoreHTTPSErrors: true,

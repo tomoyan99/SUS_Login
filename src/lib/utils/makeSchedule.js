@@ -4,7 +4,6 @@
 	sclassの学生時間割を参照して、その人が履修している科目の科目コードから、solaの科目ページurlを取得し、sola_link.jsonを作成
 */
 
-import {launch} from 'puppeteer'; //pupeteerのインポート
 import {today} from './today.js';
 import {control as cl} from "./control.js";
 import {sleep, writeJSON} from "./myUtils.js";
@@ -21,7 +20,7 @@ export async function makeSchedule(data) {
 		/* ブラウザの立ち上げ */
 	let context;
 	try{
-		context = await openContext("EUC");
+		context = await openContext("SCLASS");
 	}catch (e) {
 		this.event.emit("error","[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります");
 		return;
@@ -34,7 +33,6 @@ export async function makeSchedule(data) {
 		await context.close();
 		return marge_schedule;
 	}catch (e){
-
 		await context.close();
 		throw e;
 	}
@@ -116,49 +114,51 @@ async function searchSclass(browser, user) {
 }
 
 async function searchSola(browser, user, schedule) {
-		try {
-			//一回solaを開いておくことでログイン状態を保持
-			await openSola(browser,user,true);
-			//前期科目ページURL取得
-			await Promise.all(
-				schedule.bf.map(async (t, i) => {
-					await sleep(i * 800);
-					t.event = "sola";
-					t.url = await sola_scrp(browser, t);
-				})
-			);
-			console.log(cl.fg_green + "前期科目ページURL取得完了" + cl.fg_reset);
-			//後期科目ページURL取得
-			await Promise.all(
-				schedule.af.map(async (t, i) => {
-					await sleep(i * 800);
-					t.event = "sola";
-					t.url = await sola_scrp(browser, t);
-				})
-			);
-			const formated_schedule = {
-				"前期":{},
-				"後期":{}
-			};
 
-			for (const scheduleKey in schedule) {
-				for (const elem of schedule[scheduleKey]) {
-					formated_schedule[(scheduleKey==="bf")?"前期":"後期"][elem.name]
-						= {
-						"name": elem.name,
-						"event": elem.event,
-						"code": elem.code,
-						"url": elem.url
-					}
+	const nb = await browser.defaultBrowserContext();
+	try {
+		//一回solaを開いておくことでログイン状態を保持
+		await openSola(nb,user);
+		//前期科目ページURL取得
+		await Promise.all(
+			schedule.bf.map(async (t, i) => {
+				await sleep(i * 800);
+				t.event = "sola";
+				t.url = await sola_scrp(browser, t);
+			})
+		);
+		console.log(cl.fg_green + "前期科目ページURL取得完了" + cl.fg_reset);
+		//後期科目ページURL取得
+		await Promise.all(
+			schedule.af.map(async (t, i) => {
+				await sleep(i * 800);
+				t.event = "sola";
+				t.url = await sola_scrp(browser, t);
+			})
+		);
+		const formated_schedule = {
+			"前期":{},
+			"後期":{}
+		};
+
+		for (const scheduleKey in schedule) {
+			for (const elem of schedule[scheduleKey]) {
+				formated_schedule[(scheduleKey==="bf")?"前期":"後期"][elem.name]
+					= {
+					"name": elem.name,
+					"event": elem.event,
+					"code": elem.code,
+					"url": elem.url
 				}
 			}
-			console.log(cl.fg_green + "後期科目ページURL取得完了" + cl.fg_reset);
-			await browser.close();
-			return formated_schedule;
-		}catch (e) {
-			await browser.close();
-			throw e;
 		}
+		console.log(cl.fg_green + "後期科目ページURL取得完了" + cl.fg_reset);
+		await browser.close();
+		return formated_schedule;
+	}catch (e) {
+		await browser.close();
+		throw e;
+	}
 }
 
 async function sola_scrp(browser, data) {

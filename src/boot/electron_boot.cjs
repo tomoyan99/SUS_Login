@@ -47,7 +47,9 @@ function createWindow() {
                 env:process.env
             });
             ptyProcess.onData((data) => {
-                mainWindow.webContents.send("terminal.incomingData", data);
+                if (mainWindow){
+                    mainWindow.webContents.send("terminal.incomingData", data);
+                }
             });
 
             ipcMain.on("terminal.keystroke",(event, key) => {

@@ -30,7 +30,7 @@ import {execSync} from "child_process"; //コンソールコマンドの実行
 import {isNetConnected} from "../lib/utils/isNetConnected.js"
 import {clearInterval} from "timers";
 import {makeSchedule} from "../lib/utils/makeSchedule.js";
-import MainHome from "../lib/MainHome.js";
+import MainHome from "../lib/blessed/MainHome.js";
 
 /*
 	login関数
