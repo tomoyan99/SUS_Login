@@ -1,8 +1,9 @@
 import Blessed from "neo-blessed";
 import contrib from "neo-blessed-contrib";
 import EventEmitter from "events";
-import {readFileSync} from "fs";
-import {listeners} from "./listener/listeners.js";
+import {listeners} from "../lib/blessed/listener/listeners.js";
+import {description} from "../lib/blessed/description.js";
+import {mainCommandList} from "../lib/blessed/mainCommandList.js";
 
 class FormatData{
     _data = {
@@ -18,10 +19,10 @@ class FormatData{
      * */
     constructor(args) {
         this._data.user = args[0];
-        this._data.main = this.#parseListData(args[1]);
-        args[2]["{yellow-fg}戻る{/}"] = { event: "return" };
-        this._data.sub  = this.#parseListData(args[2]);
-        this._data.description = JSON.parse(readFileSync("src/assets/description.json","utf8"));
+        this._data.main = this.#parseListData(mainCommandList);
+        args[1]["{yellow-fg}戻る{/}"] = { event: "return" };
+        this._data.sub  = this.#parseListData(args[1]);
+        this._data.description = description;
     }
     /**
      * @name parseListData
@@ -153,6 +154,7 @@ class SetComponents extends Members{
             fullUnicode: true, // ここを追加
             title: 'Bless_main', // TUIのタイトル
             terminal:"xterm-256color",
+            tabSize:2,
         })
         // 上で作ったスクリーンを縦横20分割して配置できるようになる
         this.components.grid = new contrib.grid({
@@ -257,12 +259,12 @@ class SetComponents extends Members{
         this.setInfo = (value)=>{
             info.resetScroll();
             info.setContent(value);
-            info.setScrollPerc(100);
             this.components.screen.render();
         }
         this.appendInfo = (value)=>{
             const append = info.getContent()+value+"\n";
             this.setInfo(append);
+            info.setScrollPerc(100);
             this.components.screen.render();
         }
         this.changeInfoLabel = (value = "INFO")=>{
@@ -367,13 +369,13 @@ class MainHome extends SetComponents{
         //this._dataの作成
         super(args);
         this.#onAllEvents();
-        //最初はコマンド選択部をフォーカス
+        //最初はINFOをフォーカス
         this.setFocus(this.components.mainTree);
+        this.setFocus(this.components.info);
         //mainTree一番上の要素を選択
         this.components.mainTree.rows.emit("select item");
         //ネットワーク判定タイマーを作動
         this.event.emit("network",this);
-        process.env.netWorkTimerID = this.network.id;
         //画面のレンダリング
         this.components.screen.render();
     }
@@ -393,6 +395,7 @@ class MainHome extends SetComponents{
             t.rows.key("left",()=>{l.treeLeft(this,t)});
         }
         c.screen.key("tab",()=>{l.screenTab(this)});
+        c.screen.key("space",()=>{l.screenTab(this)});
         c.screen.key("escape",()=>{l.screenEsc(this)});
         c.screen.key(['C-[', 'C-c'],l.screenCtrC);
         c.info.key("enter",()=>{l.screenTab(this)});
@@ -400,6 +403,7 @@ class MainHome extends SetComponents{
     #setOriginalEvents(){
         const e = this.event;
         const l = this.listeners.original;
+        e.on("appinfo",l.appInfo)
         e.on("euc",l.euc);              //EUC
         e.on("sclass",l.sclass);        //SCLASS
         e.on("sola",l.sola);            //SOLA

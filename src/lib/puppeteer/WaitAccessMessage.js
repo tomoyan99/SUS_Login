@@ -9,10 +9,10 @@ class WaitAccessMessage{
         this.func = func;
     }
     //アクセスメッセージの開始
-    async consoleOn(){
+    async consoleOn(prompt="アクセス中..."){
         //アクセス待機メッセージ
         this.waitAccess = setInterval(()=>{
-            this.func("アクセス中...");
+            this.func(prompt);
         },this.waitmsec);
         return this.waitAccess;
     }

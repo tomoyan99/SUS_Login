@@ -52,6 +52,8 @@ export async function openSclass(browser, user,headless=false,func = console.log
     const target_submit_ID = "input[type=image]";//submitボタンのID
     const target_name_ID = ".inputText";//username入力要素のID
     const target_pass_ID = ".inputSecret";//password入力要素のID
+    //アクセス待機メッセージ
+    const wa = new WaitAccessMessage(1000,func);
     func("[SCLASSにログインします]");
     try {
         const page = (await browser.pages())[0];
@@ -67,8 +69,7 @@ export async function openSclass(browser, user,headless=false,func = console.log
             });
         }
         //アクセス待機メッセージ
-        const wa = new WaitAccessMessage(1000,func);
-        await wa.consoleOn();
+        await wa.consoleOn("[SCLASS] アクセス中...");
         await page.goto(url, {waitUntil: 'domcontentloaded', timeout: 0}).catch(async()=>{
             await wa.consoleOff();
             throw new Error("[SCLASS] ページ遷移エラー");
@@ -76,6 +77,8 @@ export async function openSclass(browser, user,headless=false,func = console.log
         await wa.consoleOff();
         //アクセスが完了したらアクセス完了の文字を出力
         func(`${cl.fg_green}[SCLASS] アクセス完了${cl.fg_reset}`);
+        //アクセス待機メッセージ
+        await wa.consoleOn("[SCLASS] ログイン中・・・");
         await page.waitForSelector(target_submit_ID, {timeout: 15000});
         await page.click(target_submit_ID); //submitクリック
         let misscount = 0;
@@ -89,11 +92,14 @@ export async function openSclass(browser, user,headless=false,func = console.log
         await page.click(target_submit_ID); //submitクリック
         if (page.url().match("https://s-class.admin.sus.ac.jp/up/faces/up/xu/")){
             func(`${cl.bg_green}[SCLASS] ログイン完了${cl.fg_reset}`);
+            await wa.consoleOff();
             return page;
         }else if(page.url() === "https://s-class.admin.sus.ac.jp/up/faces/login/Com00505A.jsp"){
+            await wa.consoleOff();
             throw new Error("Input Error : 不正な領域にユーザー名あるいはパスワードが入力されたためsclass側でエラーが出ました。");//errorを返す
         }
     }catch (e) {
+        await wa.consoleOff();
         throw e;
     }
 }
@@ -113,6 +119,8 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
     const target_pass_ID = "#password"; //password入力要素のID
     const target_submit_ID = "button[type=submit]"; //submitボタンのID
     func("[SOLAにログインします]");
+    //アクセス待機メッセージ
+    const wa = new WaitAccessMessage(1000,func);
     try {
         const page = (await browser.pages())[0];
         if (headless){
@@ -126,17 +134,14 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
                 }
             });
         }
-        //アクセス待機メッセージ
-        const wa = new WaitAccessMessage(1000,func);
-        await wa.consoleOn();
+        await wa.consoleOn("[SOLA] アクセス中...");
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 0 }).catch(async()=>{
-            await wa.consoleOff();
             throw new Error("[SOLA] ページ遷移エラー");
         });//ページ遷移
         await wa.consoleOff();
 
         func(`${cl.fg_green}[SOLA] アクセス完了${cl.fg_reset}`);
-
+        await wa.consoleOn("[SOLA] ログイン中・・・");
         await page.waitForSelector(target_name_ID, {timeout: 30000});
         await page.type(target_name_ID, user_name);//username入力
         await page.click(target_submit_ID);//submitクリック
@@ -158,8 +163,10 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
             await page.waitForNavigation({waitUntil: "domcontentloaded"})
         }
         func(`${cl.bg_green}[SOLA] ログイン完了${cl.fg_reset}`);
+        await wa.consoleOff();
         return page;
     }catch (e){
+        await wa.consoleOff();
         throw e;
     }
 }
@@ -171,7 +178,10 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
  * */
 export async function openEuc(browser, user, EUC,func = console.log) {
     func("[EUC登録を行います]");
+    //アクセス待機メッセージ
+    const wa = new WaitAccessMessage(1000,func);
     try {
+           await wa.consoleOn("[EUC] 登録中...")
            //SCLSSにヘッドレスでアクセス
            const page = await openSclass(browser,user,true,func);
            //スクロールを一番上に
@@ -207,6 +217,7 @@ export async function openEuc(browser, user, EUC,func = console.log) {
            const tex = await page.$eval("td span#form1\\3A htmlTorokukekka", (tar) => {
                return tar.textContent;
            });
+           await wa.consoleOff();
            func(`${cl.fg_cyan}${nam}\n${cl.fg_reset}${cl.fg_red}${tex}${cl.fg_reset}`); //結果をコンソールに表示
            //「文章が異なります。」が出なかったらスクショ
            if (tex !== "番号が異なります。") {
@@ -224,6 +235,7 @@ export async function openEuc(browser, user, EUC,func = console.log) {
             await browser.close();
             return ;
        }catch (e){
+            await wa.consoleOff();
             await browser.close();
             throw e;
        }

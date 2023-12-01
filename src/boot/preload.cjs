@@ -11,7 +11,7 @@ const term = new Terminal({
     fontSize:17,
     fontWeight:"400",
     cursorBlink:false,
-    letterSpacing:2,
+    letterSpacing:1.5,
     theme:{
         background:"rgb(0,0,0)"
     }

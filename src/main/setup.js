@@ -1,9 +1,10 @@
-import {control as cl} from "./control.js";
-import {makeSchedule} from "./makeSchedule.js";
+import {control as cl} from "../lib/utils/control.js";
+import {makeSchedule} from "../lib/utils/makeSchedule.js";
 import {existsSync,unlinkSync,writeFileSync} from "fs";
-import MyCrypt from "./MyCrypt.js";
-import {sleep} from "./myUtils.js";
+import MyCrypt from "../lib/utils/MyCrypt.js";
+import {sleep} from "../lib/utils/myUtils.js";
 import {input, password} from '@inquirer/prompts';
+import {mainCommandList} from "../lib/blessed/mainCommandList.js";
 
 //初回起動設定
 async function setup() {
@@ -15,7 +16,6 @@ async function setup() {
                 name:"",
                 password:""
             },
-            main:{},
             soraLink:{},
             last_upd:{},
         };
@@ -55,26 +55,6 @@ async function setup() {
                 await sleep(1500);
 
                 console.clear();
-
-                data.main ={
-                    "SUS_LOGIN":{
-                        "{#00ff4c-fg}EUC{/}":{
-                            event:"euc"
-                        },
-                        "SCLASS":{
-                            event:"sclass"
-                        },
-                        "SOLA":{
-                            event:"sola",
-                            "{#0077ff-fg}PAGE_LIST{/}":{event:"page"}
-                        },
-                        "履修仮組みツール":{event:"completion"}
-                    },
-                    "LOG":{event:"log"},
-                    "IMAGE":{event:"image"},
-                    "{red-fg}QUIT{/}":{event:"quit"},
-                }
-
                 /* 履修データの登録 */
                 console.log("続いて、履修科目データの登録を行います");
                 console.log(`${cl.fg_yellow}※ 科目データの登録には、回線の都合上3分ほどかかる場合がありますので、このままお待ち下さい${cl.fg_reset}`);

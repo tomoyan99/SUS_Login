@@ -16,6 +16,7 @@ import {images} from "./original/images.js";
 import {completion} from "./original/completion.js";
 import {error} from "./original/error.js";
 import {network} from "./original/network.js";
+import {appInfo} from "./original/appInfo.js";
 
 export const listeners = {
     "blessed":{
@@ -28,6 +29,7 @@ export const listeners = {
         screenCtrC  :screenCtrC
     },
     "original" :{
+        appInfo     :appInfo,
         euc         :euc,
         sclass      :sclass,
         sola        :sola,
