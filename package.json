@@ -1,6 +1,6 @@
 {
   "name": "sus_login",
-  "version": "4.6.0",
+  "version": "5.0.0",
   "description": "",
   "main": "src/boot/electron_boot.cjs",
   "keywords": [],
@@ -17,9 +17,6 @@
   "dependencies": {
     "@inquirer/prompts": "^3.3.0",
     "bcrypt": "^5.1.1",
-    "electron": "^27.1.0",
-    "electron-builder": "^24.6.4",
-    "electron-rebuild": "^3.2.9",
     "neo-blessed": "^0.2.0",
     "neo-blessed-contrib": "^4.9.0",
     "nexe": "^1.1.6",
@@ -35,6 +32,9 @@
     "xterm-addon-fit": "^0.8.0"
   },
   "devDependencies": {
+    "electron-builder": "^24.6.4",
+    "electron-rebuild": "^3.2.9",
+    "electron": "^27.1.0",
     "electron-packager": "^17.1.2",
     "node": "^21.1.0"
   },

@@ -9,7 +9,7 @@ import {control as cl} from "./control.js";
 import {isObjEmpty, sleep, writeJSON} from "./myUtils.js";
 import {openContext, openSclass, openSola} from "../puppeteer/Openers.js";
 
-export async function makeSchedule(data) {
+export async function makeSchedule(data,func=console.log) {
 	data.last_upd = {
 		year 	: today.year,
 		month	: today.month,
@@ -25,10 +25,10 @@ export async function makeSchedule(data) {
 		throw "[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります";
 	}
 	try {
-		const sclass_schedule = await searchSclass(context, data.user);
-		console.log("続いて、SOLAから科目ページリンクの取得を行います");
-		const marge_schedule = await searchSola(context, data.user, sclass_schedule);
-		console.log("履修科目データの登録が完了しました");
+		const sclass_schedule = await searchSclass(context, data.user,func);
+		func("続いて、SOLAから科目ページリンクの取得を行います");
+		const marge_schedule = await searchSola(context, data.user, sclass_schedule,func);
+		func("履修科目データの登録が完了しました");
 		await context.close();
 		return marge_schedule;
 	}catch (e){
@@ -39,8 +39,8 @@ export async function makeSchedule(data) {
 	}
 }
 
-async function searchSclass(browser, user) {
-		const page = await openSclass(browser,user,true);
+async function searchSclass(browser, user,func) {
+		const page = await openSclass(browser,user,true,func);
 		const target_risyuu_ID = "div#pmenu4"; //sclassの上のバーの「履修関連」
 
 		try {
@@ -107,35 +107,35 @@ async function searchSclass(browser, user) {
 					name: class_name.af[i].replace(/ (.*?) .*/g, "$1").replace('\t', "")
 				});
 			}
-			console.log(cl.fg_green+"履修科目コード及び科目名取得完了"+cl.fg_reset);
+			func(cl.fg_green+"履修科目コード及び科目名取得完了"+cl.fg_reset);
 			return schedule;
 		}catch (e){
 			throw e;
 		}
 }
 
-async function searchSola(browser, user, schedule) {
+async function searchSola(browser, user, schedule,func) {
 	const context = await browser.createIncognitoBrowserContext();
 	await context.newPage();
 	await (await browser.pages())[0].close();
 	try {
 		//一回solaを開いておくことでログイン状態を保持
-		await openSola(context,user,true);
+		await openSola(context,user,true,"https://sola.sus.ac.jp/",func);
 		//前期科目ページURL取得
 		await Promise.all(
 			schedule.bf.map(async (t, i) => {
 				await sleep(i * 800);
 				t.event = "sola";
-				t.url = await sola_scrp(context, t);
+				t.url = await sola_scrp(context, t,func);
 			})
 		);
-		console.log(cl.fg_green + "前期科目ページURL取得完了" + cl.fg_reset);
+		func(cl.fg_green + "前期科目ページURL取得完了" + cl.fg_reset);
 		//後期科目ページURL取得
 		await Promise.all(
 			schedule.af.map(async (t, i) => {
 				await sleep(i * 800);
 				t.event = "sola";
-				t.url = await sola_scrp(context, t);
+				t.url = await sola_scrp(context, t,func);
 			})
 		);
 		const formated_schedule = {
@@ -154,7 +154,7 @@ async function searchSola(browser, user, schedule) {
 				}
 			}
 		}
-		console.log(cl.fg_green + "後期科目ページURL取得完了" + cl.fg_reset);
+		func(cl.fg_green + "後期科目ページURL取得完了" + cl.fg_reset);
 		await browser.close();
 		return formated_schedule;
 	}catch (e) {
@@ -163,7 +163,7 @@ async function searchSola(browser, user, schedule) {
 	}
 }
 
-async function sola_scrp(browser, data) {
+async function sola_scrp(browser, data,func) {
 	//cssを非表示
 	const page2 = await browser.newPage();
 	await page2.setRequestInterception(true);
@@ -196,10 +196,10 @@ async function sola_scrp(browser, data) {
 		return null;
 	});
 	await page2.close();
-	// console.log(nend + "," + today.getNend());
+	// func(nend + "," + today.getNend());
 	if (nend === null || nend === today.getNend()) {
 		//年度が同じなら
-		console.log(url);
+		func(url);
 		return url;
 	} else if (nend !== today.getNend()) {
 		//年度が違ったら

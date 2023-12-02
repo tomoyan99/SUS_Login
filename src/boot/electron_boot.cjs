@@ -56,7 +56,7 @@ function createWindow() {
                 }
             });
             ptyExit = ptyProcess.onExit(() => {
-                // process.exit(0)
+                process.exit(0)
             });
             ipcMain.on("terminal.keystroke",(event, key) => {
                 ptyProcess.write(key);

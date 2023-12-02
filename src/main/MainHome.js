@@ -19,9 +19,9 @@ class FormatData{
      * */
     constructor(args) {
         this._data.user = args[0];
-        this._data.main = this.#parseListData(mainCommandList);
+        this._data.main = this._parseListData(mainCommandList);
         args[1]["{yellow-fg}戻る{/}"] = { event: "return" };
-        this._data.sub  = this.#parseListData(args[1]);
+        this._data.sub  = this._parseListData(args[1]);
         this._data.description = description;
     }
     /**
@@ -30,7 +30,7 @@ class FormatData{
      * @param {Number} depth 階層
      * @description データをcontrib-tree用に整形する関数
      * */
-    #parseListData(data, depth = 0) {
+    _parseListData(data, depth = 0) {
         const except_keys = ["event", "url", "name","code"]
         let edited_data = (depth === 0)
             ? {extended: true, children: {}}
@@ -41,7 +41,7 @@ class FormatData{
             if (except_keys.includes(dataKey)) {
                 edited_data[dataKey] = data[dataKey];
             } else {
-                edited_data.children[dataKey] = this.#parseListData(data[dataKey], depth + 1);
+                edited_data.children[dataKey] = this._parseListData(data[dataKey], depth + 1);
             }
         }
         return edited_data;
@@ -72,8 +72,8 @@ class Members extends FormatData{
             bg:"#29a682",
         },
         choice:{
-            fg:"#ff0000",
-            bg:"#ffa600"
+            fg:"#ffffff",
+            bg:"#ff0088"
         },
         focus:{
             border:{
@@ -187,7 +187,6 @@ class SetComponents extends Members{
         this.components.net = net;
         this.changeNetStatus = (cond)=>{
             net.setContent(`接続状況：${(cond)?"{green-bg}良好{/}":"{red-bg}不良{/}"}`);
-            this.event.emit("network change",cond);
             this.components.screen.render();
         }
 
@@ -216,7 +215,7 @@ class SetComponents extends Members{
             wrap: false,
         });
         this.setChoice = (contents)=>{
-            this.components.choice.setContent(contents);
+            this.components.choice.setContent(`{bold}${contents}{/}`);
             this.components.choice.render();
         }
     }
@@ -397,26 +396,84 @@ class MainHome extends SetComponents{
         c.screen.key("tab",()=>{l.screenTab(this)});
         c.screen.key("space",()=>{l.screenTab(this)});
         c.screen.key("escape",()=>{l.screenEsc(this)});
-        c.screen.key(['C-[', 'C-c'],l.screenCtrC);
         c.info.key("enter",()=>{l.screenTab(this)});
+        c.screen.key(['C-[', 'C-c'],l.screenCtrC);
+        c.form.on("focus",()=>{
+            c.form.on("keypress",(ch,key)=>{
+                const keyn = key.name;
+                switch (keyn) {
+                    case "backspace":
+                        if (this.status.inputValue.length === 0){
+                            c.form.setValue("入力 >>  ");
+                        }else{
+                            this.status.inputValue = this.status.inputValue.slice(0,-1);
+                        }
+                        break;
+                    case "escape":
+                        c.form.cancel();
+                        c.form.clearValue();
+                        this.setFocus(this.components.mainTree)
+                        break;
+                    case "enter":
+                        if (this.status.inputValue.length > 0){
+                            c.form.submit();
+                            c.form.clearValue();
+                            this.setFocus(this.components.mainTree);
+                            this.setFocus(this.components.info);
+                        }else{
+                            c.form.cancel();
+                            c.form.clearValue();
+                            c.mainTree.rows.emit("select item");
+                            this.setFocus(this.components.mainTree);
+                        }
+                        break;
+                    case "return":
+                        break;
+                    default:
+                        //制御文字とバックスラッシュは除外
+                        if (key.sequence){
+                            const cond = (
+                                   key.sequence.charCodeAt(0) >= 33
+                                && key.sequence.charCodeAt(0) <= 126
+                                && key.sequence.charCodeAt(0) !== 92
+                                && key.sequence.length === 1
+                            );
+                            if (cond){
+                                this.status.inputValue += key.sequence;
+                            }
+                        }else{
+                            this.status.inputValue += key.ch;
+                        }
+                        break;
+                }
+            })
+            c.form.setValue("入力 >> ");
+            this.status.inputValue = "";
+            this.components.screen.render();
+        })
+        c.form.on("blur",()=>{
+            c.form.removeAllListeners("keypress")
+        })
     }
     #setOriginalEvents(){
         const e = this.event;
-        const l = this.listeners.original;
-        e.on("appinfo",l.appInfo)
-        e.on("euc",l.euc);              //EUC
-        e.on("sclass",l.sclass);        //SCLASS
-        e.on("sola",l.sola);            //SOLA
-        e.on("log",l.logs);             //LOG
-        e.on("image",l.images);         //IMAGE
-        e.on("completion",l.completion);//履修仮組みツール
-        e.on("page",l.pageEnter);       //SOLA_PAGE_LIST
-        e.on("return",l.pageReturn);    //SOLA_PAGE_LISTから戻る
-        e.on("quit",l.quit);            //QUIT(閉じる)
+        const lb = this.listeners.blessed;
+        const lo = this.listeners.original;
+        e.on("appinfo",lo.appInfo);      //SUS_LOGIN(使用方法)
+        e.on("euc",lo.euc);              //EUC
+        e.on("sclass",lo.sclass);        //SCLASS
+        e.on("sola",lo.sola);            //SOLA
+        e.on("log",lo.logs);             //LOG
+        e.on("image",lo.images);         //IMAGE
+        e.on("completion",lo.completion);//履修仮組みツール
+        e.on("page",lo.pageEnter);       //SOLA_PAGE_LIST
+        e.on("return",lo.pageReturn);    //SOLA_PAGE_LISTから戻る
+        e.on("pagereload",async()=>{await lo.pageReload(this)}) //SOLA_PAGE_LISTの更新
+        e.on("quit",lo.quit);            //QUIT(閉じる)
         e.on("error",(e)=>{
-            l.error(this,e);
+            lo.error(this,e);
         });// イベント内で発生したエラーを拾ってinfo内に表示
-        e.on("network",l.network);
+        e.on("network",lo.network);      //ネットワーク接続
     }
     #onAllEvents(){
         this.#setListnerList();

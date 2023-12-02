@@ -17,6 +17,7 @@ import {completion} from "./original/completion.js";
 import {error} from "./original/error.js";
 import {network} from "./original/network.js";
 import {appInfo} from "./original/appInfo.js";
+import {pageReload} from "./original/pageReload.js";
 
 export const listeners = {
     "blessed":{
@@ -34,6 +35,7 @@ export const listeners = {
         sclass      :sclass,
         sola        :sola,
         pageEnter   :pageEnter,
+        pageReload  :pageReload,
         pageReturn  :pageReturn,
         quit        :quit,
         logs        :logs,

@@ -17,5 +17,6 @@ export function treeSelect(self,t) {
             self.changeInfoLabel();
             self.setInfo(`『{#006be6-bg}${name_noESC}{/}』のページを開きます`);
         }
+    }else{
     }
 }

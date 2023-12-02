@@ -17,7 +17,6 @@ export async function sola(self,node) {
             if (!isObjEmpty(context.targets())){
                 const page = await openSola(context,self._data.user,false,node.url,self.appendInfo)
                 await resizeWindow(page,[1200,700]);
-                await context.close();
             }
             return;
         }catch (e) {
@@ -25,10 +24,10 @@ export async function sola(self,node) {
                 self.setInfo("{yellow-fg}[BROWSER INFO]\nブラウザが閉じられたことで中断されました{/}");
                 return
             }
-            self.appendInfo(`[SOLA　ERROR] ${cl.bg_yellow}${cl.fg_black}※ 接続エラー${cl.bg_reset}${cl.fg_reset}(${self.status.miss_count+1})\n`);
+            self.appendInfo(`[SOLA\ ERROR] ${cl.bg_yellow}${cl.fg_black}* 接続エラー${cl.bg_reset}${cl.fg_reset}(${self.status.miss_count+1})`);
             self.status.miss_count++;
             if (self.status.miss_count === 4){
-                self.event.emit("error",`[SOLA　ERROR]\n${cl.bg_red}※ 4度接続を試みましたが失敗しました。${cl.bg_reset}\n${cl.bg_red}ネットワークを確認してください${cl.bg_reset}\n${e.stack}`);
+                self.event.emit("error",`[SOLA　ERROR]\n${cl.bg_red}* 4度接続を試みましたが失敗しました。${cl.bg_reset}\n${cl.bg_red}ネットワークを確認してください${cl.bg_reset}\n${e.stack}`);
                 await context.close();
                 self.status.miss_count = 0;
                 return;

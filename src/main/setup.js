@@ -57,7 +57,7 @@ async function setup() {
                 console.clear();
                 /* 履修データの登録 */
                 console.log("続いて、履修科目データの登録を行います");
-                console.log(`${cl.fg_yellow}※ 科目データの登録には、回線の都合上3分ほどかかる場合がありますので、このままお待ち下さい${cl.fg_reset}`);
+                console.log(`${cl.fg_yellow}※ 回線の都合上時間がかかる場合があります${cl.fg_reset}`);
                 try {
                     /* makeSchedule関数：src/data/sola_link.jsonの作成 */
                     data.solaLink = await makeSchedule(data);

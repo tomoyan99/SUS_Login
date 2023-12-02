@@ -11,7 +11,7 @@ export const mainCommandList = {
         "SOLA":{
             "event":"sola",
             "{#0077ff-fg}PAGE_LIST{/}":{"event":"page"},
-            "{#fcd303-fg}PAGE_RELOAD{/}":{"event":"pageload"}
+            "{#fcd303-fg}PAGE_RELOAD{/}":{"event":"pagereload"}
         },
         "履修仮組みツール":{"event":"completion"}
     },

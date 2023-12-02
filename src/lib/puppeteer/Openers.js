@@ -81,7 +81,6 @@ export async function openSclass(browser, user,headless=false,func = console.log
         await wa.consoleOn("[SCLASS] ログイン中・・・");
         await page.waitForSelector(target_submit_ID, {timeout: 15000});
         await page.click(target_submit_ID); //submitクリック
-        let misscount = 0;
         await page.waitForSelector(target_name_ID, {timeout: 15000});
         await page.click(target_name_ID); //usernameクリック
         await page.type(target_name_ID, user_name); //username入力
@@ -96,7 +95,7 @@ export async function openSclass(browser, user,headless=false,func = console.log
             return page;
         }else if(page.url() === "https://s-class.admin.sus.ac.jp/up/faces/login/Com00505A.jsp"){
             await wa.consoleOff();
-            throw new Error("Input Error : 不正な領域にユーザー名あるいはパスワードが入力されたためsclass側でエラーが出ました。");//errorを返す
+            throw new Error("[Input Error] : 不正な領域にユーザー名あるいはパスワードが入力されたためsclass側でエラーが出ました。");//errorを返す
         }
     }catch (e) {
         await wa.consoleOff();
@@ -181,64 +180,63 @@ export async function openEuc(browser, user, EUC,func = console.log) {
     //アクセス待機メッセージ
     const wa = new WaitAccessMessage(1000,func);
     try {
-           await wa.consoleOn("[EUC] 登録中...")
-           //SCLSSにヘッドレスでアクセス
-           const page = await openSclass(browser,user,true,func);
-           //スクロールを一番上に
-           await page.evaluate(() => {window.scroll(0, 0);});
-           const target_risyuu_ID = "div#pmenu4"; //sclassの上のバーの「履修関連」
-           await page.waitForSelector(target_risyuu_ID, {visible: true, timeout: 30000});
-           await page.hover(target_risyuu_ID);//「履修関連」をホバー
-           //「履修登録」のタブが増えてたりしたときのため
-           const target_EUC_ID = await page.$eval(target_risyuu_ID,(div)=>{
-               return `#${Array.from(div.children).filter((c) => c.text === "EUC学生出欠登録")[0].id}`
-           });
-           await page.waitForSelector(target_EUC_ID, {visible: true, timeout: 30000});
-           await page.click(target_EUC_ID);//「EUC学生出欠登録」をクリック
-           const target_eucIn_ID = "input.inputText"; //EUCinput要素のID
-           const target_eucSubmit_ID = "input.button";//EUCsubmit要素のID
-           await page.waitForSelector(target_eucIn_ID, {visible: true, timeout: 0});
-           await page.type(target_eucIn_ID, EUC.toString());//EUCの入力
+       //SCLSSにヘッドレスでアクセス
+       const page = await openSclass(browser,user,true,func);
+       await wa.consoleOn("[EUC] 登録中...")
+        //スクロールを一番上に
+       await page.evaluate(() => {window.scroll(0, 0);});
+       const target_risyuu_ID = "div#pmenu4"; //sclassの上のバーの「履修関連」
+       await page.waitForSelector(target_risyuu_ID, {visible: true, timeout: 30000});
+       await page.hover(target_risyuu_ID);//「履修関連」をホバー
+       //「履修登録」のタブが増えてたりしたときのため
+       const target_EUC_ID = await page.$eval(target_risyuu_ID,(div)=>{
+           return `#${Array.from(div.children).filter((c) => c.text === "EUC学生出欠登録")[0].id}`
+       });
+       await page.waitForSelector(target_EUC_ID, {visible: true, timeout: 30000});
+       await page.click(target_EUC_ID);//「EUC学生出欠登録」をクリック
+       const target_eucIn_ID = "input.inputText"; //EUCinput要素のID
+       const target_eucSubmit_ID = "input.button";//EUCsubmit要素のID
+       await page.waitForSelector(target_eucIn_ID, {visible: true, timeout: 0});
+       await page.type(target_eucIn_ID, EUC.toString());//EUCの入力
 
-           //ダイアログを押す
-           page.on("dialog", async dialog => {
-               await dialog.accept(); // OK
-           });
+       //ダイアログを押す
+       page.on("dialog", async dialog => {
+           await dialog.accept(); // OK
+       });
 
-           await page.click(target_eucSubmit_ID);//submitをクリック
-           await page.waitForSelector("td span.outputText", {timeout: 10000});
-           //EUC登録した授業名を取得
-           const nam = await page.$eval("td span#form1\\3A Title", (tar) => {
-               return tar.textContent.replace(/[\t\n]/g, "");
-           }).catch(() => {
-               return "";
+       await page.click(target_eucSubmit_ID);//submitをクリック
+       await page.waitForSelector("td span.outputText", {timeout: 10000});
+       //EUC登録した授業名を取得
+       const nam = await page.$eval("td span#form1\\3A Title", (tar) => {
+           return tar.textContent.replace(/[\t\n]/g, "");
+       }).catch(() => {
+           return "";
+       });
+       //EUC登録の結果の文章を取得
+       const tex = await page.$eval("td span#form1\\3A htmlTorokukekka", (tar) => {
+           return tar.textContent;
+       });
+       await wa.consoleOff();
+       func(`${cl.fg_cyan}${nam}\n${cl.fg_reset}${cl.fg_red}${tex}${cl.fg_reset}`); //結果をコンソールに表示
+       //「文章が異なります。」が出なかったらスクショ
+       if (tex !== "番号が異なります。") {
+           const shot_target = await page.$("table.sennasi");
+           const filename = today.getToday();
+           await shot_target.screenshot({
+               path: "images/" + nam + "_" + filename + ".jpg",
+               type: 'jpeg',
+               quality: 100
            });
-           //EUC登録の結果の文章を取得
-           const tex = await page.$eval("td span#form1\\3A htmlTorokukekka", (tar) => {
-               return tar.textContent;
-           });
-           await wa.consoleOff();
-           func(`${cl.fg_cyan}${nam}\n${cl.fg_reset}${cl.fg_red}${tex}${cl.fg_reset}`); //結果をコンソールに表示
-           //「文章が異なります。」が出なかったらスクショ
-           if (tex !== "番号が異なります。") {
-               const shot_target = await page.$("table.sennasi");
-               const filename = today.getToday();
-               await shot_target.screenshot({
-                   path: "images/" + nam + "_" + filename + ".jpg",
-                   type: 'jpeg',
-                   quality: 100
-               });
-               // /logs/euc.logファイルがあるか判定。なければ作成あったら追記
-               const todayEUC = `日付:${today.getTodayJP()},授業名：${nam},EUC番号:${EUC},結果:${tex}\n`;
-               appendFileSync("data/logs/euc.log", todayEUC, "utf-8");
-           }
-            await browser.close();
-            return ;
-       }catch (e){
-            await wa.consoleOff();
-            await browser.close();
-            throw e;
+           // /logs/euc.logファイルがあるか判定。なければ作成あったら追記
+           const todayEUC = `日付:${today.getTodayJP()},授業名：${nam},EUC番号:${EUC},結果:${tex}\n`;
+           appendFileSync("data/logs/euc.log", todayEUC, "utf-8");
        }
+        await wa.consoleOff();
+        return ;
+   }catch (e){
+        await wa.consoleOff();
+        throw e;
+   }
 }
 
 /**
