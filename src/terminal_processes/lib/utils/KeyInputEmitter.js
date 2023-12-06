@@ -13,21 +13,20 @@ export class KeyInputEmitter extends EventEmitter {
         // 標準入力の設定
         this.rl = readline.createInterface({
             input: process.stdin,
-            output: process.stdout,
+            output:process.stdout
         });
-        const exitKeyList = ["escape"];
-        process.on("SIGINT",()=>{
-            process.exit(0);
-        })
+        const exitKeyList = ["\x03"];
         this.rl.input.on('keypress', (char, key) => {
+            process.stdout.write(control.nowrite)
             // キー入力を受け取った時の処理
             this.emit("keypress",char,key);
             //終了処理したいときの処理
-            if (exitKeyList.includes(key.name)){
-                process.emit("SIGINT");
+            if (exitKeyList.includes(key.sequence)){
+                process.exit(0);
             }
             //エンターキーを押した処理
             if (key.name === "return"){
+                this.rl.close();
                 this.emit("enter",char,key);
             }
             //制御文字などを省いたキー
@@ -46,7 +45,8 @@ export class KeyInputEmitter extends EventEmitter {
         this.rl.resume();
     }
     exit(){
-        this.rl.input.removeAllListeners("keypress")
-        this.rl.input.setRawMode(false);
+        this.rl.input.removeAllListeners("keypress");
+        this.rl.close();
+        // this.rl.input.setRawMode(false);
     }
 }

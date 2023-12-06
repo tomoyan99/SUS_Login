@@ -23,11 +23,11 @@ export async function sclass(self,node) {
             //ブラウザウィンドウが途中で閉じられた場合
             if (isObjEmpty(await context.pages())){
                 self.setInfo("{yellow-fg}[BROWSER\ INFO]\nブラウザが閉じられたことで中断されました{/}");
-                return
+                return;
             }else{
                 if (self.status.miss_count < 4){
                     self.status.miss_count++;
-                    self.appendInfo(`[SCLASS\ ERROR] ${cl.bg_yellow}${cl.fg_black}* 接続エラー\n${cl.bg_reset}${cl.fg_reset}(${self.status.miss_count})\n`);
+                    self.appendInfo(`[SCLASS\ ERROR] ${cl.bg_yellow}${cl.fg_black}* 接続エラー${cl.bg_reset}${cl.fg_reset}(${self.status.miss_count})\n`);
                     await context.close();
                     return;
                 }else{

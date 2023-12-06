@@ -9,6 +9,7 @@ let ptyExit;
 
 process.env.browserPath = "node_modules/electron/dist/electron.exe";
 process.env.infoPath = "data/info.json"
+process.env.npm_version = require("../../package.json").version
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -16,14 +17,14 @@ function createWindow() {
         height: 638,
         webPreferences:{
             nodeIntegration: true,
-            preload:path.join(__dirname,"/preload.cjs"),
+            preload:path.join(__dirname,"./preload.cjs"),
             devTools:false
         },
         useContentSize:true,
         resizable:false,
-        title:"SUS_Login"
+        title:`SUS_Login_v${process.env.npm_version}`
     });
-    mainWindow.loadURL(`file://${__dirname}/../public/render/index.html`);
+    mainWindow.loadURL(`file://${__dirname}/public/render/index.html`);
     mainWindow.on("closed", function() {
         mainWindow = null;
     });
@@ -39,7 +40,8 @@ function createWindow() {
             ptyProcess.kill();//プロセスをキル(タイマーなどが初期化される)
         }
         try {
-            const inputFilePath = path.join(__dirname,"../main/main.js")
+            // const inputFilePath = path.join(__dirname,"../terminal_processes/main/main.js")
+            const inputFilePath = path.resolve("resources/src/terminal_processes/main/main.js")
             ptyProcess = pty.spawn("node.exe", [inputFilePath], {
                 // ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",

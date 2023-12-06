@@ -14,13 +14,12 @@ import solaLinkReload from "../lib/utils/solaLinkReload.js";
 
 //main
 (async function main() {
-
     // imagesフォルダを作成
     fs.mkdirSync("data/images", { recursive: true });
     // logsフォルダを作成
     fs.mkdirSync("data/logs",{recursive:true});
     // logs.txtを作成
-    fs.appendFileSync("data/logs/euc.log","")
+    fs.appendFileSync("data/logs/euc.log","");
     while (true){
         try {
             console.clear();
@@ -41,7 +40,7 @@ import solaLinkReload from "../lib/utils/solaLinkReload.js";
         }catch (e) {
             console.clear();
             console.log("[ERROR]");
-            console.log(e);
+            console.log("何かしらのエラーが出ました");
             await pause("pause","[何かキーを押して再起動します]");
         }
     }

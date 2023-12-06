@@ -8,7 +8,7 @@ import {mainCommandList} from "../lib/blessed/mainCommandList.js";
 
 //初回起動設定
 async function setup() {
-        const version = process.env.npm_package_version;
+        const version = process.env.npm_version;
         const info_path = process.env.infoPath;
         const mc = new MyCrypt(info_path);
         const data = {

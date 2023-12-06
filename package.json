@@ -41,14 +41,17 @@
   "type": "module",
   "homepage": "./",
   "build": {
-    "productName": "%npm_package_version%",
+    "productName": "SUS_Login_v5.0.0",
     "appId": "com.electron.SUS_Login",
     "directories": {
       "output": "build/dist"
     },
     "files": [
-      "src",
+      "src/boot/**/*",
       "package.json"
+    ],
+    "extraResources":[
+      "src/terminal_processes/**/*"
     ],
     "win": {
       "icon": "src/assets/icon.ico",
