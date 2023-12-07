@@ -5,6 +5,7 @@ import MyCrypt from "../lib/utils/MyCrypt.js";
 import {sleep} from "../lib/utils/myUtils.js";
 import {input, password} from '@inquirer/prompts';
 import {mainCommandList} from "../lib/blessed/mainCommandList.js";
+import {MyPrompt} from "../lib/utils/MyPrompt.js";
 
 //初回起動設定
 async function setup() {
@@ -13,7 +14,7 @@ async function setup() {
         const mc = new MyCrypt(info_path);
         const data = {
             user:{
-                name:"",
+                username:"",
                 password:""
             },
             soraLink:{},
@@ -29,27 +30,15 @@ async function setup() {
 
                 console.log(`${cl.bg_green}SUS_LOGIN_${cl.fg_red}v${version} ${cl.fg_reset}${cl.bg_green}へようこそ！${cl.bg_reset}`);
                 console.log(`ユーザー名(学籍番号)とパスワードの設定を行います。`);
-                //学籍番号の入力
-                const NAME = await input({ message: "UserName?>" });
 
-                //パスワードの入力。二回入力させて間違っていれば再入力
-                do {
-                    try {
-                        const PAWO1 = await password({ message: "PassWord?>" ,mask:true});
-                        console.log("確認のためもう一度パスワードを入力してください");
-                        const PAWO2 = await password({ message: "PassWord?>" ,mask:true});
-                        if (PAWO1 === PAWO2) {
-                            data.user.name = NAME; //usernameの追加
-                            data.user.password = PAWO1; //passwordの追加
-                            break;
-                        } else {
-                            console.log("パスワードが一致しません。もう一度入力してください");
-                            await sleep(1000);
-                        }
-                    }catch (e){
-                        throw `${cl.fg_red}[登録エラー] ユーザー名及びパスワードの登録に失敗しました。もう一度再起動してください${cl.fg_reset}`;
-                    }
-                }while (true);
+                const answers = await MyPrompt.Question({
+                    username:{message:"UserName?",name:"UserName",type:"input"},
+                    password:{message:"PassWord?",name:"PassWord",type:"password"},
+                })
+                data.user = {
+                    username: answers.username,
+                    password: answers.password
+                }
 
                 console.log("ユーザー名及びパスワードを登録しました");
                 await sleep(1500);

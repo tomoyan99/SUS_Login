@@ -47,6 +47,5 @@ export class KeyInputEmitter extends EventEmitter {
     exit(){
         this.rl.input.removeAllListeners("keypress");
         this.rl.close();
-        // this.rl.input.setRawMode(false);
     }
 }

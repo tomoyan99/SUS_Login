@@ -20,8 +20,6 @@ export function pause(mode="pause",prompt = "[何かキーを押して終了]",f
 			}
 		});
 		func(prompt);
-		// console.log(process.stdin._events)
-		// console.log(process.stdin._events)
 	});
 }
 

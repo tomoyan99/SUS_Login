@@ -40,14 +40,15 @@ function createWindow() {
             ptyProcess.kill();//プロセスをキル(タイマーなどが初期化される)
         }
         try {
-            // const inputFilePath = path.join(__dirname,"../terminal_processes/main/main.js")
-            const inputFilePath = path.resolve("resources/src/terminal_processes/main/main.js")
+            const inputFilePath = path.join(__dirname,"../terminal_processes/main/main.js")
+            // const inputFilePath = path.resolve("resources/src/terminal_processes/main/main.js")
             ptyProcess = pty.spawn("node.exe", [inputFilePath], {
                 // ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",
                 useConpty:true,
                 cols: 82,
                 rows: 33,
+                // cwd: path.resolve("resources"),
                 cwd: process.cwd(),
                 env:process.env,
             });
@@ -58,7 +59,7 @@ function createWindow() {
                 }
             });
             ptyExit = ptyProcess.onExit(() => {
-                process.exit(0)
+                // process.exit(0)
             });
             ipcMain.on("terminal.keystroke",(event, key) => {
                 ptyProcess.write(key);

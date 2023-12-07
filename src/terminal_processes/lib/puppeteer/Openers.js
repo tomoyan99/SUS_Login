@@ -40,12 +40,12 @@ export async function openContext(mode){
 
 /**
  * @param {Browser|BrowserContext} browser
- * @param {{name:string,password:string}} user
+ * @param {{username:string,password:string}} user
  * @param {boolean} headless
  * @param {function} func
  * */
 export async function openSclass(browser, user,headless=false,func = console.log) {
-    const user_name = user.name;
+    const user_name = user.username;
     const password  = user.password;
     const url = "https://s-class.admin.sus.ac.jp/up/faces/login/Com00504A.jsp"; //sclassのurl
 
@@ -104,13 +104,13 @@ export async function openSclass(browser, user,headless=false,func = console.log
 }
 /**
  * @param {Browser|BrowserContext} browser
- * @param {{name:string,password:string}} user
+ * @param {{username:string,password:string}} user
  * @param {boolean} headless
  * @param {string} URL
  * @param {function} func
  * */
 export async function openSola(browser, user,headless=false,URL="https://sola.sus.ac.jp/",func = console.log) {
-    const user_name = user.name;
+    const user_name = user.username;
     const password  = user.password;
     const url = URL; //solaまたはsola_pageのurl
 
@@ -171,7 +171,7 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
 }
 /**
  * @param {Browser|BrowserContext} browser
- * @param {{name:string,password:string}} user
+ * @param {{username:string,password:string}} user
  * @param {number} EUC
  * @param {function} func
  * */

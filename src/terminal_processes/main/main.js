@@ -1,4 +1,3 @@
-"use strict";
 /*
 	[electron_boot.cjs]
 	フォルダの作成、login.jsの実行などの総合的な制御を行う。

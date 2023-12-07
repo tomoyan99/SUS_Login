@@ -38,5 +38,10 @@ export const control = {
 	bg_magenta: "\x1b[45m",	//マゼンタ
 	bg_cyan: "\x1b[46m",	//シアン
 	bg_white: "\x1b[47m",	//白
-	bg_reset: "\x1b[49m"	//リセット
+	bg_reset: "\x1b[49m",	//リセット
+
+	/* オトクなセット */
+	warn :"\x1b[43m\x1b[30m",
+	error:"\x1b[41m\x1b[37m",
+	reset:"\x1b[0m\x1b[49m"
 }
