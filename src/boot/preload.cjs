@@ -3,6 +3,7 @@ const {Terminal} = require("xterm")
 const {FitAddon} = require("xterm-addon-fit")
 const WebfontLoader = require("@liveconfig/xterm-webfont");
 const {termRC} = require("./public/globalValues.cjs");
+const {WebLinksAddon} = require("xterm-addon-web-links");
 console.log(termRC)
 const term = new Terminal({
     cols:termRC.col,
@@ -22,9 +23,11 @@ function termer() {
     const termContent = document.getElementById('terminal');
     const fitAddon = new FitAddon();
     const loadA = new WebfontLoader();
+    const webLink = new WebLinksAddon();
     // アドオンをロード
     term.loadAddon(fitAddon);
     term.loadAddon(loadA);
+    term.loadAddon(webLink);
     // term.open(termContent);
     term.loadWebfontAndOpen(termContent);
 

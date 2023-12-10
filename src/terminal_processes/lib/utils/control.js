@@ -10,6 +10,7 @@ export const control = {
 	nowrite: "\b\x1b[0K",	//書き込まない
 	rightClear: "\x1b[0K",	//カーソルより行の右側消去
 	lineClear: "\x1b[2K",	//行消去
+	underline : "\x1b[4m",
 	startLine : (r = 1, n = 1) => `\x1b[${r};${n}H`,//スタート位置の決定
 	initialLine : (n = 1)=> `\x1b[${n}G`,//指定行目の行頭に移動
 
