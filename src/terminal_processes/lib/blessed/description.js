@@ -1,4 +1,3 @@
-import {npmVersion} from "../../../boot/public/globalValues.mjs";
 
 const textDeco ={
     Title  :(text)=>`{#ba0486-bg}${text}{/}`,
@@ -7,10 +6,10 @@ const textDeco ={
     Key    :(text)=>`{#e08300-fg}${text}{/}`,
 }
 
-
+const version = process.env.appVersion;
 export const description = {
     "SUS_LOGIN":
-        `${textDeco.Title(`SUS_LOGIN_${npmVersion}へようこそ！`)}\n\n` +
+        `${textDeco.Title(`SUS_LOGIN_${version}へようこそ！`)}\n\n` +
         `${textDeco.Chapter("[あらすじ]")}\n\n` +
         "   EUCの入力やSOLAの科目ページへのアクセスを簡単にするポータルアプリです！\n\n" +
         `${textDeco.Chapter("[操作方法]")}\n\n` +

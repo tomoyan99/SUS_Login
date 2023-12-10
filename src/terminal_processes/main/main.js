@@ -5,7 +5,7 @@ import setup from "./setup.js";
 import {sleep} from "../lib/utils/myUtils.js";
 import MainHome from "./MainHome.js";
 import {today} from "../lib/utils/today.js";
-import solaLinkReload from "../lib/utils/solaLinkReload.js";
+import solaLinkReload from "./solaLinkReload.js";
 
 //main
 (async function main() {
@@ -36,6 +36,7 @@ import solaLinkReload from "../lib/utils/solaLinkReload.js";
             console.clear();
             console.log("[ERROR]");
             console.log("何かしらのエラーが出ました");
+            console.log(e)
             await pause("pause","[何かキーを押して再起動します]");
         }
     }

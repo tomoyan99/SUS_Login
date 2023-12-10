@@ -1,13 +1,15 @@
 const {app, BrowserWindow, ipcMain,Menu} = require("electron");
 const pty = require("node-pty");
 const path = require('path');
-const {termRC,__PREFIX} = require("./public/globalValues.cjs");
+const {termRC,__PREFIX, npmVersion} = require("./public/globalValues.cjs");
 
 let mainWindow;
 let ptyProcess;
 let ptyData;
 let ptyExit;
 
+process.env.appVersion = npmVersion;
+process.env.infoPath = "data/info.json";
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 821,
@@ -15,7 +17,7 @@ function createWindow() {
         webPreferences:{
             nodeIntegration: true,
             preload:path.join(__dirname,"./preload.cjs"),
-            devTools:false
+            // devTools:false
         },
         useContentSize:true,
         resizable:false,
@@ -67,8 +69,8 @@ function createWindow() {
 }
 // ElectronのMenuの設定
 const mainMenu = [
-    {label: '再起動',role:"reload"}
-    // {label: 'DevTool', role:"toggleDevTools"},
+    {label: '再起動',role:"reload"},
+    {label: 'DevTool', role:"toggleDevTools"},
 ];
 
 const menu = Menu.buildFromTemplate(mainMenu);

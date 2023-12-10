@@ -3,7 +3,7 @@ const {Terminal} = require("xterm")
 const {FitAddon} = require("xterm-addon-fit")
 const WebfontLoader = require("@liveconfig/xterm-webfont");
 const {termRC} = require("./public/globalValues.cjs");
-
+console.log(termRC)
 const term = new Terminal({
     cols:termRC.col,
     rows:termRC.row,

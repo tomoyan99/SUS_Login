@@ -1,12 +1,16 @@
 const npmVersion = require("../../../package.json").version;
-const __PREFIX = "resource/";
+// const __PREFIX = "resource/";
+const __PREFIX = "";
 const termRC = {
     col:80,
     row:30
 };
 const infoPath = "data/info.json";
 
-module.exports = npmVersion;
-module.exports = __PREFIX;
-module.exports = termRC;
-module.exports = infoPath;
+module.exports = {
+    npmVersion,
+    __PREFIX,
+    termRC,
+    infoPath,
+};
+

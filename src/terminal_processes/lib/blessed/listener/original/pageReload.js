@@ -1,4 +1,4 @@
-import solaLinkReload from "../../../utils/solaLinkReload.js";
+import solaLinkReload from "../../../../main/solaLinkReload.js";
 import {sleep} from "../../../utils/myUtils.js";
 
 export function pageReload(self){
