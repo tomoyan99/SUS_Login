@@ -9,7 +9,7 @@ const term = new Terminal({
     cols:termRC.col,
     rows:termRC.row,
     cursorStyle:"bar",
-    // fontFamily:"UDEV Gothic JPDOC",
+    // fontFamily:"UDEV Gothic 35JPDOC",
     fontFamily:"myFont",
     fontSize:17,
     fontWeight:"400",
