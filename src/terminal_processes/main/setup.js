@@ -4,11 +4,11 @@ import {existsSync,unlinkSync,writeFileSync} from "fs";
 import MyCrypt from "../lib/utils/MyCrypt.js";
 import {sleep} from "../lib/utils/myUtils.js";
 import {MyPrompt} from "../lib/utils/MyPrompt.js";
+import{ npmVersion,infoPath }from "../../boot/public/globalValues.mjs";
 
 //初回起動設定
 async function setup() {
-        const version = process.env.npm_version;
-        const info_path = process.env.infoPath;
+        const info_path = infoPath;
         const mc = new MyCrypt(info_path);
         const data = {
             user:{
@@ -26,7 +26,7 @@ async function setup() {
                 await sleep(1000);
                 console.clear();
 
-                console.log(`${cl.bg_green}SUS_LOGIN_${cl.fg_red}v${version} ${cl.fg_reset}${cl.bg_green}へようこそ！${cl.bg_reset}`);
+                console.log(`${cl.bg_green}SUS_LOGIN_${cl.fg_red}v${npmVersion} ${cl.fg_reset}${cl.bg_green}へようこそ！${cl.bg_reset}`);
                 console.log(`ユーザー名(学籍番号)とパスワードの設定を行います。`);
 
                 const answers = await MyPrompt.Question({

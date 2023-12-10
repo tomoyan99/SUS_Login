@@ -19,6 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@inquirer/prompts": "^3.3.0",
+    "@liveconfig/xterm-webfont": "^2.1.0",
     "bcrypt": "^5.1.1",
     "enquirer": "^2.4.1",
     "inquirer": "^9.2.12",

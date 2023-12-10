@@ -1,20 +1,17 @@
 const {app, BrowserWindow, ipcMain,Menu} = require("electron");
 const pty = require("node-pty");
 const path = require('path');
+const {termRC,__PREFIX} = require("./public/globalValues.cjs");
 
 let mainWindow;
 let ptyProcess;
 let ptyData;
 let ptyExit;
 
-process.env.browserPath = "node_modules/electron/dist/electron.exe";
-process.env.infoPath = "data/info.json"
-process.env.npm_version = require("../../package.json").version
-
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 821,
-        height: 638,
+        height: 623,
         webPreferences:{
             nodeIntegration: true,
             preload:path.join(__dirname,"./preload.cjs"),
@@ -40,15 +37,15 @@ function createWindow() {
             ptyProcess.kill();//プロセスをキル(タイマーなどが初期化される)
         }
         try {
-            // const inputFilePath = path.join(__dirname,"../terminal_processes/main/main.js")
-            const inputFilePath = path.resolve("resources/src/terminal_processes/main/main.js")
+            const inputFilePath = path.resolve(__PREFIX,"src/terminal_processes/main/main.js")
+            // const inputFilePath = path.resolve("resources/src/terminal_processes/main/main.js")
             ptyProcess = pty.spawn("node.exe", [inputFilePath], {
                 // ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",
                 useConpty:true,
-                cols: 82,
-                rows: 33,
-                cwd: process.cwd(),
+                cols: termRC.col,
+                rows: termRC.row,
+                cwd:path.resolve(__PREFIX) ,
                 env:process.env,
             });
 

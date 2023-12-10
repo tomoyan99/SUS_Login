@@ -16,9 +16,18 @@
         body {
             height: 100%;
             margin: 0;
+            font-family: myFont;
         }
         body *::-webkit-scrollbar{
             display: none;
+        }
+        @font-face {
+            font-family:"myFont";
+            src:
+                url("./font/UDEVGothic35JPDOC-Regular.ttf") format("truetype"),
+                url("./font/UDEVGothic35JPDOC-Bold.ttf") format("truetype"),
+                url("./font/UDEVGothic35JPDOC-BoldItalic.ttf") format("truetype"),
+                url("./font/UDEVGothic35JPDOC-Italic.ttf") format("truetype");
         }
         /* .fullheight{
             height: 100%;

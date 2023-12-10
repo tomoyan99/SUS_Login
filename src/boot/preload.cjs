@@ -1,17 +1,19 @@
 const {contextBridge, ipcRenderer} = require("electron");
 const {Terminal} = require("xterm")
 const {FitAddon} = require("xterm-addon-fit")
-
+const WebfontLoader = require("@liveconfig/xterm-webfont");
+const {termRC} = require("./public/globalValues.cjs");
 
 const term = new Terminal({
-    cols:82,
-    rows:33,
+    cols:termRC.col,
+    rows:termRC.row,
     cursorStyle:"bar",
-    fontFamily:"UDEV Gothic JPDOC",
+    // fontFamily:"UDEV Gothic JPDOC",
+    fontFamily:"myFont",
     fontSize:17,
     fontWeight:"400",
     cursorBlink:false,
-    letterSpacing:1.5,
+    letterSpacing:0,
     theme:{
         background:"rgb(0,0,0)"
     }
@@ -19,11 +21,12 @@ const term = new Terminal({
 function termer() {
     const termContent = document.getElementById('terminal');
     const fitAddon = new FitAddon();
-
+    const loadA = new WebfontLoader();
     // アドオンをロード
     term.loadAddon(fitAddon);
-
-    term.open(termContent);
+    term.loadAddon(loadA);
+    // term.open(termContent);
+    term.loadWebfontAndOpen(termContent);
 
     //ターミナルをフォーカス
     term.focus();
