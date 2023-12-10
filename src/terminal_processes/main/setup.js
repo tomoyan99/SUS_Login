@@ -3,8 +3,6 @@ import {makeSchedule} from "../lib/utils/makeSchedule.js";
 import {existsSync,unlinkSync,writeFileSync} from "fs";
 import MyCrypt from "../lib/utils/MyCrypt.js";
 import {sleep} from "../lib/utils/myUtils.js";
-import {input, password} from '@inquirer/prompts';
-import {mainCommandList} from "../lib/blessed/mainCommandList.js";
 import {MyPrompt} from "../lib/utils/MyPrompt.js";
 
 //初回起動設定
