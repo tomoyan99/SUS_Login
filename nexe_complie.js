@@ -1,9 +1,8 @@
-import {compile} from "nexe"
-import {importJSON} from "./src/terminal_processes/lib/utils/myUtils.js";
-import rcedit from "rcedit";
+import {compile} from "nexe";
 import fs from "fs";
+import pkg from "./package.json" assert {type:"json"}
 
-const pkg = importJSON("package.json");
+
 const ver = pkg.version;
 const appName = `SUS_Login_v${ver}`;
 const rc = {
@@ -17,24 +16,26 @@ const rc = {
     'LegalCopyright': ""
 };
 
-async function exists(filename) {
-    try {
-        return (await fs.promises.stat(filename)).size > 0
-    } catch{ }
-    return false;
-}
-
 compile({
     input: `./bundle/sus_login_v${ver}_main.cjs`,
     output: `./nexe/SUS_Login_v${ver}.exe`,
-    python: "C:/Python311/",
-    targets:"windows-x64-14.15.3",
+    python: "C:/Python312/python.exe",
+    build: true, //required to use patches
     name:`SUS_Login_v${ver}`,
-    // rc: Object.assign({
-    //     'PRODUCTVERSION': ver,
-    //     'FILEVERSION': ver,
-    // }, rc),
-    // flags: {
-    //     "--title":appName
-    // }
+    patches: [
+        async (compiler, next) => {
+            await compiler.setFileContentsAsync(
+                'lib/new-native-module.js',
+                'module.exports = 42'
+            )
+            return next()
+        }
+    ],
+    rc: Object.assign({
+        'PRODUCTVERSION': ver,
+        'FILEVERSION': ver,
+    }, rc),
+    flags: {
+        "--title":appName
+    }
 })

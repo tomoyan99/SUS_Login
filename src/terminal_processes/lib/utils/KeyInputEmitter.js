@@ -13,7 +13,8 @@ export class KeyInputEmitter extends EventEmitter {
         // 標準入力の設定
         this.rl = readline.createInterface({
             input: process.stdin,
-            output:process.stdout
+            output:process.stdout,
+            prompt:"",
         });
         const exitKeyList = ["\x03"];
         this.rl.input.on('keypress', (char, key) => {

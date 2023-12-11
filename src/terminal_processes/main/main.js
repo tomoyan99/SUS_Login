@@ -7,10 +7,12 @@ import MainHome from "./MainHome.js";
 import {today} from "../lib/utils/today.js";
 import solaLinkReload from "./solaLinkReload.js";
 import {existChromePath} from "../lib/utils/existChromePath.js";
+import pkg from "../../../package.json" assert {type:"json"};
 
 //main
 (async function main() {
-
+    process.env.appVersion = pkg.version;
+    process.env.infoPath = "data/info.json";
     if (!existChromePath()){
         console.log(`${cl.fg_red}[ERROR]${cl.fg_reset}`);
         console.log(`${cl.fg_red}chromeがインストールされていません！${cl.fg_reset}`);
@@ -28,8 +30,7 @@ import {existChromePath} from "../lib/utils/existChromePath.js";
         try {
             console.clear();
             console.log(`${cl.bg_yellow}セットアップ中です・・・・・・${cl.bg_reset}`);
-            await sleep(600);
-            console.clear();
+            await sleep(400);
             let data = await setup();
             if (!data){
                 await pause("exit","[何かキーを押して終了]");

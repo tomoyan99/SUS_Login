@@ -22,6 +22,7 @@ async function setup() {
         do {
             //info.jsonの存在をチェック
             if (!existsSync(info_path)){
+                console.clear();
                 console.log(`初回起動を確認しました・・・`);
                 await sleep(1000);
                 console.clear();

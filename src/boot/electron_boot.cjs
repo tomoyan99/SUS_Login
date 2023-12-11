@@ -8,8 +8,6 @@ let ptyProcess;
 let ptyData;
 let ptyExit;
 
-process.env.appVersion = npmVersion;
-process.env.infoPath = "data/info.json";
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 821,
@@ -17,16 +15,17 @@ function createWindow() {
         webPreferences:{
             nodeIntegration: true,
             preload:path.join(__dirname,"./preload.cjs"),
-            // devTools:false
+            devTools:false
         },
         useContentSize:true,
         resizable:false,
-        title:`SUS_Login_v${process.env.npm_version}`
+        title:`SUS_Login_v${npmVersion}`
     });
     mainWindow.loadURL(`file://${__dirname}/public/render/index.html`);
     mainWindow.on("closed", function() {
         mainWindow = null;
     });
+    mainWindow.focus();
     mainWindow.webContents.on("dom-ready",()=>{
         //DOMがリロードされたときにプロセス・イベントが多重起動しないようにする
         if (ptyProcess){
@@ -70,7 +69,7 @@ function createWindow() {
 // ElectronのMenuの設定
 const mainMenu = [
     {label: '再起動',role:"reload"},
-    {label: 'DevTool', role:"toggleDevTools"},
+    // {label: 'DevTool', role:"toggleDevTools"},
 ];
 
 const menu = Menu.buildFromTemplate(mainMenu);

@@ -11,9 +11,9 @@
     "build": "electron-builder --win --x64 --dir",
     "build_installer": "electron-builder --win --x64",
     "postinstall": "electron-builder install-app-deps --platform win32 --arch x64",
-    "webpkg": "webpack --mode production && npm run pkg",
-    "webdir": "webpack --mode development && npm run pkg",
-    "pkg": "nexe bundle/sus_login_v%npm_package_version%_main.cjs --target windows-x64-14.15.3 --output nexe/SUS_Login_v%npm_package_version%.exe"
+    "webpkg": "webpack --mode production ",
+    "webdir": "webpack --mode development ",
+    "nexepkg": "node nexe_complie.js"
   },
   "author": "Tomoya Sano",
   "license": "ISC",

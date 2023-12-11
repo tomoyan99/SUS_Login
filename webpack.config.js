@@ -7,7 +7,7 @@ const filename = pkjson.name+"_v"+pkjson.version;
 
 const config = {
     //エントリポイントであるファイルのパスを指定
-    entry: {main:path.resolve(process.cwd(),"src/terminal_processes/main/main.js")},
+    entry: {main:path.resolve("src/terminal_processes/main/main.js")},
     output: {
         path: path.resolve(process.cwd(),"bundle/"),  //バンドルしたファイルの出力先のパスを指定
         filename: `${filename}_[name].cjs` //出力時のファイル名の指定
