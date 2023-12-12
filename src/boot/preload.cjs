@@ -2,19 +2,21 @@ const {contextBridge, ipcRenderer} = require("electron");
 const {Terminal} = require("xterm")
 const {FitAddon} = require("xterm-addon-fit")
 const WebfontLoader = require("@liveconfig/xterm-webfont");
-const {termRC} = require("./public/globalValues.cjs");
+const {CanvasAddon} = require("@xterm/addon-canvas")
+const {WebglAddon} = require("@xterm/addon-webgl")
 const {WebLinksAddon} = require("xterm-addon-web-links");
-console.log(termRC)
+const {termRC} = require("./public/globalValues.cjs");
+
 const term = new Terminal({
     cols:termRC.col,
     rows:termRC.row,
     cursorStyle:"bar",
-    // fontFamily:"UDEV Gothic 35JPDOC",
     fontFamily:"myFont",
     fontSize:17,
-    fontWeight:"400",
+    fontWeight:"300",
     cursorBlink:false,
     letterSpacing:0,
+    scrollback:0,
     theme:{
         background:"rgb(0,0,0)"
     }
@@ -24,13 +26,14 @@ function termer() {
     const fitAddon = new FitAddon();
     const loadA = new WebfontLoader();
     const webLink = new WebLinksAddon();
+    const a = new CanvasAddon();
     // アドオンをロード
     term.loadAddon(fitAddon);
     term.loadAddon(loadA);
     term.loadAddon(webLink);
+    term.loadAddon(a);
     // term.open(termContent);
     term.loadWebfontAndOpen(termContent);
-
     //ターミナルをフォーカス
     term.focus();
 
@@ -57,7 +60,11 @@ function termer() {
     term.onData(e => {
         ipcRenderer.send("terminal.keystroke", e);
     });
-
+    //xtermのresizeをnode-ptyに伝播
+    term.onResize((size) => {
+        const resizer = [size.cols, size.rows];
+        ipcRenderer.send("terminal.resize", resizer);
+    });
     //画面がリサイズされたらそれに合わせてターミナルサイズをフィットさせる
     window.addEventListener("resize",()=>{
         fitAddon.fit();

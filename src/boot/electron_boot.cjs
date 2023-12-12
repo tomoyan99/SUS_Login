@@ -10,15 +10,19 @@ let ptyExit;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 821,
-        height: 623,
+        width: 820,
+        height: 639,
         webPreferences:{
             nodeIntegration: true,
             preload:path.join(__dirname,"./preload.cjs"),
-            devTools:false
+            // devTools:false
+            webviewTag:true,
+            webgl:true,
+            webSecurity:true,
+            disableDialogs:true
         },
         useContentSize:true,
-        resizable:false,
+        // resizable:false,
         title:`SUS_Login_v${npmVersion}`
     });
     mainWindow.loadURL(`file://${__dirname}/public/render/index.html`);
@@ -41,7 +45,7 @@ function createWindow() {
             const inputFilePath = path.resolve(__PREFIX,"src/terminal_processes/main/main.js")
             // const inputFilePath = path.resolve("resources/src/terminal_processes/main/main.js")
             ptyProcess = pty.spawn("node.exe", [inputFilePath], {
-                // ptyProcess = pty.spawn("bash.exe",[], {
+            // ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",
                 useConpty:true,
                 cols: termRC.col,
@@ -49,7 +53,6 @@ function createWindow() {
                 cwd:path.resolve(__PREFIX) ,
                 env:process.env,
             });
-
             ptyData = ptyProcess.onData((data) => {
                 if (mainWindow){
                     mainWindow.webContents.send("terminal.incomingData", data);
@@ -61,6 +64,9 @@ function createWindow() {
             ipcMain.on("terminal.keystroke",(event, key) => {
                 ptyProcess.write(key);
             })
+            ipcMain.on("terminal.resize",(event, resizer) => {
+                ptyProcess.resize(resizer[0], resizer[1]);
+            })
         } catch (error) {
             mainWindow.webContents.send("terminal.incomingData",error+"\n");
         }
@@ -69,12 +75,11 @@ function createWindow() {
 // ElectronのMenuの設定
 const mainMenu = [
     {label: '再起動',role:"reload"},
-    // {label: 'DevTool', role:"toggleDevTools"},
+    {label: 'DevTool', role:"toggleDevTools"},
 ];
 
 const menu = Menu.buildFromTemplate(mainMenu);
 Menu.setApplicationMenu(menu);
-
 app.on("ready", createWindow);
 app.on("window-all-closed", function() {
     if (process.platform !== "darwin") {

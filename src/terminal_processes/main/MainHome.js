@@ -393,6 +393,9 @@ class MainHome extends SetComponents{
             t.rows.key("right",()=>{l.treeRight(this,t)});
             t.rows.key("left",()=>{l.treeLeft(this,t)});
         }
+        c.screen.on("resize",()=>{
+            console.clear();
+        })
         c.screen.key("tab",()=>{l.screenTab(this)});
         c.screen.key("space",()=>{l.screenTab(this)});
         c.screen.key("escape",()=>{l.screenEsc(this)});

@@ -19,7 +19,6 @@ export function euc(self) {
         c.form.removeAllListeners("cancel");
     });
     self.event.once("confirm euc",async(euc)=>{
-        self.setInfo("");
         let context;
         do {
             try {
@@ -27,6 +26,7 @@ export function euc(self) {
                     self.event.emit("error","[BROWSER\ ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります");
                     throw "";
                 });
+                self.
                 return;
             }catch (e) {
                 //ブラウザウィンドウが途中で閉じられた場合

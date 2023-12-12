@@ -46,6 +46,7 @@ import pkg from "../../../package.json" assert {type:"json"};
             console.clear();
             console.log("[ERROR]");
             console.log("何かしらのエラーが出ました");
+            console.log(e)
             await pause("pause","[何かキーを押して再起動します]");
         }
     }

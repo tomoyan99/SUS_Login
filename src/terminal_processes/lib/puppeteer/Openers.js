@@ -12,7 +12,7 @@ export async function openContext(mode){
         /* ブラウザの立ち上げ */
         const browser = await launch({
             headless: (mode === "EUC") ? "new" : false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
-            slowMo: (mode === "EUC") ? 0 : 0, //タイピング・クリックなどの各動作間の速度
+            slowMo: (mode === "EUC") ? 0 : 1, //タイピング・クリックなどの各動作間の速度
             defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
             channel: "chrome",//chromeを探し出して開く
             ignoreHTTPSErrors: true,
@@ -25,9 +25,10 @@ export async function openContext(mode){
                 `--app=https://www.google.co.jp/`,
                 "--incognito",
                 "--window-position=0,0",
-                " --window-size=200,200",
+                " --window-size=200,250",
                 "--proxy-server='direct://'",
-                "--proxy-bypass-list=*"
+                "--proxy-bypass-list=*",
+                "--test-type"
             ]
         }).catch(()=>{
             throw "ブラウザが開けませんでした。chromeがインストールされていることを確認してください";
@@ -78,6 +79,7 @@ export async function openSclass(browser, user,headless=false,func = console.log
         func(`${cl.fg_green}[SCLASS] アクセス完了${cl.fg_reset}`);
         //アクセス待機メッセージ
         await wa.consoleOn("[SCLASS] ログイン中・・・");
+        await page.evaluate(()=>{window.scrollBy(50,100)})
         await page.waitForSelector(target_submit_ID, {visible:true,timeout: 15000});
         await page.click(target_submit_ID); //submitクリック
         await page.waitForSelector(target_name_ID, {visible:true,timeout: 15000});

@@ -3,6 +3,8 @@ import crypto from "crypto";
 import {hostname, totalmem} from "os";
 
 import {readFileSync, writeFileSync} from "fs";
+import * as os from "os";
+import {replaceNumberWithWord} from "./myUtils.js";
 
 
 class MyCrypt {
@@ -22,7 +24,9 @@ class MyCrypt {
         }
         const longhost = long_name(hostname());
         const longmem = long_name(totalmem().toString());
-        const nlf = process.config.variables.node_library_files.join(",");
+        const cpuredu = os.cpus().map((c)=>c.model.length).reduce((a,c)=>(a+c)*10,1).toString();
+        const cpuredu_nw = Array.from(cpuredu).sort().map((n)=>replaceNumberWithWord(n)).join("");
+        const nlf = Array.from(new Set(Array.from(cpuredu_nw))).reduce((a,c)=>a.concat(Array.from(a.concat(c).join("")).sort().join("")),[]).join("");
         this.#PASSWORD =  this.#createHush512(longhost+Buffer.from(nlf,"binary").toString("base64"));
         this.#SALT = this.#createHush512(longmem+Buffer.from(nlf,"binary").toString("hex"));
         this.#PATH = path;
