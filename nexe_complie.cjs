@@ -18,9 +18,8 @@ compile({
     input: `bundle/sus_login_v${ver}_main.cjs`,
     output: `./nexe/SUS_Login_v${ver}.exe`,
     python: "C:/Python312/python.exe",
-    build:true,
+    // build:true,
     targets:["14.15.3"],
-    // build: true, //required to use patches
     name:`SUS_Login_v${ver}`,
     rc: Object.assign({
         'PRODUCTVERSION': ver,

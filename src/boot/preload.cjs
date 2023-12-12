@@ -2,8 +2,7 @@ const {contextBridge, ipcRenderer} = require("electron");
 const {Terminal} = require("xterm")
 const {FitAddon} = require("xterm-addon-fit")
 const WebfontLoader = require("@liveconfig/xterm-webfont");
-const {CanvasAddon} = require("@xterm/addon-canvas")
-const {WebglAddon} = require("@xterm/addon-webgl")
+const {CanvasAddon} = require("xterm-addon-canvas")
 const {WebLinksAddon} = require("xterm-addon-web-links");
 const {termRC} = require("./public/globalValues.cjs");
 
@@ -26,13 +25,13 @@ function termer() {
     const fitAddon = new FitAddon();
     const loadA = new WebfontLoader();
     const webLink = new WebLinksAddon();
-    const a = new CanvasAddon();
+    const canvasAddon = new CanvasAddon();
     // アドオンをロード
     term.loadAddon(fitAddon);
     term.loadAddon(loadA);
     term.loadAddon(webLink);
-    term.loadAddon(a);
-    // term.open(termContent);
+    term.loadAddon(canvasAddon);
+    //コンテンツをロード
     term.loadWebfontAndOpen(termContent);
     //ターミナルをフォーカス
     term.focus();
@@ -48,27 +47,29 @@ function termer() {
         }
         return true;
     });
-
-    //画面サイズに合わせてターミナルサイズを合わせる
-    fitAddon.fit();
     //node-ptyの標準出力をブラウザに表示する
     ipcRenderer.on("terminal.incomingData", (event, data) => {
         term.write(data);
     });
-
     //ブラウザ側でのキー入力をnode-ptyに送る
     term.onData(e => {
         ipcRenderer.send("terminal.keystroke", e);
     });
-    //xtermのresizeをnode-ptyに伝播
+    //xtermのresizeをnode-ptyに伝播。fitされたら発火
     term.onResize((size) => {
         const resizer = [size.cols, size.rows];
         ipcRenderer.send("terminal.resize", resizer);
     });
     //画面がリサイズされたらそれに合わせてターミナルサイズをフィットさせる
+    //リサイズが終了してから発火
+    let timeoutID;
     window.addEventListener("resize",()=>{
-        fitAddon.fit();
+        clearTimeout(timeoutID);
+        timeoutID = setTimeout(()=>{
+            fitAddon.fit();
+        }, 800);
     });
+    fitAddon.fit();
 }
 //contextBridgeにtermer関数を接続
 contextBridge.exposeInMainWorld('testapi', {

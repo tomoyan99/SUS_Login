@@ -7,20 +7,24 @@ let mainWindow;
 let ptyProcess;
 let ptyData;
 let ptyExit;
+const defaultWindowSize = {
+    width:820,
+    height:640
+}
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 820,
-        height: 639,
+        width: defaultWindowSize.width,
+        height: defaultWindowSize.height,
         webPreferences:{
             nodeIntegration: true,
             preload:path.join(__dirname,"./preload.cjs"),
             // devTools:false
-            webviewTag:true,
-            webgl:true,
-            webSecurity:true,
             disableDialogs:true
         },
+        backgroundColor: '#000',
+        minWidth :300,
+        minHeight:300,
         useContentSize:true,
         // resizable:false,
         title:`SUS_Login_v${npmVersion}`
@@ -42,28 +46,32 @@ function createWindow() {
             ptyProcess.kill();//プロセスをキル(タイマーなどが初期化される)
         }
         try {
-            const inputFilePath = path.resolve(__PREFIX,"src/terminal_processes/main/main.js")
-            // const inputFilePath = path.resolve("resources/src/terminal_processes/main/main.js")
-            ptyProcess = pty.spawn("node.exe", [inputFilePath], {
+            // const inputFilePath = path.resolve(__PREFIX,"src/terminal_processes/main/main.js")
+            const inputFilePath = path.resolve(__PREFIX,`EXE/SUS_Login_v${npmVersion}.exe`);
+            ptyProcess = pty.spawn(inputFilePath, [], {
+            // ptyProcess = pty.spawn("node.exe", [inputFilePath], {
             // ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",
-                useConpty:true,
                 cols: termRC.col,
                 rows: termRC.row,
-                cwd:path.resolve(__PREFIX) ,
+                cwd:path.resolve(__PREFIX,"EXE") ,
                 env:process.env,
             });
+            //node-ptyからデータが送られてきたらxterm.jsに送信
             ptyData = ptyProcess.onData((data) => {
                 if (mainWindow){
                     mainWindow.webContents.send("terminal.incomingData", data);
                 }
             });
+            //子プロセスが終了したらelectronも閉じる
             ptyExit = ptyProcess.onExit(() => {
                 // process.exit(0)
             });
+            //xtermからキー入力を受け取って、node-ptyに流す
             ipcMain.on("terminal.keystroke",(event, key) => {
                 ptyProcess.write(key);
             })
+            //xtermがfitして、resizeしたとき、node-ptyもresize
             ipcMain.on("terminal.resize",(event, resizer) => {
                 ptyProcess.resize(resizer[0], resizer[1]);
             })
@@ -75,7 +83,10 @@ function createWindow() {
 // ElectronのMenuの設定
 const mainMenu = [
     {label: '再起動',role:"reload"},
-    {label: 'DevTool', role:"toggleDevTools"},
+    // {label: 'DevTool', role:"toggleDevTools"},
+    {label: "ウィンドウサイズ初期化",click:()=>{
+        if (mainWindow){mainWindow.setContentSize(defaultWindowSize.width,defaultWindowSize.height,true);}}
+    }
 ];
 
 const menu = Menu.buildFromTemplate(mainMenu);

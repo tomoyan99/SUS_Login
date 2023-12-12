@@ -30,8 +30,8 @@ const config2 = {
         // chunkFormat や format の設定を追加
     },
     target: 'node',
-    // mode: 'production',
-    mode: 'development',
+    mode: 'production',
+    // mode: 'development',
     externals: [nodeExternals()], // Node.js モジュールを除外
 };
 

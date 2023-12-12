@@ -2,7 +2,7 @@
   "name": "sus_login",
   "version": "5.0.0",
   "description": "",
-  "main": "src/terminal_processes/main/main.js",
+  "main": "src/boot/electron_boot.cjs",
   "keywords": [],
   "scripts": {
     "node:start": "node .",
@@ -16,7 +16,7 @@
     "webpack": "webpack",
     "nexe:pkg": "node nexe_complie.cjs",
     "nexe:build": "run-s webpack nexe:pkg",
-    "nexe:start": "powershell nexe/SUS_Login_v5.0.0.exe"
+    "nexe:start": "powershell EXE/SUS_Login_v5.0.0.exe"
   },
   "author": "Tomoya Sano",
   "license": "ISC",
@@ -43,6 +43,7 @@
     "webpack-node-externals": "^3.0.0",
     "webpack-obfuscator": "^3.5.1",
     "xterm": "^5.3.0",
+    "xterm-addon-canvas": "^0.5.0",
     "xterm-addon-fit": "^0.8.0",
     "xterm-addon-web-links": "^0.9.0"
   },
@@ -50,8 +51,7 @@
     "electron": "^27.1.0",
     "electron-builder": "^24.6.4",
     "electron-packager": "^17.1.2",
-    "electron-rebuild": "^3.2.9",
-    "node": "^21.1.0"
+    "electron-rebuild": "^3.2.9"
   },
   "type": "module",
   "homepage": "./",
@@ -66,7 +66,7 @@
       "package.json"
     ],
     "extraResources": [
-      "src/terminal_processes/**/*"
+      "EXE/*"
     ],
     "win": {
       "icon": "src/assets/icon.ico",
