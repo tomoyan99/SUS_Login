@@ -1,7 +1,6 @@
 # SUS_Login
 公立諏訪東京理科大学専用の総合ユーティリティーシステムです  
-![2023-12-13(000002)](https://github.com/tomoyan99/SUS_Login/assets/101825008/3161a0a6-1a1a-40c9-b3c3-0f6038b79136)
-![2023-12-13(000003)](https://github.com/tomoyan99/SUS_Login/assets/101825008/30f4c6fa-6f2c-4dc4-83fa-a739e4a81980)
+<img width="50%" height="50%" alt="SUS_Login_Home" src="https://github.com/tomoyan99/SUS_Login/assets/101825008/3161a0a6-1a1a-40c9-b3c3-0f6038b79136"><img width="50%" height="50%" alt="SUS_Login_PageList" src="https://github.com/tomoyan99/SUS_Login/assets/101825008/30f4c6fa-6f2c-4dc4-83fa-a739e4a81980">
 ## 概要
 
 公立諏訪東京理科大学における2つのポータルサイト、S-CLASSとSOLAへのアクセス及び出席登録の簡略化を目的として作成しました。  
@@ -9,7 +8,7 @@
 さらにその度に毎回マウスカーソルを小さいボタンにエイムを合わせカチカチする日々。これは非常に煩わしいものでした。  
 そこで、このアプリではCLIをベースとすることで、キーボード操作のみでのタスク実行を可能にしました。  
 ## 機能
-機能は主に4つあります。  
+主な4つの機能  
 1. 出席登録システム「EUC」の全自動化　　
 2. S-CLASSへのアクセス及びログイン　　
 3. SOLAへのアクセス及びログイン　　
