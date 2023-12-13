@@ -82,7 +82,7 @@ function createWindow() {
 // ElectronのMenuの設定
 const mainMenu = [
     {label: '再起動',role:"reload"},
-    {label: 'DevTool', role:"toggleDevTools"},
+    // {label: 'DevTool', role:"toggleDevTools"},
     {label: "ウィンドウサイズ初期化",click:()=>{
         if (mainWindow){mainWindow.setContentSize(defaultWindowSize.width,defaultWindowSize.height,true);}}
     }
