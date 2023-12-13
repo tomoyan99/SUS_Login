@@ -19,7 +19,7 @@ function createWindow() {
         webPreferences:{
             nodeIntegration: true,
             preload:path.join(__dirname,"./preload.cjs"),
-            // devTools:false
+            devTools:false,
             disableDialogs:true
         },
         backgroundColor: '#000',
@@ -33,6 +33,7 @@ function createWindow() {
     mainWindow.on("closed", function() {
         mainWindow = null;
     });
+    mainWindow.focus();
     mainWindow.webContents.on("dom-ready",()=>{
         //DOMがリロードされたときにプロセス・イベントが多重起動しないようにする
         if (ptyProcess){
@@ -42,7 +43,7 @@ function createWindow() {
             ptyProcess.write(PAUSE);//フローを一旦止め、安全にプロセスをキル出来るように
             ptyData.dispose();//onDataイベントを削除
             ptyExit.dispose();//onExitイベントを削除
-            ptyProcess.kill();//プロセスをキル(タイマーなどが初期化される)
+            process.kill(ptyProcess.pid);//プロセスをキル(タイマーなどが初期化される)
         }
         try {
             const inputFilePath = path.resolve(__PREFIX,`EXE/SUS_Login_v${npmVersion}.exe`);
@@ -63,7 +64,7 @@ function createWindow() {
             });
             //子プロセスが終了したらelectronも閉じる
             ptyExit = ptyProcess.onExit(() => {
-                // process.exit(0)
+                process.exit(0)
             });
             //xtermからキー入力を受け取って、node-ptyに流す
             ipcMain.on("terminal.keystroke",(event, key) => {
@@ -81,7 +82,7 @@ function createWindow() {
 // ElectronのMenuの設定
 const mainMenu = [
     {label: '再起動',role:"reload"},
-    // {label: 'DevTool', role:"toggleDevTools"},
+    {label: 'DevTool', role:"toggleDevTools"},
     {label: "ウィンドウサイズ初期化",click:()=>{
         if (mainWindow){mainWindow.setContentSize(defaultWindowSize.width,defaultWindowSize.height,true);}}
     }

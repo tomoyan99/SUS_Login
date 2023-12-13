@@ -33,8 +33,6 @@ function termer() {
     term.loadAddon(canvasAddon);
     //コンテンツをロード
     term.loadWebfontAndOpen(termContent);
-    //ターミナルをフォーカス
-    term.focus();
 
     //Ctrl+Cで選択範囲をクリップボードにコピー可能にする
     term.attachCustomKeyEventHandler((arg) => {
@@ -47,19 +45,31 @@ function termer() {
         }
         return true;
     });
+    //画面サイズに合わせてターミナルサイズを合わせる
+    fitAddon.fit();
+
+    let isFocused = false;
     //node-ptyの標準出力をブラウザに表示する
     ipcRenderer.on("terminal.incomingData", (event, data) => {
+        if (!isFocused){
+            //ターミナルをフォーカス
+            term.focus();
+            isFocused = true;
+        }
         term.write(data);
     });
+
     //ブラウザ側でのキー入力をnode-ptyに送る
     term.onData(e => {
         ipcRenderer.send("terminal.keystroke", e);
     });
+
     //xtermのresizeをnode-ptyに伝播。fitされたら発火
     term.onResize((size) => {
         const resizer = [size.cols, size.rows];
         ipcRenderer.send("terminal.resize", resizer);
     });
+
     //画面がリサイズされたらそれに合わせてターミナルサイズをフィットさせる
     //リサイズが終了してから発火
     let timeoutID;
@@ -67,9 +77,8 @@ function termer() {
         clearTimeout(timeoutID);
         timeoutID = setTimeout(()=>{
             fitAddon.fit();
-        }, 800);
+        }, 500);
     });
-    fitAddon.fit();
 }
 //contextBridgeにtermer関数を接続
 contextBridge.exposeInMainWorld('testapi', {

@@ -61,6 +61,7 @@
     "directories": {
       "output": "build/dist"
     },
+    "compression": "maximum",
     "files": [
       "src/boot/**/*",
       "package.json"
