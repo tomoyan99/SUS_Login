@@ -33,7 +33,6 @@ function createWindow() {
     mainWindow.on("closed", function() {
         mainWindow = null;
     });
-    mainWindow.focus();
     mainWindow.webContents.on("dom-ready",()=>{
         //DOMがリロードされたときにプロセス・イベントが多重起動しないようにする
         if (ptyProcess){
@@ -46,7 +45,6 @@ function createWindow() {
             ptyProcess.kill();//プロセスをキル(タイマーなどが初期化される)
         }
         try {
-            // const inputFilePath = path.resolve(__PREFIX,"src/terminal_processes/main/main.js")
             const inputFilePath = path.resolve(__PREFIX,`EXE/SUS_Login_v${npmVersion}.exe`);
             ptyProcess = pty.spawn(inputFilePath, [], {
             // ptyProcess = pty.spawn("node.exe", [inputFilePath], {
