@@ -60,3 +60,26 @@ export class MyPrompt {
         return answers;
     }
 }
+
+export async function myConfirm(arg  ={message:"" ,name:""}){
+    const answer = await Index.prompt({
+        message:arg.message,
+        name:arg.name,
+        type:"confirm",
+        hint:`${cl.reset}${cl.fg_yellow}[Y]-Yes [N/Enter]-No${cl.reset}`,
+        separator:`${cl.reset}>>`,
+        format(value) {
+            let { styles, state } = this;
+            const defaultValue = "YES or NO"
+            value = this.isTrue(value) ? 'YES' : 'NO';
+            return !state.submitted ? styles.primary(defaultValue) : styles.success(value);
+        },
+        onSubmit(name, value, prompt) {
+            return value === "YES";
+        },
+        async onCancel(name, value, prompt) {
+            await pause("exit");
+        }
+    });
+    return answer[arg.name];
+}

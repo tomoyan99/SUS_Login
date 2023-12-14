@@ -45,8 +45,6 @@ function termer() {
         }
         return true;
     });
-    //画面サイズに合わせてターミナルサイズを合わせる
-    fitAddon.fit();
 
     let isFocused = false;
     //node-ptyの標準出力をブラウザに表示する
@@ -54,6 +52,8 @@ function termer() {
         if (!isFocused){
             //ターミナルをフォーカス
             term.focus();
+            //ウィンドウサイズに合わせてターミナルサイズを合わせる
+            fitAddon.fit();
             isFocused = true;
         }
         term.write(data);

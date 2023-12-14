@@ -207,7 +207,7 @@ export async function openEuc(browser, user, EUC,func = console.log) {
        await page.click(target_eucSubmit_ID);//submitをクリック
        await page.waitForSelector("td span.outputText", {visible:true,timeout: 10000});
        //EUC登録した授業名を取得
-       const nam = await page.$eval("td span#form1\\3A Title", (tar) => {
+       const num = await page.$eval("td span#form1\\3A Title", (tar) => {
            return tar.textContent.replace(/[\t\n]/g, "");
        }).catch(() => {
            return "";
@@ -217,18 +217,18 @@ export async function openEuc(browser, user, EUC,func = console.log) {
            return tar.textContent;
        });
        await wa.consoleOff();
-       func(`${cl.fg_cyan}${nam}\n${cl.fg_reset}${cl.fg_red}${tex}${cl.fg_reset}`); //結果をコンソールに表示
+       func(`${cl.fg_cyan}${num}\n${cl.fg_reset}${cl.fg_red}${tex}${cl.fg_reset}`); //結果をコンソールに表示
        //「文章が異なります。」が出なかったらスクショ
        if (tex !== "番号が異なります。") {
            const shot_target = await page.$("table.sennasi");
            const filename = today.getToday();
            await shot_target.screenshot({
-               path: "images/" + nam + "_" + filename + ".jpg",
+               path: "data/images/" + num + "_" + filename + ".jpg",
                type: 'jpeg',
                quality: 100
            });
            // /logs/euc.logファイルがあるか判定。なければ作成あったら追記
-           const todayEUC = `日付:${today.getTodayJP()},授業名：${nam},EUC番号:${EUC},結果:${tex}\n`;
+           const todayEUC = `日付:${today.getTodayJP()},授業名：${num},EUC番号:${EUC},結果:${tex}\n`;
            appendFileSync("data/logs/euc.log", todayEUC, "utf-8");
        }
         return ;

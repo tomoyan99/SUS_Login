@@ -13,7 +13,7 @@ export const mainCommandList = {
             "{#0077ff-fg}PAGE_LIST{/}":{"event":"page"},
             "{#fcd303-fg}PAGE_RELOAD{/}":{"event":"pagereload"}
         },
-        "履修仮組みツール":{"event":"completion"}
+        // "履修仮組みツール":{"event":"completion"}
     },
     "LOG":{"event":"log"},
     "IMAGE":{"event":"image"},

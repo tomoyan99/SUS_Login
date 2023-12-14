@@ -23,14 +23,14 @@ export function euc(self) {
         let miss_count = 0;
         do {
             try {
+                //ブラウザの起動
                 context = await openContext("EUC").catch(()=>{
                     self.event.emit("error","[BROWSER\ ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります");
                     throw "";
                 });
-                //ブラウザウィンドウが途中で閉じられた場合
+                //EUCの登録
                 if (!isObjEmpty(await context.pages())){
                     await openEuc(context,self._data.user,euc,self.appendInfo);
-                    await context.close();
                 }
                 return;
             }catch (e) {

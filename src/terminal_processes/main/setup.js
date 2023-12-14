@@ -3,7 +3,8 @@ import {makeSchedule} from "./makeSchedule.js";
 import {existsSync,unlinkSync,writeFileSync} from "fs";
 import MyCrypt from "../lib/utils/MyCrypt.js";
 import {sleep} from "../lib/utils/myUtils.js";
-import {MyPrompt} from "../lib/utils/MyPrompt.js";
+import {myConfirm, MyPrompt} from "../lib/utils/MyPrompt.js";
+import {pause} from "../lib/utils/pause.js";
 
 //初回起動設定
 async function setup() {
@@ -41,40 +42,53 @@ async function setup() {
 
                 console.log("ユーザー名及びパスワードを登録しました");
                 await sleep(1500);
+                let schedule_try_count = 1;
+                do {
+                    try {
+                        console.clear();
+                        /* 履修データの登録 */
+                        console.log("履修科目データを取得します");
+                        console.log(`${cl.fg_yellow}※ 回線の都合上時間がかかる場合があります${cl.fg_reset}`);
+                        /* makeSchedule関数：src/data/sola_link.jsonの作成 */
+                        data.solaLink = await makeSchedule(data);
+                        break;
+                    }catch (e) {
+                        console.clear();
+                        if (schedule_try_count < 4){
+                            console.log(`[ERROR] 試行回数:${schedule_try_count}\n履修科目データの取得に失敗しました。3秒後に再試行します`);
+                            await sleep(3000);
+                            continue;
+                        }else{
+                            console.log(`[ERROR] 4回試行しましたが失敗しました。\n再試行するか、このまま終了するか選択してください`);
+                            const yn = await myConfirm({message: "再試行しますか？",name: "retry"});
+                            if (yn){
+                                console.log("[YES]が選択されました。3秒後に再試行します");
+                                await sleep(3000);
+                                schedule_try_count = 1;
+                                continue;
+                            }else{
+                                console.log("[NO]が選択されました。終了します");
+                                await pause("exit","[何かキーを押して終了]");
+                                //process.exit
+                            }
+                        }
+                    }
+                }while (true);
+                console.log("認証ファイルの暗号化を行います・・・");
 
-                console.clear();
-                /* 履修データの登録 */
-                console.log("続いて、履修科目データの登録を行います");
-                console.log(`${cl.fg_yellow}※ 回線の都合上時間がかかる場合があります${cl.fg_reset}`);
-                try {
-                    /* makeSchedule関数：src/data/sola_link.jsonの作成 */
-                    data.solaLink = await makeSchedule(data);
-
-                    console.log("認証ファイルの暗号化を行います・・・");
-
-                    writeFileSync(info_path,"");
-
-                    await mc.writeCrypt(data);//info.jsonを暗号化して書き込み
-
-                    await sleep(2000);
-                    console.log("\n設定が完了しました。次回起動時から本機能が使用可能になります。");
-                    return false;
-                }catch (e){
-                    const errormes =
-                        `${cl.fg_red}[登録エラー]\n`+
-                        `履修科目データの登録に失敗しました。以下の項目を確認してもう一度やり直してください\n`+
-                        `[考えられる原因]`+`ユーザー名またはパスワードの入力間違い\n`+
-                        `インターネットに接続されていない\n`+
-                        `S-ClassまたはSOLAのサーバーが落ちているなどの不具合\n`+
-                        `${cl.fg_reset}\n`;
-                    throw e;
-                }
+                writeFileSync(info_path,"");
+                await mc.writeCrypt(data);//info.jsonを暗号化して書き込み
+                await sleep(2000);
+                console.log("\n設定が完了しました。次回起動時から本機能が使用可能になります。");
+                return false;
             }else{
-                //info.jsonが存在していたとき
                 try {
+                    //info.jsonが存在していたとき
+                    //復号してデータの読み込み
                     plane = await mc.readPlane();
                     break;
                 }catch (e){
+                    //info.jsonが読み込めなかったら登録を最初から
                     unlinkSync(info_path);
                     continue;
                 }
