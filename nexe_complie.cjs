@@ -15,8 +15,8 @@ const rc = {
 };
 
 compile({
-    input: `bundle/sus_login_v${ver}_main.cjs`,
-    output: `./nexe/SUS_Login_v${ver}.exe`,
+    input: `bundle/main.cjs`,
+    output: `./EXE/main.exe`,
     python: "C:/Python312/python.exe",
     // build:true,
     targets:["14.15.3"],

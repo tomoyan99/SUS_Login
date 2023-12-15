@@ -22,7 +22,7 @@ const config = {
 const config2 = {
     entry: {main:path.resolve("src/terminal_processes/main/main.js")},
     output: {
-        filename: `${filename}_[name].cjs`,
+        filename: `[name].cjs`,
         path: path.resolve(process.cwd(),"bundle/"),
         library: {
             type: 'commonjs',
