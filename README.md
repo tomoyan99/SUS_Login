@@ -1,7 +1,6 @@
 # SUS_Login
 公立諏訪東京理科大学専用の総合ユーティリティーシステムです  
-
-<img width="50%" height="50%" alt="SUS_Login_Home" src="https://github.com/tomoyan99/SUS_Login/assets/101825008/3161a0a6-1a1a-40c9-b3c3-0f6038b79136"><img width="50%" height="50%" alt="SUS_Login_PageList" src="https://github.com/tomoyan99/SUS_Login/assets/101825008/30f4c6fa-6f2c-4dc4-83fa-a739e4a81980">
+![SUS_Login紹介](https://github.com/tomoyan99/SUS_Login/assets/101825008/f8619707-553b-44c0-a8b5-ee1c59204463)
 ## 概要
 公立諏訪東京理科大学における2つのポータルサイト、S-CLASSとSOLAへのアクセス及び出席登録の簡略化を目的として作成しました。  
 本校の授業時間は1時限につき100分。なのにポータルサイトのログイン状態は30分で切れるアンバランスさ。  
