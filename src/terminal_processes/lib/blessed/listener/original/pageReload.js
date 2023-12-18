@@ -16,7 +16,7 @@ export function pageReload(self){
                 newData.soraLink["{yellow-fg}戻る{/}"] = { event: "return" };
                 self._data.sub  = self._parseListData(newData.soraLink);
             }catch (e){
-                 self.event.emit("error","[ERROR] 科目ページリストの更新に失敗しました");
+                 self.event.emit("error","[ERROR] 科目ページリストの更新に失敗しました\n"+e.stack);
             }finally{
                 c.info.key("enter",()=>{lb.screenTab(self)});
                 c.form.removeAllListeners("cancel");
