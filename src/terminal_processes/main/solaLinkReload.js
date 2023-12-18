@@ -3,12 +3,13 @@ import {makeSchedule} from "./makeSchedule.js";
 import {writeFileSync} from "fs";
 import MyCrypt from "../lib/utils/MyCrypt.js";
 import {sleep, writeJSON} from "../lib/utils/myUtils.js";
+import {myConfirm} from "../lib/utils/MyPrompt.js";
+import {pause} from "../lib/utils/pause.js";
 
 //初回起動設定
 async function solaLinkReload(data,func=console.log) {
         const info_path = process.env.infoPath;
         const mc = new MyCrypt(info_path);
-        let plane;
         const newData = {
             user:{
                 name:data.user.name,
@@ -21,7 +22,7 @@ async function solaLinkReload(data,func=console.log) {
         func(`${cl.fg_yellow}※ 回線の都合上時間がかかる場合があります${cl.fg_reset}`);
         try {
             /* makeSchedule関数：src/data/sola_link.jsonの作成 */
-            newData.solaLink = await makeSchedule(newData,func);
+            newData.solaLink = await makeSchedule(data,func);
 
             func("認証ファイルの暗号化を行います・・・");
 
