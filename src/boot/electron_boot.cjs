@@ -67,14 +67,13 @@ function createWindow() {
         try {
             const inputFilePath = path.resolve(__PREFIX,`EXE/main.exe`);
             ptyProcess = pty.spawn(inputFilePath, [], {
-            // ptyProcess = pty.spawn("node.exe", [inputFilePath], {
             // ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",
                 cols: userConfig.defaultTerminalSize.col,
                 rows: userConfig.defaultTerminalSize.row,
                 cwd:path.resolve(__PREFIX,"EXE") ,
                 env:process.env,
-                handleFlowControl:true
+                handleFlowControl:true,
             });
             //node-ptyからデータが送られてきたらxterm.jsに送信
             ptyData = ptyProcess.onData((data) => {
