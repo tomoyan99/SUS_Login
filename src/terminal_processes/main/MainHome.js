@@ -152,7 +152,6 @@ class SetComponents extends Members{
         this.components.screen = Blessed.screen({
             smartCSR: true,
             fullUnicode: true, // ここを追加
-            title: 'Bless_main', // TUIのタイトル
             terminal:"xterm-256color",
             tabSize:2,
         })

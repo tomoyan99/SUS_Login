@@ -20,7 +20,7 @@ compile({
     python: "C:/Python312/python.exe",
     // build:true,
     targets:["14.15.3"],
-    name:`SUS_Login_v${ver}`,
+    name:appName,
     rc: Object.assign({
         'PRODUCTVERSION': ver,
         'FILEVERSION': ver,

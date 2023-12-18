@@ -19,7 +19,7 @@ const term = new Terminal({
     scrollback:0,
     theme:{
         background:"rgb(0,0,0)"
-    }
+    },
 })
 function termer() {
     const termContent = document.getElementById('terminal');
@@ -31,7 +31,6 @@ function termer() {
     webGLAddon.onContextLoss(e => {
         webGLAddon.dispose();
     });
-
     // アドオンをロード
     term.loadAddon(fitAddon);
     term.loadAddon(loadA);
