@@ -1,21 +1,17 @@
 const {app, BrowserWindow, ipcMain,Menu} = require("electron");
 const pty = require("node-pty");
 const path = require('path');
-const {termRC,__PREFIX, npmVersion} = require("./public/globalValues.cjs");
+const {__PREFIX, npmVersion,confPath,userConfig} = require("./public/globalValues.cjs");
+const fs = require("fs");
 
 let mainWindow;
 let ptyProcess;
 let ptyData;
 let ptyExit;
-const defaultWindowSize = {
-    width:820,
-    height:640
-}
-
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: defaultWindowSize.width,
-        height: defaultWindowSize.height,
+        width: userConfig.defaultWindowSize.width,
+        height: userConfig.defaultWindowSize.height,
         webPreferences:{
             nodeIntegration: true,
             preload:path.join(__dirname,"./preload.cjs"),
@@ -30,7 +26,30 @@ function createWindow() {
         title:`SUS_Login_v${npmVersion}`
     });
     mainWindow.loadURL(`file://${__dirname}/public/render/index.html`);
-    mainWindow.on("closed", function() {
+    mainWindow.once("close",(e)=>{
+        //windowのクローズを一旦停止
+        e.preventDefault();
+        //term.optionsをもらったときの処理
+        //userConfig.jsonに今の設定値を記載
+        ipcMain.once("terminal.sendOptions",(event, options)=>{
+            const contentSize = mainWindow.getContentSize();
+            //mainwindowのサイズを取得
+            userConfig.defaultWindowSize.width  = contentSize[0];
+            userConfig.defaultWindowSize.height = contentSize[1];
+
+            //現在のfontSizeをdefaultに
+            userConfig.defaultFontSize = options.fontSize;
+
+            //userConfig.jsonを記述
+            fs.writeFileSync(confPath,JSON.stringify(userConfig),{encoding:"utf8"});
+            //windowを閉じる
+            //eventはonceなので発動しない
+            mainWindow.close();
+        });
+        //xtermにリクエストを送るってterm.optionsをもらう
+        mainWindow.webContents.send("terminal.requestOptions");
+    })
+    mainWindow.on("closed", ()=> {
         mainWindow = null;
     });
     mainWindow.focus();
@@ -46,15 +65,16 @@ function createWindow() {
             process.kill(ptyProcess.pid);//プロセスをキル(タイマーなどが初期化される)
         }
         try {
-            const inputFilePath = path.resolve(__PREFIX,`EXE/SUS_Login_v${npmVersion}.exe`);
+            const inputFilePath = path.resolve(__PREFIX,`EXE/main.exe`);
             ptyProcess = pty.spawn(inputFilePath, [], {
             // ptyProcess = pty.spawn("node.exe", [inputFilePath], {
             // ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",
-                cols: termRC.col,
-                rows: termRC.row,
+                cols: userConfig.defaultTerminalSize.col,
+                rows: userConfig.defaultTerminalSize.row,
                 cwd:path.resolve(__PREFIX,"EXE") ,
                 env:process.env,
+                handleFlowControl:true
             });
             //node-ptyからデータが送られてきたらxterm.jsに送信
             ptyData = ptyProcess.onData((data) => {
@@ -64,7 +84,7 @@ function createWindow() {
             });
             //子プロセスが終了したらelectronも閉じる
             ptyExit = ptyProcess.onExit(() => {
-                process.exit(0)
+                mainWindow.close();
             });
             //xtermからキー入力を受け取って、node-ptyに流す
             ipcMain.on("terminal.keystroke",(event, key) => {
@@ -83,21 +103,30 @@ function createWindow() {
 const mainMenu = [
     {label: '再起動',role:"reload"},
     // {label: 'DevTool', role:"toggleDevTools"},
-    {label: "ウィンドウサイズ初期化",click:()=>{
-        if (mainWindow){mainWindow.setContentSize(defaultWindowSize.width,defaultWindowSize.height,true);}}
-    }
+    {label: "フォント",submenu: [
+        {label:"文字大きく",click:()=>{
+            mainWindow.webContents.send("terminal.fontsize",1);
+        },accelerator: 'CmdOrCtrl+='},
+        {label:"初期値",click:()=>{
+            mainWindow.webContents.send("terminal.fontsize","default");
+        }},
+        {label:"文字小さく",click:()=>{
+            mainWindow.webContents.send("terminal.fontsize",-1);
+        },accelerator: 'CmdOrCtrl+-'}
+    ]},
 ];
 
 const menu = Menu.buildFromTemplate(mainMenu);
 Menu.setApplicationMenu(menu);
 app.on("ready", createWindow);
-app.on("window-all-closed", function() {
+
+app.on("window-all-closed", ()=> {
     if (process.platform !== "darwin") {
         app.quit();
     }
 });
 
-app.on("activate", function() {
+app.on("activate", ()=> {
     if (mainWindow === null) {
         createWindow();
     }
