@@ -6,10 +6,12 @@ export function treeEntered(self,t) {
     const reg = /{.+?}(.+?){\/}/g;
     let content = node.name.replace(reg,"$1");
     let colored_content = `>>{${self.colors.choice.fg}-fg}{${self.colors.choice.bg}-bg}${content}{/}{/}`;
-    self.setChoice(colored_content);
-    self.changeInfoLabel(content);
     //イベントをエミット
+    const excludeNameList = ["前期","後期"];
     try {
+        if (excludeNameList.includes(node.name))return;//除外リストに入っているnode.nameは無効
+        self.setChoice(colored_content);
+        self.changeInfoLabel(content);
         self.setFocus(c.info);
         self.event.emit(node.event,self,node);
     }catch (e){

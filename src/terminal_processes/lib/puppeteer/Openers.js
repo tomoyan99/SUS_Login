@@ -147,13 +147,18 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
         await page.waitForSelector(target_submit_ID, {visible:true,timeout: 30000});
         await page.type(target_pass_ID, password);//password入力
         await page.click(target_pass_ID);
+        let isVisibleClick = false; //clickが可視化されているかどうか
         while(page.url() === "https://sus.ex-tic.com/auth/session"){
             try{
                 await page.click(target_submit_ID,{delay:300});
+                isVisibleClick = true;
                 await page.waitForNavigation({waitUntil: "domcontentloaded", timeout: 0})
                 break;
             }catch (e) {
-                await page.evaluate(()=>{window.scrollBy(0,10)})
+                await page.evaluate(()=>{
+                    if (!isVisibleClick){
+                        window.scrollBy(0,10);
+                    }});
                 continue;
             }
         }
@@ -235,6 +240,7 @@ export async function openEuc(browser, user, EUC,func = console.log) {
         throw e;
    }finally {
         await wa.consoleOff();
+        await browser.close();
     }
 }
 
