@@ -1,6 +1,6 @@
 {
   "name": "sus_login",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "",
   "main": "src/boot/electron_boot.cjs",
   "keywords": [],
