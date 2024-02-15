@@ -26,7 +26,7 @@ export async function openContext(mode){
                 `--app=https://www.google.co.jp/`,
                 "--incognito",
                 "--window-position=0,0",
-                " --window-size=200,250",
+                " --window-size=200,300",
                 "--proxy-server='direct://'",
                 "--proxy-bypass-list=*",
                 "--test-type"
