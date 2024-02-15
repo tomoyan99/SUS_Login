@@ -89,10 +89,10 @@ export async function openSclass(browser, user,headless=false,func = console.log
         await page.type(target_pass_ID, password); //password入力
         await page.waitForSelector(target_submit_ID, {visible:true,timeout: 30000});
         await page.click(target_submit_ID); //submitクリック
-        if (page.url().match("https://s-class.admin.sus.ac.jp/up/faces/up/xu/")){
+        if (page.url().match("https://s-class.admin.sus.ac.jp/up/faces/up/")){
             func(`${cl.bg_green}[SCLASS] ログイン完了${cl.fg_reset}`);
             return page;
-        }else if(page.url() === "https://s-class.admin.sus.ac.jp/up/faces/login/Com00505A.jsp"){
+        }else if(page.url().match("https://s-class.admin.sus.ac.jp/up/faces/login/")){
             throw new Error("[Input Error]\n不正な領域にユーザー名あるいはパスワードが入力されたためsclass側でエラーが出ました。");//errorを返す
         }
     }catch (e) {
