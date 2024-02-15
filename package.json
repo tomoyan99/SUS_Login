@@ -6,6 +6,7 @@
   "keywords": [],
   "scripts": {
     "node:start": "node src/terminal_processes/main/main.js",
+    "all_build": "run-s nexe:build electron:ins",
     "test": "echo %npm_package_version%",
     "postinstall": "electron-builder install-app-deps --platform win32 --arch x64",
     "package:update": "ncu -u && npm i",
@@ -16,7 +17,7 @@
     "webpack": "webpack",
     "nexe:pkg": "node nexe_complie.cjs",
     "nexe:build": "run-s webpack nexe:pkg",
-    "nexe:start": "powershell EXE/SUS_Login_v5.0.0.exe"
+    "exe:start": "powershell EXE/main.exe"
   },
   "author": "Tomoya Sano",
   "license": "ISC",
