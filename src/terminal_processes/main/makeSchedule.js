@@ -44,33 +44,34 @@ async function searchSclass(browser, user,func) {
 		const target_risyuu_ID = "div#pmenu4"; //sclassの上のバーの「履修関連」
 
 		try {
-			await page.evaluate(() => { window.scroll(0, 0); });
-			await page.waitForSelector(target_risyuu_ID, { visible: true, timeout: 10000 });
-			await page.hover(target_risyuu_ID);//「履修関連」をホバー
-			const target_studentSchedule_ID = await page.$eval(target_risyuu_ID,(div)=>{
-				return `#${Array.from(div.children).filter((c) => c.text === "学生時間割表")[0].id}`
-			});
-			await page.waitForSelector(target_studentSchedule_ID, { visible: true, timeout: 10000 });
-			await page.click(target_studentSchedule_ID, { delay: 1000 });//授業時間割をクリック
-			const target_select_viewstyle_ID = "select#form1\\3A HyojiKeishiki"; //表示形式選択のID
-			const target_select_term_ID = "select#form1\\3A htmlGakki"
-			const target_search_ID = "input#form1\\3A search";//検索ボタンのID
-
+			do {
+				await page.evaluate(() => { window.scroll(0, 0); });
+				await page.waitForSelector(target_risyuu_ID, { visible: true, timeout: 10000 });
+				await page.hover(target_risyuu_ID);//「履修関連」をホバー
+				const target_studentSchedule_ID = await page.$eval(target_risyuu_ID,(div)=>{
+					return `#${Array.from(div.children).filter((c) => c.text === "学生時間割表")[0].id}`
+				});
+				await page.waitForSelector(target_studentSchedule_ID, { visible: true, timeout: 10000 });
+				await page.click(target_studentSchedule_ID, { delay: 1000 });//授業時間割をクリック
+			}while (page.url() !== "https://s-class.admin.sus.ac.jp/up/faces/up/km/Kma00401A.jsp");
+			const target_select_viewstyle_ID = "select#form1\\:HyojiKeishiki"; //表示形式選択のID
+			const target_select_term_ID = "select#form1\\:htmlGakki"
+			const target_search_ID = "input#form1\\:search";//検索ボタンのID
 			await page.waitForSelector(target_select_viewstyle_ID, { visible: true, timeout: 10000 });
 			await page.select(target_select_viewstyle_ID, "1");//一覧形式の選択
 			await page.select(target_select_term_ID, "0");//一覧形式の選択
 			await page.click(target_search_ID);//submitをクリック
 
 			//一覧形式のtableの表示を待つ
-			const table_list_bf_ID = "table#form1\\3A standardJugyoTimeSchedule00List";
+			const table_list_bf_ID = "table#form1\\:standardJugyoTimeSchedule00List";
 			await page.waitForSelector(table_list_bf_ID, { visible: true, timeout: 10000 });
 			//一覧形式のtableの表示を待つ
-			const table_list_af_ID = "table#form1\\3A standardJugyoTimeSchedule01List";
+			const table_list_af_ID = "table#form1\\:standardJugyoTimeSchedule01List";
 			await page.waitForSelector(table_list_af_ID, { visible: true, timeout: 10000 });
 
 			async function evalSUS(classname, page) {
-				const path_bf = `table#form1\\3A standardJugyoTimeSchedule00List td.${classname} span`;
-				const path_af = `table#form1\\3A standardJugyoTimeSchedule01List td.${classname} span`;
+				const path_bf = `table#form1\\:standardJugyoTimeSchedule00List td.${classname} span`;
+				const path_af = `table#form1\\:standardJugyoTimeSchedule01List td.${classname} span`;
 				return {
 					"bf": Array.from(new Set(
 						await page.$$eval(path_bf, (tds) => {
@@ -119,6 +120,7 @@ async function searchSola(browser, user, schedule,func) {
 	await context.newPage();
 	await (await browser.pages())[0].close();
 	try {
+		func("前期科目ページURLを取得します・・・");
 		//一回solaを開いておくことでログイン状態を保持
 		await openSola(context,user,true,"https://sola.sus.ac.jp/",func);
 		//前期科目ページURL取得
@@ -130,6 +132,7 @@ async function searchSola(browser, user, schedule,func) {
 			})
 		);
 		func(cl.fg_green + "前期科目ページURL取得完了" + cl.fg_reset);
+		func("後期科目ページを取得します・・・");
 		//後期科目ページURL取得
 		await Promise.all(
 			schedule.af.map(async (t, i) => {
