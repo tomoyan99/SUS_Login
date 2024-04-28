@@ -1,5 +1,5 @@
 
-export const mainCommandList = {
+export const commandList = {
     "SUS_LOGIN":{
         "event":"appinfo",
         "{#00ff4c-fg}EUC{/}":{

@@ -2,7 +2,7 @@ import {clearInterval} from "timers";
 process.stdout.setEncoding("utf8");
 class WaitAccessMessage{
     private wait_msec:number;
-    private wait_access:NodeJS.Timeout;
+    private wait_access:NodeJS.Timeout|undefined;
     private print_func:Function;
     constructor(wait_msec:number,func:Function=console.log) {
         this.wait_msec = wait_msec;

@@ -1,10 +1,10 @@
-import {control as cl} from "../lib/utils/control.js";
+import {control as cl} from "../utils/control.js";
 import {makeSchedule} from "./makeSchedule.js";
 import {writeFileSync} from "fs";
-import MyCrypt from "../lib/utils/MyCrypt.js";
-import {sleep, writeJSON} from "../lib/utils/myUtils.js";
-import {myConfirm} from "../lib/utils/MyPrompt.js";
-import {pause} from "../lib/utils/pause.js";
+import MyCrypt from "../utils/MyCrypt.js";
+import {sleep, writeJSON} from "../utils/myUtils.js";
+import {myConfirm} from "../utils/MyPrompt.js";
+import {pause} from "../utils/pause.js";
 
 //初回起動設定
 async function solaLinkReload(data,func=console.log) {

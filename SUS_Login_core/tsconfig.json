@@ -10,10 +10,8 @@
       "ES2021",
       "dom"
     ],
-    "sourceMap": true
+    "sourceMap": true,
   },
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  }
+  "include": [
+    "../src", "@types/index.d.ts"],
 }

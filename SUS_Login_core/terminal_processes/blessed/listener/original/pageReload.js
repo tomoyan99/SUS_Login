@@ -1,4 +1,4 @@
-import solaLinkReload from "../../../../main/solaLinkReload.js";
+import solaLinkReload from "../../../puppeteer/solaLinkReload.js";
 import {sleep} from "../../../utils/myUtils.js";
 
 export function pageReload(self){

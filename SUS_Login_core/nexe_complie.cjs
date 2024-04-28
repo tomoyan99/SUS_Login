@@ -1,4 +1,4 @@
-const pkg = require("./package.json")
+const pkg = require("../package.json")
 const {compile} = require("nexe");
 
 const ver = pkg.version;

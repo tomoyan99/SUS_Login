@@ -1,9 +1,9 @@
 import Blessed from "neo-blessed";
 import contrib from "neo-blessed-contrib";
 import EventEmitter from "events";
-import {listeners} from "../lib/blessed/listener/listeners.js";
-import {description} from "../lib/blessed/description.js";
-import {mainCommandList} from "../lib/blessed/mainCommandList.js";
+import {listeners} from "../listener/listeners.js";
+import {description} from "../description/description.js";
+import {mainCommandList} from "../commandList/commandList.js";
 
 class FormatData{
     _data = {

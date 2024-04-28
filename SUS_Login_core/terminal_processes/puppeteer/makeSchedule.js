@@ -4,10 +4,10 @@
 	sclassの学生時間割を参照して、その人が履修している科目の科目コードから、solaの科目ページurlを取得し、sola_link.jsonを作成
 */
 
-import {today} from '../lib/utils/today.js';
-import {control as cl} from "../lib/utils/control.js";
-import {isObjEmpty, sleep, writeJSON} from "../lib/utils/myUtils.js";
-import {openContext, openSclass, openSola} from "../lib/puppeteer/Openers.js";
+import {today} from '../utils/today.js';
+import {control as cl} from "../utils/control.js";
+import {isObjEmpty, sleep, writeJSON} from "../utils/myUtils.js";
+import {openContext, openSclass, openSola} from "./Openers.js";
 
 export async function makeSchedule(data,func=console.log) {
 	data.last_upd = {

@@ -1,12 +1,12 @@
-import {pause} from "../lib/utils/pause.js";
+import {pause} from "../utils/pause.js";
 import fs from "fs";
-import {control as cl} from "../lib/utils/control.js";
+import {control as cl} from "../utils/control.js";
 import setup from "./setup.js";
-import {sleep} from "../lib/utils/myUtils.js";
-import MainHome from "./MainHome.js";
-import {today} from "../lib/utils/today.js";
-import solaLinkReload from "./solaLinkReload.js";
-import {existChromePath} from "../lib/utils/existChromePath.js";
+import {sleep} from "../utils/myUtils.js";
+import MainHome from "../blessed/home/MainHome.js";
+import {today} from "../utils/today.js";
+import solaLinkReload from "../puppeteer/solaLinkReload.js";
+import {existChromePath} from "../utils/existChromePath.js";
 import pkg from "../../../package.json" assert {type:"json"};
 
 //main

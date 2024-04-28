@@ -1,10 +1,10 @@
-import {control as cl} from "../lib/utils/control.js";
-import {makeSchedule} from "./makeSchedule.js";
+import {control as cl} from "../utils/control.js";
+import {makeSchedule} from "../puppeteer/makeSchedule.js";
 import {existsSync,unlinkSync,writeFileSync} from "fs";
-import MyCrypt from "../lib/utils/MyCrypt.js";
-import {sleep} from "../lib/utils/myUtils.js";
-import {myConfirm, MyPrompt} from "../lib/utils/MyPrompt.js";
-import {pause} from "../lib/utils/pause.js";
+import MyCrypt from "../utils/MyCrypt.js";
+import {sleep} from "../utils/myUtils.js";
+import {myConfirm, MyPrompt} from "../utils/MyPrompt.js";
+import {pause} from "../utils/pause.js";
 
 //初回起動設定
 async function setup() {

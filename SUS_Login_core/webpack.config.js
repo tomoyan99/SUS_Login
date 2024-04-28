@@ -1,6 +1,6 @@
 import path from "path";
 import nodeExternals from "webpack-node-externals"
-import {importJSON} from "./src/terminal_processes/lib/utils/myUtils.js";
+import {importJSON} from "./terminal_processes/utils/myUtils.js";
 import WebpackObfuscator from "webpack-obfuscator";
 
 const pkjson = importJSON("package.json");

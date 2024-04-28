@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require("fs");
-const npmVersion = require("../../../package.json").version;
+const npmVersion = require("../../package.json").version;
 // const __PREFIX = "resources/";
 const __PREFIX = "";
 const termRC = {
@@ -8,7 +8,7 @@ const termRC = {
     row:30
 };
 const infoPath = "data/info.json";
-const confPath = path.resolve(__PREFIX,"userConfig.json");
+const confPath = path.resolve(__PREFIX,"src/boot/userConfig.json");
 let userConfig;
 
 if (!fs.existsSync(confPath)){

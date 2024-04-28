@@ -5,7 +5,7 @@ const WebfontLoader = require("@liveconfig/xterm-webfont");
 const {CanvasAddon} = require("xterm-addon-canvas")
 const {WebglAddon} = require("xterm-addon-webgl")
 const {WebLinksAddon} = require("xterm-addon-web-links");
-const {userConfig} = require("./public/globalValues.cjs");
+const {userConfig} = require("./boot_config.cjs");
 
 const term = new Terminal({
     cols:userConfig.defaultTerminalSize.cols,

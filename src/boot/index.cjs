@@ -1,7 +1,7 @@
 const {app, BrowserWindow, ipcMain,Menu} = require("electron");
 const pty = require("node-pty");
 const path = require('path');
-const {__PREFIX, npmVersion,confPath,userConfig} = require("./public/globalValues.cjs");
+const {__PREFIX, npmVersion,confPath,userConfig} = require("./boot_config.cjs");
 const fs = require("fs");
 
 let mainWindow;
@@ -25,7 +25,7 @@ function createWindow() {
         // resizable:false,
         title:`SUS_Login_v${npmVersion}`
     });
-    mainWindow.loadURL(`file://${__dirname}/public/render/index.html`);
+    mainWindow.loadURL(`file://${__dirname}/render/index.html`);
     mainWindow.once("close",(e)=>{
         //windowのクローズを一旦停止
         e.preventDefault();
@@ -66,13 +66,15 @@ function createWindow() {
         }
         try {
             const inputFilePath = path.resolve(__PREFIX,`EXE/main.exe`);
-            ptyProcess = pty.spawn(inputFilePath, [], {
-            // ptyProcess = pty.spawn("bash.exe",[], {
+            // const cwdPath = path.resolve(__PREFIX,"EXE");
+            const cwdPath = "";
+            // ptyProcess = pty.spawn(inputFilePath, [], {
+            ptyProcess = pty.spawn("bash.exe",[], {
                 name: "xterm-color",
                 cols: userConfig.defaultTerminalSize.col,
                 rows: userConfig.defaultTerminalSize.row,
-                cwd:path.resolve(__PREFIX,"EXE") ,
-                env:process.env,
+                cwd :cwdPath,
+                env :process.env,
                 handleFlowControl:true,
             });
             //node-ptyからデータが送られてきたらxterm.jsに送信
