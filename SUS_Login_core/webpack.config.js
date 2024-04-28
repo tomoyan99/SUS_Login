@@ -1,26 +1,25 @@
 import path from "path";
 import nodeExternals from "webpack-node-externals"
-import {importJSON} from "./terminal_processes/utils/myUtils.js";
-import WebpackObfuscator from "webpack-obfuscator";
-
+import {importJSON} from "./src/utils/myUtils.js";
 const pkjson = importJSON("package.json");
 const filename = pkjson.name+"_v"+pkjson.version;
 
-const config = {
-    //エントリポイントであるファイルのパスを指定
-    entry: {main:path.resolve("src/terminal_processes/main/main.js")},
-    output: {
-        path: path.resolve(process.cwd(),"bundle/"),  //バンドルしたファイルの出力先のパスを指定
-        filename: `${filename}_[name].cjs` //出力時のファイル名の指定
-    },
-    target:"node",
-    externals: [nodeExternals()],
-
-}
-// export default config;
-
 const config2 = {
-    entry: {main:path.resolve("src/terminal_processes/main/main.js")},
+    rules: [
+        {
+            // 拡張子 .ts の場合
+            test: /\.ts$/,
+            // TypeScript をコンパイルする
+            use: 'ts-loader',
+        },
+    ],
+    resolve: {
+        // 拡張子を配列で指定
+        extensions: [
+            '.ts', '.js',
+        ],
+    },
+    entry: {main:path.resolve("src/main/main.js")},
     output: {
         filename: `[name].cjs`,
         path: path.resolve(process.cwd(),"bundle/"),
