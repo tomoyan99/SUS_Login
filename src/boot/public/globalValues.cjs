@@ -1,8 +1,8 @@
 const path = require("path");
 const fs = require("fs");
 const npmVersion = require("../../../package.json").version;
-const __PREFIX = "resources/";
-// const __PREFIX = "";
+// const __PREFIX = "resources/";
+const __PREFIX = "";
 const termRC = {
     col:80,
     row:30

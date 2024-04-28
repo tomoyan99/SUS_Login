@@ -2,16 +2,17 @@ import {control as cl} from "../utils/control.js";
 import {today} from "../utils/today.js";
 import {appendFileSync} from "fs";
 import {Browser, BrowserContext, launch} from "puppeteer-core";
-import WaitAccessMessage from "./WaitAccessMessage.js";
+import WaitAccessMessage from "./WaitAccessMessage.ts";
 import {sleep} from "../utils/myUtils.js";
 
 /**
  * @param {('EUC'|'SCLASS'|'SOLA')} mode
  * */
 export async function openContext(mode){
+    let browser = undefined;
     try {
         /* ブラウザの立ち上げ */
-        const browser = await launch({
+        browser = await launch({
             headless: (mode === "EUC") ? "new" : false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
             slowMo: (mode === "EUC") ? 0 : 1, //タイピング・クリックなどの各動作間の速度
             defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
@@ -36,6 +37,9 @@ export async function openContext(mode){
         });
         return browser;
     }catch (e) {
+        if (browser){
+            await browser?.close();
+        }
         throw e;
     }
 }
@@ -79,15 +83,15 @@ export async function openSclass(browser, user,headless=false,func = console.log
         //アクセス待機メッセージ
         await wa.consoleOn("[SCLASS] ログイン中・・・");
         await page.evaluate(()=>{window.scrollBy(50,100)})
-        await page.waitForSelector(target_submit_ID, {visible:true,timeout: 30000});
+        await page.waitForSelector(target_submit_ID, {timeout: 30000});
         await page.click(target_submit_ID); //submitクリック
-        await page.waitForSelector(target_name_ID, {visible:true,timeout: 30000});
+        await page.waitForSelector(target_name_ID, {timeout: 30000});
         await page.focus(target_name_ID); //usernameクリック
         await page.type(target_name_ID, user_name); //username入力
-        await page.waitForSelector(target_pass_ID, {visible:true,timeout: 30000});
+        await page.waitForSelector(target_pass_ID, {timeout: 30000});
         await page.focus(target_pass_ID); //passwordクリック
         await page.type(target_pass_ID, password); //password入力
-        await page.waitForSelector(target_submit_ID, {visible:true,timeout: 30000});
+        await page.waitForSelector(target_submit_ID, {timeout: 30000});
         await page.click(target_submit_ID); //submitクリック
         if (page.url().match("https://s-class.admin.sus.ac.jp/up/faces/up/")){
             func(`${cl.bg_green}[SCLASS] ログイン完了${cl.fg_reset}`);
@@ -115,7 +119,7 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
 
     const target_name_ID = "#identifier"; //username入力要素のID
     const target_pass_ID = "#password"; //password入力要素のID
-    const target_submit_ID = "button[type=submit]"; //submitボタンのID
+    const target_submit_ID = "#login-form-selector-tab-content button[type=submit]"; //submitボタンのID
     func("[SOLAにログインします]");
     //アクセス待機メッセージ
     const wa = new WaitAccessMessage(1000,func);
@@ -140,30 +144,32 @@ export async function openSola(browser, user,headless=false,URL="https://sola.su
 
         func(`${cl.fg_green}[SOLA] アクセス完了${cl.fg_reset}`);
         await wa.consoleOn("[SOLA] ログイン中・・・");
-        await page.waitForSelector(target_name_ID, {visible:true,timeout: 30000});
+        await page.waitForSelector(target_name_ID, {timeout: 30000});
         await page.type(target_name_ID, user_name);//username入力
         await page.click(target_submit_ID);//submitクリック
-        await page.waitForSelector(target_pass_ID, {visible:true,timeout: 30000});
-        await page.waitForSelector(target_submit_ID, {visible:true,timeout: 30000});
+        await page.waitForSelector(target_pass_ID, {timeout: 30000});
+        await page.waitForSelector(target_submit_ID, {timeout: 30000});
         await page.type(target_pass_ID, password);//password入力
         await page.click(target_pass_ID);
-        let isVisibleClick = false; //clickが可視化されているかどうか
-        while(page.url() === "https://sus.ex-tic.com/auth/session"){
-            try{
-                await page.click(target_submit_ID,{delay:300});
-                isVisibleClick = true;
-                await page.waitForNavigation({waitUntil: "domcontentloaded", timeout: 0})
-                break;
-            }catch (e) {
-                await page.evaluate(()=>{
-                    if (!isVisibleClick){
-                        window.scrollBy(0,10);
-                    }});
-                continue;
+        // clickが作動しないときの処理
+        while(true){
+            console.log(!!page.url().match("https://sola.sus.ac.jp/"))
+            const page_url = page.url();
+            if (page.isClosed()){
+                console.log("close")
+                throw "is closed";
             }
-        }
-        while (!page.url().match("https://sola.sus.ac.jp/")){
-            await page.waitForNavigation({waitUntil: "domcontentloaded"})
+            if (page_url === "https://sus.ex-tic.com/auth/session"){
+                try{
+                    await page.waitForSelector(target_submit_ID,{timeout:500});
+                    await page.click(target_submit_ID,{delay:300});
+                }catch (e) {
+                    ;
+                }
+            }else if (page_url.match("https://sola.sus.ac.jp/")){
+                break;
+            }
+            await sleep(10);
         }
         func(`${cl.bg_green}[SOLA] ログイン完了${cl.fg_reset}`);
         return page;
@@ -209,7 +215,7 @@ export async function openEuc(browser, user, EUC,func = console.log) {
        });
 
        await page.click(target_eucSubmit_ID);//submitをクリック
-       await page.waitForSelector("td span.outputText", {visible:true,timeout: 30000});
+       await page.waitForSelector("td span.outputText", {timeout: 30000});
        //EUC登録した授業名を取得
        const num = await page.$eval("td span#form1\\3A Title", (tar) => {
            return tar.textContent.replace(/[\t\n]/g, "");
@@ -260,6 +266,7 @@ export function resizeWindow(page,[w, h]) {
                 },
                 windowId:windowId,
             });
+            resolve();
         }catch (e) {
             reject(e)
         }
