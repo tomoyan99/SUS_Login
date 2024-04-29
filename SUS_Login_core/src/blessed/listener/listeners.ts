@@ -20,28 +20,28 @@ import {appInfo} from "./original/appInfo.js";
 import {pageReload} from "./original/pageReload.js";
 
 export const listeners = {
-    "blessed":{
-        treeEntered :treeEntered,
-        treeSelect  :treeSelect,
-        treeRight   :treeRight,
-        treeLeft    :treeLeft,
-        screenTab   :screenTab,
-        screenEsc   :screenEsc,
-        screenCtrC  :screenCtrC
+    "blessed": {
+        treeEntered: treeEntered,
+        treeSelect: treeSelect,
+        treeRight: treeRight,
+        treeLeft: treeLeft,
+        screenTab: screenTab,
+        screenEsc: screenEsc,
+        screenCtrC: screenCtrC
     },
-    "original" :{
-        appInfo     :appInfo,
-        euc         :euc,
-        sclass      :sclass,
-        sola        :sola,
-        pageEnter   :pageEnter,
-        pageReload  :pageReload,
-        pageReturn  :pageReturn,
-        quit        :quit,
-        logs        :logs,
-        images      :images,
-        completion  :completion,
-        error       :error,
-        network     :network
+    "original": {
+        appInfo: appInfo,
+        euc: euc,
+        sclass: sclass,
+        sola: sola,
+        pageEnter: pageEnter,
+        pageReload: pageReload,
+        pageReturn: pageReturn,
+        quit: quit,
+        logs: logs,
+        images: images,
+        completion: completion,
+        error: error,
+        network: network
     }
 }

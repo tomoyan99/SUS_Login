@@ -2,7 +2,7 @@ import crypto from "crypto";
 import * as os from "os";
 import {hostname, totalmem} from "os";
 import {readFileSync, writeFileSync} from "fs";
-import {replaceNumberWithWord} from "./myUtils.js";
+import {replaceNumberWithWord} from "../src/utils/myUtils";
 
 
 class MyCrypt {
@@ -24,22 +24,26 @@ class MyCrypt {
         const longhost = long_name(hostname());
         const longmem = long_name(totalmem().toString());
         // cpu名の文字数をコアの分x10ずつ総和
-        const cpuredu = os.cpus().map((c) => c.model.length).reduce((a, c) => (a + c) * 10, 1).toString();
-        // cpureduを数値から文字列に
-        const cpuredu_nw = Array.from(cpuredu).sort().map((n) => replaceNumberWithWord(parseInt(n))).join("");
-        const nlf = Array.from(new Set([cpuredu_nw]))
-            .reduce((a, c) => a.concat(
-                Array.from(a.concat(c).join(""))
-                    .sort()
-                    .join("")), []
-            ).join("");
+        const cpuname_sum = os.cpus().map((c) => c.model.length+hostname().length*20).reduce((a, c) => (a + c) * 10, 1).toString().split("");
+        // cpureduを数値から文字列に(fivezerozeroone～みたいになる)
+        const cpuname_sum_word = cpuname_sum.map((n) => replaceNumberWithWord(parseInt(n))).join("");
+        // アルファベット被りなし
+        const distinct_cpuname_sum_array =cpuname_sum_word.split("");
+        const nlf = distinct_cpuname_sum_array.reduce((a,c)=>{
+            const s = `${(c.codePointAt(0)??0)**2}`.split("").map((d)=>{
+                return `${(d.codePointAt(0)??0)**(c.codePointAt(0)??0)}`;
+            }).join("");
+            const ss = s.split("").map((d)=>{
+                return `${((d.codePointAt(0)??0)**parseInt(d)).toString(16).toUpperCase()}`;
+            }).join("");
+            return [...a,ss];
+        },<string[]>[]).join("");
         this.PASSWORD = this.createHush512(longhost + Buffer.from(nlf, "binary").toString("base64"));
         this.SALT = this.createHush512(longmem + Buffer.from(nlf, "binary").toString("hex"));
         this.PATH = path;
     }
-
     //暗号書くやつ
-    public async writeCrypt(inputData) {
+    public async writeCrypt(inputData:Object|string) {
         return new Promise((resolve, reject) => {
             if (typeof inputData !== "string") {
                 inputData = JSON.stringify(inputData);
@@ -111,6 +115,6 @@ class MyCrypt {
     }
 }
 
-const mc = new MyCrypt("./test/test.txt");
+const mc = new MyCrypt("./test.txt");
 
 // export default MyCrypt;

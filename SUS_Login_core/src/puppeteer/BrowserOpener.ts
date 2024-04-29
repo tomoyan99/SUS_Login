@@ -1,8 +1,8 @@
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+    return (mod && mod.__esModule) ? mod : {"default": mod};
 };
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.browserOpener = void 0;
 const puppeteer_core_1 = require("puppeteer-core");
 const myUtils_1 = require("../utils/myUtils.js");
@@ -44,6 +44,7 @@ var browserOpener;
                     break;
             }
         }
+
         async open() {
             [this.browser, this.page] = await this.createContext();
             await this.errorLoop(4, async () => {
@@ -63,19 +64,21 @@ var browserOpener;
                 }
             });
         }
+
         async close() {
         }
+
         async errorLoop(max_loop, func) {
             for (let i = 0; i < max_loop; i++) {
                 try {
                     (await func)();
                     break;
-                }
-                catch (e) {
+                } catch (e) {
                     this.print_func(e);
                 }
             }
         }
+
         // ブラウザコンテキストの生成
         async createContext() {
             const browser = await (0, puppeteer_core_1.launch)({
@@ -101,6 +104,7 @@ var browserOpener;
             const page = (await browser.pages())[0];
             return [browser, page];
         }
+
         // requestがあったらHTML,script以外のファイル読み込みを禁止し軽量化
         async disableCSS() {
             if (this.page) {
@@ -109,16 +113,15 @@ var browserOpener;
                 this.page.on('request', (request) => {
                     if (['image', 'stylesheet', 'font'].indexOf(request.resourceType()) !== -1) {
                         request.abort();
-                    }
-                    else {
+                    } else {
                         request.continue();
                     }
                 });
-            }
-            else {
+            } else {
                 throw "page is not opened";
             }
         }
+
         async openSCLASS() {
             if (this.page) {
                 // cssをoffに
@@ -130,7 +133,7 @@ var browserOpener;
                 const wa = new WaitAccessMessage_1.default(1000, this.print_func);
                 //アクセス待機メッセージ
                 await wa.consoleOn("[SCLASS] アクセス中...");
-                await this.page.goto(this.default_URL, { waitUntil: 'domcontentloaded', timeout: 0 }); //ページ遷移
+                await this.page.goto(this.default_URL, {waitUntil: 'domcontentloaded', timeout: 0}); //ページ遷移
                 await wa.consoleOff();
                 //アクセスが完了したらアクセス完了の文字を出力
                 this.print_func(`${control_1.control.fg_green}[SCLASS] アクセス完了${control_1.control.fg_reset}`);
@@ -138,36 +141,37 @@ var browserOpener;
                 await wa.consoleOn("[SCLASS] ログイン中・・・");
                 // SCLASSのセレクター
                 const selectors = this.selectors.SCLASS;
-                const logout_btn = await this.page.waitForSelector(selectors.logout_btn, { timeout: 30000 });
+                const logout_btn = await this.page.waitForSelector(selectors.logout_btn, {timeout: 30000});
                 await logout_btn?.click();
-                const ID_input = await this.page.waitForSelector(selectors.ID_input, { timeout: 30000 });
+                const ID_input = await this.page.waitForSelector(selectors.ID_input, {timeout: 30000});
                 await ID_input?.type(this.userdata.ID);
-                const pass_input = await this.page.waitForSelector(selectors.pass_input, { timeout: 30000 });
+                const pass_input = await this.page.waitForSelector(selectors.pass_input, {timeout: 30000});
                 await pass_input?.type(this.userdata.password);
-                const login_btn = await this.page.waitForSelector(selectors.login_btn, { timeout: 30000 });
+                const login_btn = await this.page.waitForSelector(selectors.login_btn, {timeout: 30000});
                 await login_btn?.click();
                 //  アクセス出来たかチェック
                 if (this.page.url().match("https://s-class.admin.sus.ac.jp/up/faces/up/")) {
                     this.print_func(`${control_1.control.bg_green}[SCLASS] ログイン完了${control_1.control.fg_reset}`);
                     return this.page;
-                }
-                else if (this.page.url().match("https://s-class.admin.sus.ac.jp/up/faces/login/")) {
+                } else if (this.page.url().match("https://s-class.admin.sus.ac.jp/up/faces/login/")) {
                     throw new Error("[Input Error]\n不正な領域にユーザー名あるいはパスワードが入力されたためsclass側でエラーが出ました。"); //errorを返す
                 }
-            }
-            else {
+            } else {
                 throw "page is not opened";
             }
         }
+
         async openSOLA() {
         }
+
         async openEUC() {
         }
+
         resizeWindow([w, h]) {
             return new Promise(async (resolve, reject) => {
                 try {
                     const session = await this.page.target().createCDPSession();
-                    const { windowId } = await session.send('Browser.getWindowForTarget');
+                    const {windowId} = await session.send('Browser.getWindowForTarget');
                     await session.send('Browser.setWindowBounds', {
                         bounds: {
                             height: h,
@@ -176,13 +180,13 @@ var browserOpener;
                         windowId: windowId,
                     });
                     resolve(true);
-                }
-                catch (e) {
+                } catch (e) {
                     reject(e);
                 }
             });
         }
     }
+
     browserOpener.BrowserOpener = BrowserOpener;
 })(browserOpener || (exports.browserOpener = browserOpener = {}));
 //# sourceMappingURL=BrowserOpener.js.map

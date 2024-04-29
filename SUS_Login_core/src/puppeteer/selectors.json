@@ -1,14 +1,12 @@
 {
   "SCLASS": {
-    "logout_btn":"#form1\\:logout",
-    "ID_input":"#form1\\:htmlUserId",
-    "pass_input":"#form1\\:htmlPassword",
-    "login_btn":"#form1\\:login"
+    "logout_btn": "#form1\\:logout",
+    "ID_input": "#form1\\:htmlUserId",
+    "pass_input": "#form1\\:htmlPassword",
+    "login_btn": "#form1\\:login"
   },
   "SOLA": {
-
   },
   "EUC": {
-
   }
 }

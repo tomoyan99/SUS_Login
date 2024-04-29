@@ -1,4 +1,4 @@
-export function treeRight(self,t) {
+export function treeRight(self, t) {
     const root = t.rows;
     const node = t.nodeLines[root.getItemIndex(root.selected)];
     //右を押したとき、子要素がある(開閉可能)ならextended属性をtrueにしてデータの再設置

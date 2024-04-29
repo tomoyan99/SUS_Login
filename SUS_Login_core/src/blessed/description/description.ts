@@ -1,10 +1,10 @@
-import pkg from "../../../../package.json" assert {type :"json"};
+import pkg from "../../../../package.json" assert {type: "json"};
 
-const textDeco ={
-    Title  :(text)=>`{#ba0486-bg}${text}{/}`,
-    Chapter:(text)=>`{#007e85-bg}${text}{/}`,
-    Tab    :(text)=>`{#56c700-fg}${text}{/}`,
-    Key    :(text)=>`{#e08300-fg}${text}{/}`,
+const textDeco = {
+    Title: (text) => `{#ba0486-bg}${text}{/}`,
+    Chapter: (text) => `{#007e85-bg}${text}{/}`,
+    Tab: (text) => `{#56c700-fg}${text}{/}`,
+    Key: (text) => `{#e08300-fg}${text}{/}`,
 }
 
 export const description = {
@@ -35,8 +35,8 @@ export const description = {
     "IMAGE": "EUCの登録スクリーンショットを参照します！",
     "QUIT": "{red-bg}終了します！{/}",
     "EUC":
-        "EUCで出席登録を行います！\n\n"+
-        `${textDeco.Chapter("[説明]")}\n\n`+
+        "EUCで出席登録を行います！\n\n" +
+        `${textDeco.Chapter("[説明]")}\n\n` +
         `   1.コマンドを実行すると${textDeco.Tab("INPUT_FORMタブ")}が現れます\n` +
         `     そこにEUCを入力し、完了したら${textDeco.Key("Enter")}を押してください\n` +
         "   2.バックグラウンドでSCLASSにアクセスし、EUCの登録を行います\n" +
@@ -46,7 +46,7 @@ export const description = {
     "SOLA": "SOLAを開きます",
     "履修仮組みツール": "履修仮組みツールを開きます",
     "PAGE_LIST": "SOLAの科目ページリストを表示します",
-    "PAGE_RELOAD":"SOLAの科目ページリストを更新します",
+    "PAGE_RELOAD": "SOLAの科目ページリストを更新します",
     "前期": "{#03dffc-fg}前{/}期科目ページリストです",
     "後期": "{#fc03ba-fg}後{/}期科目ページリストです",
     "戻る": "メニュー選択に戻ります"

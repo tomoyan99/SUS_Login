@@ -14,10 +14,8 @@
   "author": "Tomoya Sano",
   "license": "ISC",
   "dependencies": {
-    "@inquirer/prompts": "^3.3.0",
     "bcrypt": "^5.1.1",
     "enquirer": "^2.4.1",
-    "inquirer": "^9.2.12",
     "neo-blessed": "^0.2.0",
     "neo-blessed-contrib": "^4.9.0",
     "nexe": "^4.0.0-rc.2",

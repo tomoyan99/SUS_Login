@@ -1,3 +1,3 @@
-export function completion(self,t) {
+export function completion(self, t) {
     self.setInfo("completion!")
 }
