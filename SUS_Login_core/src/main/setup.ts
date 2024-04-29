@@ -6,24 +6,6 @@ import {MyPrompt} from "../utils/MyPrompt";
 import {pause} from "../utils/pause";
 import {today} from "../utils/today";
 
-type MainData = {
-    user: {
-        username: string,
-        password: string
-    },
-    soraLink: SolaLinkData,
-    last_upd: LastUpdateData,
-}
-type SolaLinkData = {
-
-}
-type LastUpdateData = {
-    year: number,
-    month: number,
-    date: number,
-    value: number,
-    nowterm: "bf"|"af"
-}
 
 //初回起動設定
 async function setup() {
