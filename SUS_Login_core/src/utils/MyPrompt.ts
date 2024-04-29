@@ -1,44 +1,50 @@
 import Index from "enquirer";
-import {pause} from "./pause.js";
-import {control as cl} from "./control.js";
-import {sleep} from "./myUtils.js";
+import {pause} from "./pause";
+import {control as cl} from "./control";
+import {sleep} from "./myUtils";
+
+type Prompt = {
+    [key:string]:{
+        message:string,
+        name:string,
+        type:"input"|"password"
+    }
+}
+type Answer = {
+    [key:string]:string
+};
 
 export class MyPrompt {
-    static async Question(prompts = {
-        key:{message:"question?",name:"answer",type:"input"}
-    }){
-        const answers = {};
+    static async Question(prompts:Prompt){
+        let answers:Answer={};
         for (const promptsKey in prompts) {
             const prompt = prompts[promptsKey];
             let answerCheckList = [];
-            // console.log(promptsKey,":",prompt);
-            let answer = "";
+            let answer:Answer;
             do {
                 answer = await Index.prompt({
                     message:prompt.message,
                     name:prompt.name,
-                    type:(prompt.type === "password")?"password":"input",
-                    async onCancel(name, value, prompt) {
-                        await pause("exit")
+                    type:prompt.type,
+                    async onCancel() {
+                        await pause("exit");
+                        return true;
                     }
-                })
+                });
                 //何も入力されていなければcontinue
                 if (answer[prompt.name] === ""){
                     console.log(`${cl.error}[INPUT ERROR] 何も入力されていません${cl.reset}`);
                     await sleep(1000);
                     continue;
                 }
-
                 //answerCheckListに入力内容をpush
                 answerCheckList.push(answer[prompt.name]);
-
                 //typeがpasswordじゃなければ確認無しでbreak;
                 if (prompt.type !== "password"){
                     break;
                 }
                 //typeがpasswordなら二度の入力の後、正誤チェック
                 if (answerCheckList.length === 2){
-
                     if (answerCheckList[0] === answerCheckList[1]){
                         //入力が一致したらbreak
                         break;
@@ -79,6 +85,7 @@ export async function myConfirm(arg  ={message:"" ,name:""}){
         },
         async onCancel(name, value, prompt) {
             await pause("exit");
+            return true;
         }
     });
     return answer[arg.name];

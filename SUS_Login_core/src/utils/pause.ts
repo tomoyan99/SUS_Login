@@ -1,22 +1,17 @@
-import {KeyInputEmitter} from "./KeyInputEmitter.js";
+import {KeyInputEmitter} from "./KeyInputEmitter";
 
-/**
- * @param {("pause"|"exit")} mode
- * @param {("[何かキーを押して終了]"|"[何かキーを押して続ける]"|string)} prompt
- * @param {function} func
- * */
 export function pause(mode="pause",prompt = "[何かキーを押して終了]",func=console.log){
-	return new Promise((resolve, reject)=>{
+	return new Promise((resolve)=>{
 		// KeyInputEmitterのインスタンスを作成
 		const KIE = new KeyInputEmitter();
 		// キー入力のイベントをリッスンして表示
-		KIE.on('keypress', (char, key) => {
+		KIE.on('keypress', () => {
 			if (mode === "exit"){
 				KIE.exit();
 				process.exit(0);
 			}else if(mode === "pause"){
 				KIE.exit();
-				resolve(0);
+				resolve(true);
 			}
 		});
 		func(prompt);

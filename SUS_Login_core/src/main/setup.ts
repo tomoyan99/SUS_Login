@@ -1,15 +1,18 @@
-import {control as cl} from "../utils/control.js";
-import {makeSchedule} from "../puppeteer/makeSchedule.js";
+import {control as cl} from "../utils/control";
+import {makeSchedule} from "../puppeteer/makeSchedule";
 import {existsSync,unlinkSync,writeFileSync} from "fs";
-import MyCrypt from "../utils/MyCrypt.js";
-import {sleep} from "../utils/myUtils.js";
-import {myConfirm, MyPrompt} from "../utils/MyPrompt.js";
-import {pause} from "../utils/pause.js";
+import MyCrypt from "../utils/MyCrypt";
+import {sleep} from "../utils/myUtils";
+import {myConfirm, MyPrompt} from "../utils/MyPrompt";
+import {pause} from "../utils/pause";
 
 //初回起動設定
 async function setup() {
         const info_path = process.env.infoPath;
         const version = process.env.appVersion;
+        if (!info_path||!version){
+            throw "'infoPath' or 'version' is Empty";
+        }
         const mc = new MyCrypt(info_path);
         const data = {
             user:{
