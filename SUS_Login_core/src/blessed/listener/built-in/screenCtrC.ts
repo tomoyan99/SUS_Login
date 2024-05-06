@@ -1,3 +1,3 @@
 export function screenCtrC() {
-    process.exit(0)
+  process.exit(0);
 }

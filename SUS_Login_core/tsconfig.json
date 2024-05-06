@@ -16,8 +16,11 @@
     "typeRoots": [
       "node_modules/@types",         // デフォルトではここだけ読む.忘れず書き添える
       "src/@types" // ここを読むように変更
-    ]
+    ],
+    "resolveJsonModule": true
   },
   "include": [
-    "../src", "@types/index.d.ts"],
+    "./src",
+    "@types/index.d.ts",
+  ],
 }
