@@ -26,9 +26,7 @@ async function solaLinkReload(data: MainData, func = console.log) {
   try {
     /* createSolaLinkData関数：solaLinkDataの取得 */
     newData.solaLink = await createSolaLinkData(data, func);
-
     func("認証ファイルの暗号化を行います・・・");
-
     // info.jsonの作成or初期化
     writeFileSync(info_path, "");
     await mc.writeCrypt(newData); //info.jsonを暗号化して書き込み
@@ -36,13 +34,6 @@ async function solaLinkReload(data: MainData, func = console.log) {
     func("設定が完了しました。");
     return newData;
   } catch (e) {
-    const error_message =
-      `${cl.fg_red}[登録エラー]\n` +
-      `SOLA科目ページリストの更新に失敗しました。以下の項目を確認してもう一度やり直してください\n` +
-      `[考えられる原因]\n` +
-      `インターネットに接続されていない\n` +
-      `S-ClassまたはSOLAのサーバーが落ちているなどの不具合\n` +
-      `${cl.fg_reset}\n`;
     throw e;
   }
 }

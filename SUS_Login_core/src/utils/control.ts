@@ -6,7 +6,7 @@
 export const control = {
   /* 制御文字一覧 */
   CtrlC: "\u0003", //コントロール+C
-  erathe: "\b\b\x1b[0K", //一文字消す
+  erase: "\b\b\x1b[0K", //一文字消す
   nowrite: "\b\x1b[0K", //書き込まない
   rightClear: "\x1b[0K", //カーソルより行の右側消去
   lineClear: "\x1b[2K", //行消去

@@ -12,7 +12,6 @@ class WaitAccessMessage {
     this.wait_access = undefined;
     this.print_func = func;
   }
-
   //アクセスメッセージの開始
   async consoleOn(prompt: string = "アクセス中...") {
     //アクセス待機メッセージ
@@ -21,7 +20,6 @@ class WaitAccessMessage {
     }, this.wait_msec);
     return this.wait_access;
   }
-
   //アクセスメッセージの終了
   async consoleOff() {
     if (typeof this.wait_access) {
