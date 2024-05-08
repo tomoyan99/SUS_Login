@@ -1,20 +1,19 @@
 import {isAsyncFunction} from "util/types";
 
-async function errorLoop<T>(
-    max_loop: number,
-    func:Function
-): Promise<T> {
-    for (let i = 0; i < max_loop; i++) {
-    try {
-        return <T>await func();
-    } catch (e) {
-        console.log()
-        // console.log(e)
+function errortest(){
+    throw Error("test");
+}
+function errortest2(){
+    try{
+        errortest()
+    }catch (e) {
+        throw new Error("test2",{
+            cause:e
+        });
     }
 }
-throw new Error("[Error] retried 4th but couldn't resolve");
+try{
+    errortest2()
+}catch (e) {
+    console.dir(e)
 }
-
-errorLoop(4,()=>{
-    throw "aiueo"
-})

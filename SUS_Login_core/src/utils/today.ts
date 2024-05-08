@@ -21,21 +21,30 @@ type Today = {
   whichTerm(): "bf" | "af";
   isStartNend(lastUpdate: LastUpdateData): boolean;
 };
-
 export const today: Today = {
-  value: new Date().valueOf(),
-  year: new Date().getFullYear(),
-  month: new Date().getMonth() + 1,
-  date: new Date().getDate(),
-  hour: new Date().getHours(),
-  minute: new Date().getMinutes(),
-  sec: new Date().getSeconds(),
-  yearl2d: parseInt(new Date().getFullYear().toString().slice(-2)),
-  getToday: function getToday() {
-    return `${this.year}-${this.month.toString().padStart(2, "0")}-${this.date.toString().padStart(2, "0")}-${this.hour.toString().padStart(2, "0")}-${this.minute.toString().padStart(2, "0")}-${this.sec.toString().padStart(2, "0")}`;
+  value   : new Date().valueOf(),
+  year    : new Date().getFullYear(),
+  month   : new Date().getMonth() + 1,
+  date    : new Date().getDate(),
+  hour    : new Date().getHours(),//0~23
+  minute  : new Date().getMinutes(),
+  sec     : new Date().getSeconds(),
+  yearl2d : parseInt(new Date().getFullYear().toString().slice(-2)),
+  getToday: function getToday(separater:string="-") {
+    return `${this.year}${separater}`+
+           `${this.month.toString().padStart(2, "0")}${separater}`+
+           `${this.date.toString().padStart(2, "0")}${separater}`+
+           `${this.hour.toString().padStart(2, "0")}${separater}`+
+           `${this.minute.toString().padStart(2, "0")}`+
+           `${separater}${this.sec.toString().padStart(2, "0")}`;
   },
   getTodayJP: function getToday() {
-    return `${this.year}年${this.month.toString().padStart(2, "0")}月${this.date.toString().padStart(2, "0")}日${this.hour.toString().padStart(2, "0")}時${this.minute.toString().padStart(2, "0")}分${this.sec.toString().padStart(2, "0")}秒`;
+    return `${this.year}年`+
+           `${this.month.toString().padStart(2, "0")}月`+
+           `${this.date.toString().padStart(2, "0")}日`+
+           `${this.hour.toString().padStart(2, "0")}時`+
+           `${this.minute.toString().padStart(2, "0")}分`+
+           `${this.sec.toString().padStart(2, "0")}秒`;
   },
   getNend: function getNend() {
     let nend = this.year;
@@ -53,7 +62,7 @@ export const today: Today = {
     }
   },
   //学期始まりか否か
-  isStartNend: function isStartNend(lastUpdate) {
+  isStartNend: function isStartNend(lastUpdate:LastUpdateData) {
     // 半年分の秒数
     const half_year_msec = 2629800000 * 6;
     const newValue = this.value;
@@ -62,7 +71,7 @@ export const today: Today = {
     if (newValue - oldValue >= half_year_msec) {
       return true;
     } else {
-      return lastUpdate.nowterm !== this.whichTerm();
+      return lastUpdate.term !== this.whichTerm();
     }
   },
 };

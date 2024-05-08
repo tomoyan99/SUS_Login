@@ -26,11 +26,11 @@ export namespace MyPrompt {
       case "password": {
         let answerCheckList = [];
         const answer: MyPrompt.Answer<string> = { result: "" };
-        let result: { [key: string]: string };
+        let result: { response: string };
         do {
           result = await Index.prompt({
             message: prompt.message,
-            name: "name",
+            name: "response",
             type: prompt.type,
             async onCancel() {
               await pause("exit");
@@ -38,15 +38,13 @@ export namespace MyPrompt {
             },
           });
           //何も入力されていなければcontinue
-          if (answer.result === "") {
-            console.log(
-              `${cl.error}[INPUT ERROR] 何も入力されていません${cl.reset}`,
-            );
+          if (result.response === "") {
+            console.log(`${cl.error}[INPUT ERROR] 何も入力されていません${cl.reset}`);
             await sleep(1000);
             continue;
           }
           //answerCheckListに入力内容をpush
-          answerCheckList.push(answer.result);
+          answerCheckList.push(result.response);
           //typeがpasswordじゃなければ確認無しでbreak;
           if (prompt.type !== "password") {
             break;
@@ -71,14 +69,14 @@ export namespace MyPrompt {
           }
         } while (true);
         //入力内容をanswersに入れる
-        answer.result = result.name;
+        answer.result = result.response;
         return answer;
       }
       case "confirm": {
         const answer: MyPrompt.Answer<boolean> = { result: false };
-        const result: { [key: string]: boolean } = await Index.prompt({
+        const result: { response: boolean } = await Index.prompt({
           message: prompt.message,
-          name: "name",
+          name: "response",
           type: "toggle",
           enabled: "NO",
           disabled: "YES",
@@ -92,7 +90,7 @@ export namespace MyPrompt {
             return true;
           },
         });
-        answer.result = !result.name;
+        answer.result = !result.response;
         return answer;
       }
     }

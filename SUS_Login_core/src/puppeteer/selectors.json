@@ -2,11 +2,35 @@
   "SCLASS": {
     "logout_btn": "#form1\\:logout",
     "username_input": "#form1\\:htmlUserId",
-    "pass_input": "#form1\\:htmlPassword",
+    "password_input": "#form1\\:htmlPassword",
     "login_btn": "#form1\\:login"
   },
   "SOLA": {
+    "username_input": "#identifier",
+    "password_input": "#password",
+    "submit_btn"    : "#login button[type=submit]"
   },
   "EUC": {
+    "risyuu_div": "div::-p-text(履修関連)",
+    "EUC_link": "div::-p-text(EUC学生出欠登録)",
+    "EUC_input": "input.inputText",
+    "EUC_submit_btn": "input.button",
+    "result_text_span": "span#form1\\:htmlTorokuKekka",
+    "result_class_span": "span#form1\\:Title",
+    "shot_target_table": "table.sennasi"
+  },
+  "SCHEDULE": {
+    "SCLASS": {
+      "risyuu_div": "div::-p-text(履修関連)",
+      "schedule_link": "div#pmenu4 a::-p-text(学生時間割表)",
+      "viewstyle_select":"select#form1\\:HyojiKeishiki",
+      "term_select":"select#form1\\:htmlGakki",
+      "search_input": "input#form1\\:search",
+      "schedule_bf_table": "table#form1\\:standardJugyoTimeSchedule00List",
+      "schedule_af_table": "table#form1\\:standardJugyoTimeSchedule01List"
+    },
+    "SOLA": {
+
+    }
   }
 }

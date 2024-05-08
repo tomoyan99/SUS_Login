@@ -3,258 +3,200 @@
 	sclassの学生時間割を参照して、その人が履修している科目の科目コードから、solaの科目ページurlを取得し、sola_link.jsonを作成
 */
 import * as puppeteer from "puppeteer-core";
-
-import { today } from "../utils/today.js";
-import { control as cl } from "../utils/control.js";
-import { isObjEmpty, sleep } from "../utils/myUtils.js";
-import { MainData } from "../main/setup";
+import { today } from "../utils/today";
+import { control as cl } from "../utils/control";
+import {errorLoop, sleep} from "../utils/myUtils";
+import {SolaLinkData, User,SolaClassRecord} from "../main/setup";
 import Opener from "./BrowserOpener";
-export async function createSolaLinkData(data: MainData, func:Function = console.log) {
-  data.last_upd = {
-    year: today.year,
-    month: today.month,
-    date: today.date,
-    value: today.value,
-    nowterm: today.whichTerm(),
-  };
+import LaunchOption = Opener.LaunchOption;
+
+type Schedule = { bf:{code:string,name:string}[], af:{code:string,name:string}[]};
+
+export async function createSolaLinkData(user:User,sub_option?:LaunchOption):Promise<SolaLinkData> {
   /* ブラウザの立ち上げ */
-  try {
-    if(data.user){
-      throw "userdata is undefined";
-    }
-    const bo = new Opener.BrowserOpener({
-      userdata:data.user,
-      func:func,
-      mode:"SCLASS",
-      headless:true,
-    });
-    const sclass_schedule = await searchSclass(context, data.user, func);
-    func("続いて、SOLAから科目ページリンクの取得を行います");
-    const marge_schedule = await searchSola(
-      context,
-      data.user,
-      sclass_schedule,
-      func,
-    );
-    func("履修科目データの登録が完了しました");
-    await context.close();
-    return marge_schedule;
-  } catch (e) {
-    if (!isObjEmpty(await context)) {
-      await context.close();
-    }
-    throw e;
+  let Scraper = new SolaLinkDataScraper(user);
+  const launch_option = {
+    is_app:false,
+    is_secret:false,
+    is_headless:sub_option?.is_headless??true,
   }
-}
-
-class solaLinkDataScraper extends BO.BrowserOpener {
-  constructor(param: BO.Param) {
-    super({
-      userdata: param.userdata,
-      mode: "SCLASS",
-    });
-    // ヘッドレスモードをonに
-    this.setHeadless(true);
-  }
-
-  private async searchSclass() {
-    const page = await this.openSCLASS();
-    const target_risyuu_ID = "div#pmenu4"; //sclassの上のバーの「履修関連」
-
+  return await errorLoop(4,async()=>{
+    Scraper = await Scraper.launch(launch_option);
     try {
-      do {
-        await page.waitForSelector(target_risyuu_ID, { timeout: 10000 });
-        await page.hover(target_risyuu_ID); //「履修関連」をホバー
-        const target_studentSchedule_ID = await page.$eval(
-          target_risyuu_ID,
-          (div) => {
-            return `#${Array.from(div.children).filter((c: HTMLElement) => c.text === "学生時間割表")[0]}`;
-          },
-        );
-        await page.waitForSelector(target_studentSchedule_ID, {
-          timeout: 10000,
-        });
-        await page.click(target_studentSchedule_ID, { delay: 1000 }); //授業時間割をクリック
-      } while (
-        page.url() !==
-        "https://s-class.admin.sus.ac.jp/up/faces/up/km/Kma00401A.jsp"
-      );
-      const target_select_viewstyle_ID = "select#form1\\:HyojiKeishiki"; //表示形式選択のID
-      const target_select_term_ID = "select#form1\\:htmlGakki";
-      const target_search_ID = "input#form1\\:search"; //検索ボタンのID
-      await page.waitForSelector(target_select_viewstyle_ID, {
-        timeout: 10000,
-      });
-      await page.select(target_select_viewstyle_ID, "1"); //一覧形式の選択
-      await page.select(target_select_term_ID, "0"); //一覧形式の選択
-      await page.click(target_search_ID); //submitをクリック
-
-      //一覧形式のtableの表示を待つ
-      const table_list_bf_ID = "table#form1\\:standardJugyoTimeSchedule00List";
-      await page.waitForSelector(table_list_bf_ID, { timeout: 10000 });
-      //一覧形式のtableの表示を待つ
-      const table_list_af_ID = "table#form1\\:standardJugyoTimeSchedule01List";
-      await page.waitForSelector(table_list_af_ID, { timeout: 10000 });
-
+      const schedule = await Scraper.searchSclass();
+      Scraper.printFunc("続いて、SOLAから科目ページリンクの取得を行います");
+      const sola_links:SolaLinkData = await Scraper.searchSola(schedule);
+      Scraper.printFunc("履修科目データの登録が完了しました");
+      return sola_links
+    } catch (e) {
+      throw e;
+    }finally {
+      if (Scraper.getBrowser())await Scraper.close();
+    }
+  });
+}
+class SolaLinkDataScraper extends Opener.BrowserOpener {
+  constructor(option:User&LaunchOption) {
+    super(option);
+  }
+  async searchSclass():Promise<Schedule> {
+    try {
+      if (!this.page)throw new Error("PAGE:UNDEFINED");
+      await this.open({mode:"SCLASS"});
+      const selector = this.selectors.SCHEDULE.SCLASS;
+      try {
+        const risyuu_div = await this.page.waitForSelector(selector.risyuu_div);
+        await risyuu_div?.hover(); //「履修関連」をホバー
+        const schedule_link = await this.page.waitForSelector(selector.schedule_link);
+        await schedule_link?.click({ delay: 500 }); //授業時間割をクリック
+        const term_select = await this.page.waitForSelector(selector.term_select);
+        const viewstyle_select = await this.page.waitForSelector(selector.viewstyle_select);
+        const search_input = await this.page.waitForSelector(selector.search_input);
+        await term_select?.click();//学期選択をクリック
+        await term_select?.select("0");//学期の選択：通年
+        await viewstyle_select?.click();//表示形式をクリック
+        await viewstyle_select?.select("1");//表示形式の選択：一覧表示
+        await search_input?.click(); //submitをクリック
+        //前期tableの表示を待つ
+        const schedule_bf_table = await this.page.waitForSelector(selector.schedule_bf_table);
+        //後期tableの表示を待つ
+        const schedule_af_table = await this.page.waitForSelector(selector.schedule_af_table);
+      }catch (e) {
+        throw new Error("SCRAPE_SCLASS:CONTROL_ERROR");
+      }
       async function evalSUS(className: string, page: puppeteer.Page) {
         const path_bf = `table#form1\\:standardJugyoTimeSchedule00List td.${className} span`;
         const path_af = `table#form1\\:standardJugyoTimeSchedule01List td.${className} span`;
+        const data_bf = await page.$$eval(path_bf, (tds) => {
+              return <string[]>tds.map((data) => data.textContent).filter(Boolean);
+        });
+        const data_af = await page.$$eval(path_af, (tds) => {
+          return <string[]>tds.map((data) => data.textContent??"");
+        });
         return {
-          bf: Array.from(
-            new Set(
-              await page.$$eval(path_bf, (tds) => {
-                return tds.map((data) => data.textContent);
-              }),
-            ),
-          ),
-          af: Array.from(
-            new Set(
-              await page.$$eval(path_af, (tds) => {
-                return tds.map((data) => data.textContent);
-              }),
-            ),
-          ),
+          bf:[...new Set(data_bf)],
+          af:[...new Set(data_af)],
         };
       }
-
-      // //授業コードを取得
-      let class_code = await evalSUS("jugyoCd", page);
-
-      // //授業名を取得
-      let class_name = await evalSUS("jugyoMei", page);
-
-      let schedule = { bf: [], af: [] };
-
-      //前期分を整形してScheduleに格納
-      for (let i = 0; i < class_code.bf.length; i++) {
-        schedule.bf.push({
-          code: class_code.bf[i],
-          name: class_name.bf[i].replace(/ (.*?) .*/g, "$1").replace("\t", ""),
-        });
+      try {
+        // //授業コードを取得
+        const class_code = await evalSUS("jugyoCd", this.page);
+        // //授業名を取得
+        const class_name = await evalSUS("jugyoMei", this.page);
+        // 授業名から余計な文字を消し去る
+        class_name.bf = class_name.bf.map((name)=>name.replace(/ (.*?) .*/g, "$1").replace("\t", ""));
+        class_name.af = class_name.af.map((name)=>name.replace(/ (.*?) .*/g, "$1").replace("\t", ""));
+        // スケジュールを作成
+        const schedule = {
+          bf:class_code.bf.map((code,i)=> ({code:code,name:class_name.bf[i]})),
+          af:class_code.af.map((code,i)=> ({code:code,name:class_name.af[i]}))
+        }
+        this.printFunc(cl.fg_green + "履修科目コード及び科目名取得完了" + cl.fg_reset);
+        return schedule;
+      }catch (e) {
+        throw new Error("SCRAPE_SCLASS:CREATE_SCHEDULE_ERROR");
       }
-      //後期分を整形してScheduleに格納
-      for (let i = 0; i < class_code.af.length; i++) {
-        schedule.af.push({
-          code: class_code.af[i],
-          name: class_name.af[i].replace(/ (.*?) .*/g, "$1").replace("\t", ""),
-        });
-      }
-      func(cl.fg_green + "履修科目コード及び科目名取得完了" + cl.fg_reset);
-      return schedule;
     } catch (e) {
       throw e;
     }
   }
 
-  private async searchSola(browser, user, schedule, func) {
-    const context = await browser.createIncognitoBrowserContext();
-    await context.newPage();
-    await (await browser.pages())[0].close();
+  async searchSola(schedule:Schedule):Promise<SolaLinkData> {
     try {
-      func("前期科目ページURLを取得します・・・");
+      if (!this.page)throw new Error("PAGE:UNDEFINED");
       //一回solaを開いておくことでログイン状態を保持
-      await openSola(context, user, true, "https://sola.sus.ac.jp/", func);
-      //前期科目ページURL取得
-      await Promise.all(
-        schedule.bf.map(async (t, i) => {
-          await sleep(i * 800);
-          t.event = "sola";
-          t.url = await sola_scrp(context, t, func);
-        }),
-      );
-      func(cl.fg_green + "前期科目ページURL取得完了" + cl.fg_reset);
-      func("後期科目ページを取得します・・・");
-      //後期科目ページURL取得
-      await Promise.all(
-        schedule.af.map(async (t, i) => {
-          await sleep(i * 800);
-          t.event = "sola";
-          t.url = await sola_scrp(context, t, func);
-        }),
-      );
-      const formated_schedule = {
-        前期: {},
-        後期: {},
+      await this.open({mode:"SOLA"});
+      const selector = this.selectors.SCHEDULE.SOLA;
+      this.printFunc("前期科目ページURLを取得します・・・");
+      await sleep(1000);
+      const solaLinkData:SolaLinkData={
+        "前期":[],
+        "後期":[],
       };
-
-      for (const scheduleKey in schedule) {
-        for (const elem of schedule[scheduleKey]) {
-          formated_schedule[scheduleKey === "bf" ? "前期" : "後期"][elem.name] =
-            {
-              name: elem.name,
-              event: elem.event,
-              code: elem.code,
-              url: elem.url,
-            };
+      try {
+        //前期科目ページURL取得
+        solaLinkData["前期"] = await Promise.all(
+            schedule.bf.map(async (t, i:number):Promise<SolaClassRecord> => {
+              await sleep(i * 800);
+              return<SolaClassRecord>{
+                code :t.code,
+                name :t.name,
+                event:"sola",
+                url  :await this.sola_scrp(t)
+              }
+            })
+        );
+        this.printFunc(cl.fg_green + "前期科目ページURL取得完了" + cl.fg_reset);
+        this.printFunc("後期科目ページを取得します・・・");
+        //前期科目ページURL取得
+        solaLinkData["後期"] = await Promise.all(
+            schedule.af.map(async (t:{code:string,name:string}, i:number):Promise<SolaClassRecord> => {
+              await sleep(i * 800);
+              return<SolaClassRecord>{
+                code :t.code,
+                name :t.name,
+                event:"sola",
+                url  :await this.sola_scrp(t)
+              }
+            })
+        );
+        this.printFunc(cl.fg_green + "後期科目ページURL取得完了" + cl.fg_reset);
+      }catch (e:any) {
+        if (e?.message && e.message === "SCRAPE_SOLA:CANNOT_SCRAPE_DATA"){
+          throw e;
+        }else{
+          throw new Error("SCRAPE_SOLA:DATA_FORMAT_ERROR");
         }
       }
-      func(cl.fg_green + "後期科目ページURL取得完了" + cl.fg_reset);
-      await browser.close();
-      return formated_schedule;
+      return solaLinkData;
     } catch (e) {
-      await browser.close();
       throw e;
     }
   }
 
-  private async sola_scrp() {
+  private async sola_scrp(data:{code:string,name:string}) {
     //cssを非表示
-    const page2 = await browser.newPage();
-    await page2.setRequestInterception(true);
-    page2.on("request", (request) => {
-      if (
-        ["image", "stylesheet", "font"].indexOf(request.resourceType()) !== -1
-      ) {
-        request.abort();
-      } else {
-        request.continue();
+    if (!this.browser)throw new Error("PAGE:UNDEFINED");
+    try{
+      const page2 = await this.browser.newPage();
+      await this.disableCSS();
+      //solaに飛ぶ
+      await page2.goto(
+          `https://sola.sus.ac.jp/course/search.php?areaids=core_course-course&q=${data.code}`,
+          {
+            waitUntil: "domcontentloaded",
+            timeout: 0,
+          },
+      );
+      await page2.waitForSelector("div.last a.aalink");
+      //aのhrefから一番下にあるやつをとってくる
+      //URLが存在しなかったらSOLAのページへ
+      const url = await page2
+          .$eval("div.last a.aalink", (tar) => tar.href)
+          .catch(() => "https://sola.sus.ac.jp/");
+      //授業名の頭の二文字
+      const nend = await page2
+          .$eval("div.last a.aalink", (tar) => {
+            if (!tar.textContent)return undefined;
+            return parseInt(tar.textContent.split("_")[0]);
+          })
+          .catch(() => {
+            return undefined;
+          });
+      // ページを閉じる
+      await page2.close();
+      // func(nend + "," + today.getNend());
+      if (!nend || nend === today.getNend()) {
+        //年度が同じなら
+        this.printFunc(url);
+        return url;
+      } else if (nend !== today.getNend()) {
+        //年度が違ったら
+        this.printFunc("https://sola.sus.ac.jp/");
+        return "https://sola.sus.ac.jp/";
       }
-    });
-    //solaに飛ぶ
-    await page2.goto(
-      "https://sola.sus.ac.jp/course/search.php?areaids=core_course-course&q=" +
-        data.code,
-      {
-        waitUntil: "domcontentloaded",
-        timeout: 0,
-      },
-    );
-
-    await page2
-      .waitForSelector("div.last a.aalink", { timeout: 2000 })
-      .catch(() => {
-        return "https://sola.sus.ac.jp/";
-      });
-
-    //aのhrefから一番下にあるやつをとってくる
-    const url = await page2
-      .$eval("div.last a.aalink", (tar) => {
-        //通年科目とかの年度名が書いてあるかどうか
-        return tar.href;
-      })
-      .catch(() => {
-        //URLが存在しなかったらSOLAのページへ
-        return "https://sola.sus.ac.jp/";
-      });
-    const nend = await page2
-      .$eval("div.last a.aalink", (tar) => {
-        //通年科目とかの年度名が書いてあるかどうか
-        return parseInt(
-          tar.textContent.match(/[0-9][0-9]_/)[0].replace(/_/, ""),
-        );
-      })
-      .catch(() => {
-        return null;
-      });
-    await page2.close();
-    // func(nend + "," + today.getNend());
-    if (nend === null || nend === today.getNend()) {
-      //年度が同じなら
-      func(url);
-      return url;
-    } else if (nend !== today.getNend()) {
-      //年度が違ったら
-      return "https://sola.sus.ac.jp/";
+    }catch (e) {
+      throw new Error("SCRAPE_SOLA:CANNOT_SCRAPE_DATA");
     }
   }
 }

@@ -2,7 +2,7 @@ import {pause} from "../utils/pause";
 import fs from "fs";
 import {control as cl} from "../utils/control";
 import {setup} from "./setup";
-import {sleep} from "../utils/myUtils";
+import {sleep, writeJSON} from "../utils/myUtils";
 import MainHome from "../blessed/home/MainHome";
 import solaLinkReload from "../puppeteer/solaLinkReload";
 import {existChromePath} from "../utils/existChromePath";
@@ -32,18 +32,16 @@ import * as pkg from "../../package.json";
         `${cl.bg_yellow}セットアップ中です・・・・・・${cl.bg_reset}`,
       );
       await sleep(400);
-      let data = await setup();
-      if (!data) {
-        await pause("exit", "[何かキーを押して終了]");
-      }
+      const data = await setup();//データのフェッチ。データが無ければ作成
+      console.clear();
+      writeJSON("./data/info_raw.json",data,true);
       // if (today.isStartNend(data.last_upd)) {
-      //   console.log(
+      //   console.logs(
       //     `${cl.bg_yellow}${cl.fg_black} ※ 年度の切り替わりを検知しました${cl.fg_reset}${cl.bg_reset}`,
       //   );
       //   data = await solaLinkReload(data);
       // }
-      console.clear();
-      new MainHome([data.user, data.solaLink]);
+      // new MainHome([data.userdata, data.solaLink]);
       break;
     } catch (e) {
       console.clear();
