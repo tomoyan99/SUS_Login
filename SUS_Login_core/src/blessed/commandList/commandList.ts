@@ -1,4 +1,10 @@
-export const commandList = {
+export type EventMap = {
+  event?:string;
+  [key:string]:EventMap|string|undefined;
+}
+
+export const mainEventMap:EventMap =
+{
   SUS_LOGIN: {
     event: "appinfo",
     "{#00ff4c-fg}EUC{/}": {

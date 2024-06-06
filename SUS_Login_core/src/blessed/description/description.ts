@@ -1,13 +1,13 @@
-import pkg from "../../../../package.json" assert { type: "json" };
+import pkg from "../../../../package.json";
 
 const textDeco = {
-  Title: (text) => `{#ba0486-bg}${text}{/}`,
-  Chapter: (text) => `{#007e85-bg}${text}{/}`,
-  Tab: (text) => `{#56c700-fg}${text}{/}`,
-  Key: (text) => `{#e08300-fg}${text}{/}`,
+  Title: (text:string) => `{#ba0486-bg}${text}{/}`,
+  Chapter: (text:string) => `{#007e85-bg}${text}{/}`,
+  Tab: (text:string) => `{#56c700-fg}${text}{/}`,
+  Key: (text:string) => `{#e08300-fg}${text}{/}`,
 };
 
-export const description = {
+export const description:Record<string, string> = {
   SUS_LOGIN:
     `${textDeco.Title(`SUS_LOGIN_${pkg.version}へようこそ！`)}\n\n` +
     `${textDeco.Chapter("[あらすじ]")}\n\n` +
@@ -44,10 +44,10 @@ export const description = {
     "   4.登録成功時は、履歴がeuc.logとimagesフォルダ内に保存されます",
   SCLASS: "SCLASSを開きます",
   SOLA: "SOLAを開きます",
-  履修仮組みツール: "履修仮組みツールを開きます",
+  "履修仮組みツール": "履修仮組みツールを開きます",
   PAGE_LIST: "SOLAの科目ページリストを表示します",
   PAGE_RELOAD: "SOLAの科目ページリストを更新します",
-  前期: "{#03dffc-fg}前{/}期科目ページリストです",
-  後期: "{#fc03ba-fg}後{/}期科目ページリストです",
-  戻る: "メニュー選択に戻ります",
+  "前期": "{#03dffc-fg}前{/}期科目ページリストです",
+  "後期": "{#fc03ba-fg}後{/}期科目ページリストです",
+  "戻る": "メニュー選択に戻ります",
 };

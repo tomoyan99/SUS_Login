@@ -1,53 +1,44 @@
 import Blessed from "neo-blessed";
 import contrib from "neo-blessed-contrib";
 import EventEmitter from "events";
-import { listeners } from "../listener/listeners.js";
-import { description } from "../description/description.js";
-import { mainCommandList } from "../commandList/commandList.js";
+import { listeners } from "../listener/listeners";
+import { description } from "../description/description";
+import {EventData, EventDefinition, EventMap, mainEventMap, NestedEventDefinition} from "../commandList/commandList";
+import {User} from "../../main/setup";
 
 class FormatData {
-  _data = {
-    user: {},
+  protected data :{
+    user: User,
     main: {},
     sub: {},
     description: {},
   };
-
-  /**
-   * @param {Object} args
-   * @param {Object} args.main
-   * @param {Object} args.sub
-   * */
-  constructor(args) {
-    this._data.user = args[0];
-    this._data.main = this._parseListData(mainCommandList);
+  constructor(args:any) {
+    this.data = {
+      user:args[0],
+      main:this.parseListData(mainEventMap),
+      sub :this.parseListData(args[1]),
+      description : description
+    }
     args[1]["{yellow-fg}戻る{/}"] = { event: "return" };
-    this._data.sub = this._parseListData(args[1]);
-    this._data.description = description;
   }
 
   /**
    * @name parseListData
-   * @param {Object} data 入力データ
-   * @param {Number} depth 階層
-   * @description データをcontrib-tree用に整形する関数
+   * @description EventMapデータをcontrib-tree用に整形する関数
    * */
-  _parseListData(data, depth = 0) {
+  protected parseListData(data: EventMap, depth: number = 0) {
     const except_keys = ["event", "url", "name", "code"];
-    let edited_data =
+    let edited_data:any =
       depth === 0
-        ? { extended: true, children: {} }
-        : Object.keys(data).length > 0
-          ? { children: {} }
-          : {};
+        ? { extended: true, children: {}}//depthが0だったらextended,childrenをまず作成
+        : Object.keys(data).length > 0 ? { children: {} }//depth>0だが子要素があるときはchildrenを作成
+        : {};
     for (const dataKey in data) {
       if (except_keys.includes(dataKey)) {
         edited_data[dataKey] = data[dataKey];
       } else {
-        edited_data.children[dataKey] = this._parseListData(
-          data[dataKey],
-          depth + 1,
-        );
+        edited_data.children[dataKey] = this.parseListData(<EventMap>data[dataKey], depth + 1,);
       }
     }
     return edited_data;
@@ -110,13 +101,13 @@ class Members extends FormatData {
     subTree: {},
   };
 
-  constructor(args) {
+  constructor(args: any) {
     super(args);
   }
 }
 
 class SetComponents extends Members {
-  constructor(args) {
+  constructor(args: any) {
     super(args);
     this.#makeGrid();
     this.#makeNet();
@@ -357,7 +348,7 @@ class SetComponents extends Members {
       },
     );
     //データをセット
-    main.setData(this._data.main);
+    main.setData(this.data.main);
     this.components.mainTree = main;
   }
 
@@ -402,7 +393,7 @@ class MainHome extends SetComponents {
   };
 
   constructor(args) {
-    //this._dataの作成
+    //this.dataの作成
     super(args);
     this.#onAllEvents();
     //最初はINFOをフォーカス
