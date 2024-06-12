@@ -5,7 +5,7 @@
   "main": "src/main/main.js",
   "keywords": [],
   "scripts": {
-    "node:start": "node SUS_Login_core/terminal_processes/main/main.js",
+    "ts-node:start": "ts-node src/main/main.ts",
     "webpack": "webpack",
     "nexe:pkg": "node nexe_complie.cjs",
     "nexe:build": "run-s webpack nexe:pkg",

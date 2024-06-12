@@ -3,46 +3,40 @@ import contrib from "neo-blessed-contrib";
 import EventEmitter from "events";
 import { listeners } from "../listener/listeners";
 import { description } from "../description/description";
-import {EventData, EventDefinition, EventMap, mainEventMap, NestedEventDefinition} from "../commandList/commandList";
-import {User} from "../../main/setup";
+import {EventMap, mainEventMap} from "../commandList/commandList";
+import {SolaLinkData, User} from "../../main/setup";
 
-class FormatData {
-  protected data :{
-    user: User,
-    main: {},
-    sub: {},
-    description: {},
-  };
-  constructor(args:any) {
-    this.data = {
-      user:args[0],
-      main:this.parseListData(mainEventMap),
-      sub :this.parseListData(args[1]),
+
+/**
+ * @name treeingEventMap
+ * @description EventMapデータをcontrib-tree用に整形する関数
+ * */
+export function treeingEventMap(EM: any, depth: number = 0) {
+  const except_keys = ["event", "url", "name", "code"];//
+  let EM_treed:any =
+      depth === 0
+          ? { extended: true, children: {}}//depthが0だったらextended,childrenをまず作成
+          : Object.keys(EM).length > 0 ? { children: {} }//depth>0だが子要素があるときはchildrenを作成
+          : {};
+  for (const EM_key in EM) {
+    //EM_keyがexcept_keysに存在するキーの場合は
+    if (except_keys.includes(EM_key)) {
+      EM_treed[EM_key] = EM[EM_key];
+    } else {
+      EM_treed.children[EM_key] = treeingEventMap(<EventMap>EM[EM_key], depth + 1,);
+    }
+  }
+  return EM_treed;
+}
+
+function FormatData(args:{user:User,links:SolaLinkData}) {
+   const data = {
+      user:args.user,
+      main:treeingEventMap(mainEventMap),
+      sub :treeingEventMap(args.links),
       description : description
     }
-    args[1]["{yellow-fg}戻る{/}"] = { event: "return" };
-  }
-
-  /**
-   * @name parseListData
-   * @description EventMapデータをcontrib-tree用に整形する関数
-   * */
-  protected parseListData(data: EventMap, depth: number = 0) {
-    const except_keys = ["event", "url", "name", "code"];
-    let edited_data:any =
-      depth === 0
-        ? { extended: true, children: {}}//depthが0だったらextended,childrenをまず作成
-        : Object.keys(data).length > 0 ? { children: {} }//depth>0だが子要素があるときはchildrenを作成
-        : {};
-    for (const dataKey in data) {
-      if (except_keys.includes(dataKey)) {
-        edited_data[dataKey] = data[dataKey];
-      } else {
-        edited_data.children[dataKey] = this.parseListData(<EventMap>data[dataKey], depth + 1,);
-      }
-    }
-    return edited_data;
-  }
+    args.links["{yellow-fg}戻る{/}"] = { event: "return" };
 }
 
 class Members extends FormatData {
@@ -120,7 +114,6 @@ class SetComponents extends Members {
 
   /**
    * @name setFocus
-   * @param tar target
    * @description フォーカスを切り替える関数
    * */
   setFocus(tar) {
