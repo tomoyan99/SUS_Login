@@ -13,8 +13,8 @@ export function pageReload(self){
                 self.appendInfo("科目ページリストを更新します");
                 c.info.unkey("enter",()=>{lb.screenTab(self)});
                 const newData = await solaLinkReload(self._data,self.appendInfo);
-                newData.soraLink["{yellow-fg}戻る{/}"] = { event: "return" };
-                self._data.sub  = self._parseListData(newData.soraLink);
+                newData.solaLink["{yellow-fg}戻る{/}"] = { event: "return" };
+                self._data.sub  = self._parseListData(newData.solaLink);
             }catch (e){
                  self.event.emit("error","[ERROR] 科目ページリストの更新に失敗しました\n"+e.stack);
             }finally{

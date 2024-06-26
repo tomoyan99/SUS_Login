@@ -12,7 +12,7 @@ async function solaLinkReload(data,func=console.log) {
         const mc = new MyCrypt(info_path);
         const newData = {
             user:{
-                name:data.user.name,
+                username:data.user.username,
                 password:data.user.password
             },
             soraLink:{},

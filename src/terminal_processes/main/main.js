@@ -35,10 +35,10 @@ import pkg from "../../../package.json" assert {type:"json"};
             if (!data){
                 await pause("exit","[何かキーを押して終了]");
             }
-            if (today.isStartNend(data.last_upd)){
-                console.log(`${cl.bg_yellow}${cl.fg_black} ※ 年度の切り替わりを検知しました${cl.fg_reset}${cl.bg_reset}`)
-                data = await solaLinkReload(data);
-            }
+            // if (today.isStartNend(data.last_upd)){
+            //     console.log(`${cl.bg_yellow}${cl.fg_black} ※ 年度の切り替わりを検知しました${cl.fg_reset}${cl.bg_reset}`)
+            //     data = await solaLinkReload(data);
+            // }
             console.clear();
             new MainHome([data.user,data.solaLink]);
             break;

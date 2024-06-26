@@ -56,6 +56,7 @@ async function setup() {
                         console.clear();
                         if (schedule_try_count < 4){
                             console.log(`[ERROR] 試行回数:${schedule_try_count}\n履修科目データの取得に失敗しました。3秒後に再試行します`);
+                            console.log(e.stack)
                             await sleep(3000);
                             continue;
                         }else{
@@ -64,12 +65,11 @@ async function setup() {
                             if (yn){
                                 console.log("[YES]が選択されました。3秒後に再試行します");
                                 await sleep(3000);
-                                schedule_try_count = 1;
+                                schedule_try_count++;
                                 continue;
                             }else{
                                 console.log("[NO]が選択されました。終了します");
                                 await pause("exit","[何かキーを押して終了]");
-                                //process.exit
                             }
                         }
                     }
