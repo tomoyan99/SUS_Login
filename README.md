@@ -9,10 +9,10 @@
 
 ## 機能
 主な4つの機能  
-1. 出席登録システム「EUC」の全自動化　　
-2. S-CLASSへのアクセス及びログイン　　
-3. SOLAへのアクセス及びログイン　　
-4. 履修している科目が一目で分かって、即ページに飛べる「SOLA-PageList」   
+1. 出席登録システム「EUC」入力機能　　
+2. S-CLASS
+3. SOLA
+4. 履修している科目のSOLAページに飛べるSOLA_LINK   
 
 その他の機能
 - SOLA-PageListを更新できるPAGE-Reload
