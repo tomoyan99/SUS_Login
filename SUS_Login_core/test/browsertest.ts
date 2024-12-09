@@ -16,9 +16,8 @@ async function test() {
 }
 
 async function test2(){
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 1; i++) {
         await test();
-        await sleep(4000);
     }
 }
 test2()

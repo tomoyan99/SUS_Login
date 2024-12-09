@@ -1,4 +1,4 @@
-import { KeyInputEmitter } from "./KeyInputEmitter";
+import {KeyInputEmitter} from "./KeyInputEmitter";
 
 export function pause(
   mode: "pause" | "exit" = "pause",

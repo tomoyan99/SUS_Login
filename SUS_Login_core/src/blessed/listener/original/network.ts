@@ -1,12 +1,13 @@
-import { isNetConnected } from "../../../utils/isNetConnected.js";
+import {isNetConnected} from "../../../utils/isNetConnected.js";
+import MainHome from "../../home/MainHome";
 
-export async function network(self) {
-  const n = self.network;
-  const ns = await isNetConnected();
-  self.changeNetStatus(ns);
-  n.id = setInterval(async () => {
+export async function network(self:MainHome) {
+  const network = self.network;
+  const condition = await isNetConnected();
+  self.changeNetStatus(condition);
+  network.id = setInterval(async () => {
     const ns = await isNetConnected();
-    if (n.status !== ns) {
+    if (network.status && network.status !== condition) {
       self.changeNetStatus(ns);
     }
   }, 500);

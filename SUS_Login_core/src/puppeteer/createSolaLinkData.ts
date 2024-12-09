@@ -3,10 +3,10 @@
 	sclassの学生時間割を参照して、その人が履修している科目の科目コードから、solaの科目ページurlを取得し、sola_link.jsonを作成
 */
 import * as puppeteer from "puppeteer-core";
-import { today } from "../utils/today";
-import { control as cl } from "../utils/control";
+import {today} from "../utils/today";
+import {control as cl} from "../utils/control";
 import {errorLoop, sleep} from "../utils/myUtils";
-import {SolaLinkData, User,SolaClassRecord} from "../main/setup";
+import {SolaClassRecord, SolaLinkData, User} from "../main/setup";
 import Opener from "./BrowserOpener";
 import LaunchOption = Opener.LaunchOption;
 

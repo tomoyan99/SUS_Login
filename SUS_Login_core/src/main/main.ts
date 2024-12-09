@@ -3,8 +3,6 @@ import fs from "fs";
 import {control as cl} from "../utils/control";
 import {setup} from "./setup";
 import {sleep, writeJSON} from "../utils/myUtils";
-import MainHome from "../blessed/home/MainHome";
-import solaLinkReload from "../puppeteer/solaLinkReload";
 import {existChromePath} from "../utils/existChromePath";
 import * as pkg from "../../package.json";
 

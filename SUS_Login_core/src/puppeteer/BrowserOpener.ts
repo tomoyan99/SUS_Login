@@ -1,410 +1,322 @@
 import * as puppeteer from "puppeteer-core";
 import {control as cl} from "../utils/control";
 import WaitAccessMessage from "./WaitAccessMessage";
-import * as selectors from "./selectors.json";
+import Selectors from "./Selectors";
 import {User} from "../main/setup";
 import {today} from "../utils/today";
 import {appendFileSync, existsSync, mkdirSync} from "fs";
 import {errorLoop, sleep} from "../utils/myUtils";
 
+// Opener namespace定義
 namespace Opener {
+  // Launch時のオプション設定
   export type LaunchOption = {
-    printFunc?: Function;
-    clearFunc?: Function;
-    is_app?: boolean;
-    is_headless?: boolean;
-    is_secret?: boolean;
-  }
-  export type SiteMode = "SCLASS" | "SOLA" | "EUC";
-  export type ModeOption<T extends SiteMode>=
-       T extends "SCLASS" ?{ mode: "SCLASS"; }
-      :T extends "SOLA"   ?{ mode: "SOLA"  ; solaLink_URL?: string; }
-      :T extends "EUC"    ?{ mode: "EUC"   ; EUC: string; }
-      :never;
-  export type Contexts = [puppeteer.Browser, puppeteer.Page];
-  export type Selectors = {
-    SCLASS:Record<string, string>;
-    SOLA  : Record<string, string>;
-    EUC   : Record<string, string>;
-    SCHEDULE: {
-      SCLASS: Record<string, string>;
-      SOLA  : Record<string, string>;
-    };
+    printFunc?: Function;         // ログ出力関数
+    clearFunc?: Function;         // 画面クリア関数
+    is_app?: boolean;             // アプリモードの指定
+    is_headless?: boolean | "shell";  // ヘッドレスモードの指定
+    is_secret?: boolean;          // シークレットモードの指定
   };
+  export type Contexts = [puppeteer.Browser, puppeteer.Page];
+  // モード設定（SCLASS, SOLA, EUC）の型定義
+  export type SiteMode = "SCLASS" | "SOLA" | "EUC";
+  export type ModeOption<T extends SiteMode> =
+      T extends "SCLASS" ? { mode: "SCLASS" }
+          : T extends "SOLA" ? { mode: "SOLA"; solaLink_URL?: string }
+              : T extends "EUC" ? { mode: "EUC"; EUC: string }
+                  : never;
 
+  // ブラウザを制御するクラス
   export class BrowserOpener {
-    protected mode: SiteMode | undefined;
-    protected readonly userdata: User;
-    protected target_URL: string;
-    protected EUC: string | undefined;
-    protected selectors: Selectors;
-    protected solaLink_URL: string | undefined;
-    protected browser: puppeteer.Browser | undefined;
-    protected page: puppeteer.Page | undefined;
-    public    printFunc: Function; //文字を表示させる関数
-    public    clearFunc: Function; //文字を表示させる関数
-    protected is_headless: boolean; //デフォルトはfalse
-    protected is_app    : boolean; //ブラウザをappモードで開くかどうか(デフォルトはtrue)
-    protected is_secret: boolean; //ブラウザをシークレットモードで開くかどうか(デフォルトはtrue)
+    private mode?: SiteMode;                // サイトモードを保持
+    private readonly userdata: User;        // ユーザー情報
+    private target_URL = "";          // ターゲットURL
+    private readonly selectors:Selectors;
+    private EUC?: string;                   // EUC専用のプロパティ
+    private solaLink_URL?: string;          // SOLA専用のプロパティ
+    private browser?: puppeteer.Browser;    // PuppeteerのBrowserインスタンス
+    private page?: puppeteer.Page;          // PuppeteerのPageインスタンス
+    private printFunc: Function;            // ログ出力関数
+    private clearFunc: Function;            // 画面クリア関数
+    private is_headless: boolean | "shell" = false; // ヘッドレスモードフラグ
+    private is_app: boolean = true;         // アプリモードフラグ
+    private is_secret: boolean = true;      // シークレットモードフラグ
+
     // コンストラクタ
     constructor(userdata: User) {
-      this.userdata             = userdata;
-      this.target_URL           = "";//必ず何らかの値で初期化されるから大丈夫
-      this.browser              = undefined;
-      this.page                 = undefined;
-      this.selectors            = selectors;
-      this.printFunc            = console.log;
-      this.clearFunc            = console.clear;
-      this.is_app               = true; //デフォルト：アプリモード
-      this.is_headless          = false;//デフォルト：ノンヘッドレスモード
-      this.is_secret            = true; //デフォルト：シークレットモード
-      this.mode                 = undefined;
-      this.solaLink_URL         = undefined;
+      this.userdata = userdata;
+      this.printFunc = console.log;
+      this.clearFunc = console.clear;
+      this.selectors = new Selectors();
     }
-    // 疑似コンストラクタ
-    // ブラウザを立ち上げる
-    public async launch(option:LaunchOption) {
-      this.printFunc = option.printFunc??console.log;
-      this.clearFunc = option.clearFunc??console.clear;
-      this.is_headless= option.is_headless??false;
-      this.is_app     = option.is_app??true;
-      this.is_secret  = option.is_secret??true; //デフォルト：シークレットモード
-      // エラーだったら4回リトライ
-      [this.browser, this.page] = await errorLoop<Contexts>(
+
+    // ブラウザ起動
+    public async launch(option: LaunchOption) {
+      this.applyLaunchOptions(option);      // オプションの適用
+      [this.browser, this.page] = await errorLoop<Contexts>( // エラーループ付きでブラウザ起動
           4,
-          async () => await this.createContext()
+          this.createContext.bind(this)
       );
       return this;
     }
+
+    // 指定モードでサイトを開く
     public async open(option: ModeOption<SiteMode>): Promise<BrowserOpener> {
-      return await errorLoop(
-          4,
-          async ()=>{
-            // ブラウザが無いもしくは接続が無い場合はブラウザ閉じられエラーを出す
-            if (!this.browser || (await this.browser.pages()).length === 0){
-              throw new Error("BROWSER:CLOSED");
-            }
-            switch (option.mode) {
-              case "SCLASS": {
-                this.changeMode({
-                  mode: option.mode,
-                });
-                await this.openSCLASS();
-                await this.resizeWindow([800, 600]);
-                return this;
-              }
-              case "SOLA": {
-                this.changeMode({
-                  mode: option.mode,
-                  solaLink_URL: option.solaLink_URL,
-                });
-                await this.openSOLA();
-                await this.resizeWindow([800, 600]);
-                return this;
-              }
-              case "EUC": {
-                this.changeMode({
-                  mode: option.mode,
-                  EUC: option.EUC,
-                });
-                await this.openEUC();
-                await this.close();
-                return this;
-              }
-            }
-          });
+      return await errorLoop(4, async () => { // エラーループ付き
+        if (!this.browser || (await this.browser.pages()).length === 0) {
+          throw new Error("BROWSER:CLOSED");
+        }
+        this.changeMode(option);           // モード変更
+        await this.navigateAndResize(option.mode); // サイトアクセスとリサイズ
+        return this;
+      });
     }
+
+    // ブラウザを閉じる
     public async close() {
-      if (!this.browser) throw new Error("BROWSER:UNDEFINED");//ブラウザ未定義エラー
+      if (!this.browser) throw new Error("BROWSER:UNDEFINED");
       await this.browser.close();
       this.browser = undefined;
     }
-    public changeMode(option: ModeOption<SiteMode>): void {
-      this.mode = option.mode;
-      switch (option.mode) {
-        case "SCLASS":
-          this.target_URL =
-              "https://s-class.admin.sus.ac.jp/up/faces/login/Com00504A.jsp";
-          break;
-        case "SOLA":
-          this.target_URL = this.solaLink_URL
-              ? this.solaLink_URL
-              : "https://sola.sus.ac.jp/";
-          break;
-        case "EUC":
-          // EUCだけはデフォルトでheadlessをtrueに
-          this.EUC = option.EUC;
-          this.target_URL =
-              "https://s-class.admin.sus.ac.jp/up/faces/login/Com00504A.jsp";
-          break;
-      }
+
+    // オプション設定を適用
+    private applyLaunchOptions(option: LaunchOption) {
+      this.printFunc = option.printFunc ?? console.log;
+      this.clearFunc = option.clearFunc ?? console.clear;
+      this.is_headless = option.is_headless ?? false;
+      this.is_app = option.is_app ?? true;
+      this.is_secret = option.is_secret ?? true;
     }
-    public getBrowser(){
-      if (!this.browser) throw new Error("BROWSER:NOT_OPENED");
-      return this.browser;
-    }
-    public getPage(){
-      if (!this.page)throw new Error("PAGE:UNDEFINED");
-      return this.page;
-    }
-    // ブラウザコンテキストの生成
-    private async createContext(): Promise<Contexts> {
+
+    // ブラウザとページの作成
+    private async createContext(): Promise<[puppeteer.Browser, puppeteer.Page]> {
       try {
         const browser = await puppeteer.launch({
-          headless: this.is_headless ? "new" : false, //ヘッドレス(ブラウザの表示・非表示)の設定。falseなら表示
-          slowMo: this.is_headless ? 0 : 1, //タイピング・クリックなどの各動作間の速度
-          defaultViewport: null, //ブラウザサイズとviewportがずれる不具合の防止
-          channel: "chrome", //chromeを探し出して開く
-          ignoreHTTPSErrors: true,
-          timeout:0,
-          waitForInitialPage: true,
-          ignoreDefaultArgs: [
-            "--disable-extensions",
-            "--enable-automation", //コレ付けると「自動で動いています」みたいな表示が出ない
-          ],
-          args: [
-            ...(this.is_app ?["--app=https://www.google.co.jp/"]:[]), //appモードがonならappモードで開く
-            ...(this.is_headless||!this.is_secret?[]:["--incognito"]),
-            "--window-position=0,0",
-            this.is_headless
-                ? "--window-size=1200,1200"
-                : "--window-size=200,300",
-            "--proxy-server='direct://'",
-            "--proxy-bypass-list=*",
-            "--test-type"
-          ],
+          headless: this.is_headless ? "shell" : false,
+          slowMo: this.is_headless ? 0 : 1,
+          defaultViewport: null,
+          channel: "chrome",
+          timeout: 0,
+          ignoreDefaultArgs: ["--disable-extensions", "--enable-automation"],
+          args: this.buildLaunchArgs(),
         });
-        const page = (await browser.pages())[0];
-        return [browser, page];
-      }catch (e) {
+        return [browser, (await browser.pages())[0]];
+      } catch {
         throw new Error("BROWSER:CANNOT_OPEN");
       }
     }
-    // requestがあったらHTML,script以外のファイル読み込みを禁止し軽量化
-    public async disableCSS() {
-      if (!this.page)throw new Error("PAGE:UNDEFINED");
-      // CSSをOFFにして高速化
-        await this.page.setRequestInterception(true);
-        this.page.removeAllListeners("request");
-        this.page.on("request", (request) => {
-          if (["image", "stylesheet", "font"].indexOf(request.resourceType()) !== -1) {
-            request.abort();
-          } else {
-            request.continue();
-          }
-        });
+
+    // Puppeteerの引数を生成
+    private buildLaunchArgs(): string[] {
+      return [
+        ...(this.is_app ? ["--app=https://www.google.co.jp/"] : []),
+        ...(this.is_headless || !this.is_secret ? [] : ["--incognito"]),
+        "--window-position=0,0",
+        this.is_headless ? "--window-size=1200,1200" : "--window-size=200,300",
+        "--proxy-server='direct://'",
+        "--proxy-bypass-list=*",
+        "--test-type",
+      ];
     }
+
+    // サイトアクセスとウィンドウのリサイズ
+    private async navigateAndResize(mode: SiteMode) {
+      switch (mode) {
+        case "SCLASS":
+          await this.openSCLASS();
+          await this.resizeWindow([800, 600]);
+          break;
+        case "SOLA":
+          await this.openSOLA();
+          await this.resizeWindow([800, 600]);
+          break;
+        case "EUC":
+          await this.openEUC();
+          await this.close();
+          break;
+      }
+    }
+
+    // モードを変更し、ターゲットURLを設定
+    private changeMode(option: ModeOption<SiteMode>): void {
+      this.mode = option.mode;
+      this.target_URL =
+          option.mode === "SOLA" && option.solaLink_URL
+              ? option.solaLink_URL
+              : "https://s-class.admin.sus.ac.jp/up/faces/login/Com00504A.jsp";
+      if (option.mode === "EUC") this.EUC = option.EUC;
+    }
+    // エラーハンドリング共通関数
+    private handleError(e: unknown, source: string): Error {
+      let errorMessage = `${source}:UNKNOWN_ERROR`;
+
+      if (e instanceof Error) {
+        errorMessage = e.message.includes("net::ERR_CONNECTION_REFUSED")
+            ? `${source}:CONNECTION_REFUSED`
+            : `${source}:${e.message}`;
+      } else if (typeof e === "string") {
+        errorMessage = `${source}:${e}`;
+      }
+
+      return new Error(errorMessage);
+    }
+
+    // SCLASSサイトにアクセスしログイン
     protected async openSCLASS(): Promise<void> {
-      if (!this.page)throw new Error("PAGE:UNDEFINED");
-      // cssをoffに
+      if (!this.page) throw new Error("PAGE:UNDEFINED");
       if (this.is_headless) await this.disableCSS();
       this.printFunc("[SCLASSにログインします]");
-      //アクセス待機メッセージ生成器
       const wa = new WaitAccessMessage(1000, this.printFunc);
+
       try {
-        await wa.consoleOn("[SCLASS] アクセス中...");//アクセス待機メッセージON
-        try {
-          await this.page.goto(this.target_URL, {
-            waitUntil: "domcontentloaded",
-            timeout: 0,
-          });
-        }catch (e:any) {
-          if (e?.message && e.message === `net::ERR_CONNECTION_REFUSED at ${this.target_URL}`){
-            // 2時から5時はメンテタイム
-            if (today.hour >=2 && today.hour <= 5)throw new Error("SCLASS:MAINTENANCE_TIME_ERROR");
-            //それ以外は謎に繋がらないエラー
-            throw new Error("SCLASS:CONNECTION_REFUSED");
-          }else{
-            throw new Error("SCLASS:UNKNOWN_GOTO_ERROR")
-          }
-        }
-        await wa.consoleOff();//アクセス待機メッセージOFF
+        await wa.consoleOn("[SCLASS] サイトにアクセスしています...");
+        await this.page.goto(this.target_URL, { waitUntil: "domcontentloaded", timeout: 0 });
+        await wa.consoleOff();
         this.printFunc(`${cl.fg_green}[SCLASS] アクセス完了${cl.fg_reset}`);
-        await wa.consoleOn("[SCLASS] ログイン中・・・");//アクセス待機メッセージON
-        const selectors = this.selectors.SCLASS; // SCLASSのセレクター
-        const logout_btn = await this.page.waitForSelector(
-            selectors.logout_btn,
-            { timeout: 30000 },
-        );// ログインボタン
+        await wa.consoleOn("[SCLASS] ログイン中・・・");
+
+        const selectors = this.selectors.SCLASS;
+        const logout_btn = await this.page.waitForSelector(selectors.logout_btn, { timeout: 30000 });
         await logout_btn?.click();
-        // 学籍番号入力
-        const username_input = await this.page.waitForSelector(
-            selectors.username_input,
-            {timeout: 30000});
-        await username_input?.click();//クリックして入力箇所の間違いを防ぐ
+
+        const username_input = await this.page.waitForSelector(selectors.username_input, { timeout: 30000 });
+        await username_input?.click();
         await username_input?.type(this.userdata.username);
-        // パスワード入力
-        const password_input = await this.page.waitForSelector(
-            selectors.password_input,
-            { timeout: 30000});
-        await password_input?.click();//クリックして入力箇所の間違いを防ぐ
+
+        const password_input = await this.page.waitForSelector(selectors.password_input, { timeout: 30000 });
+        await password_input?.click();
         await password_input?.type(this.userdata.password);
-        //提出・入力ボタン
-        const login_btn = await this.page.waitForSelector(selectors.login_btn, {timeout: 30000,});
+
+        const login_btn = await this.page.waitForSelector(selectors.login_btn, { timeout: 30000 });
         await login_btn?.click();
-        // waitForNavigatorが効かないのでbodyが現れるまで待つ
-        // このとき、現れるまでの時間は不明なので無限に待つ
-        await this.page.waitForSelector("body",{timeout:0});
-        // URLを見て認証の成否をチェック
+
+        await this.page.waitForSelector("body", { timeout: 0 });
+
         if (this.page.url().match("https://s-class.admin.sus.ac.jp/up/faces/up/")) {
           this.printFunc(`${cl.bg_green}[SCLASS] ログイン完了${cl.fg_reset}`);
         } else if (this.page.url().match("https://s-class.admin.sus.ac.jp/up/faces/login/")) {
-          throw new Error("SCLASS:AUTH_FAILURE");//認証失敗エラー
+          throw this.handleError(new Error("AUTH_FAILURE"), "SCLASS");
         }
-      }catch (e:unknown) {
-        let new_e :Error;
-        new_e = (e instanceof Error)?e
-                :(typeof e === "string")?new Error(e)
-                :new Error("SCLASS:UNKNOWN_ERROR");
-        throw new_e;
-      }finally {
-        await wa.consoleOff();// コンソールメッセージは必ずOFFに
+      } catch (e: unknown) {
+        throw this.handleError(e, "SCLASS");
+      } finally {
+        await wa.consoleOff();
       }
     }
-    protected async openSOLA():Promise<void> {
-      if (!this.page)throw new Error("PAGE:UNDEFINED");//ページ未定義エラー
-      if (!this.target_URL)throw new Error("SOLA:URL_UNDEFINED");//ページ未定義エラー
-      const selectors = this.selectors.SOLA;
+
+    // SOLAサイトにアクセスしログイン
+    protected async openSOLA(): Promise<void> {
+      if (!this.page) throw new Error("PAGE:UNDEFINED");
+      if (!this.target_URL) throw new Error("SOLA:URL_UNDEFINED");
       this.printFunc("[SOLAにログインします]");
-      //アクセス待機メッセージ
-      const wa = new WaitAccessMessage(1000,this.printFunc);
+      const wa = new WaitAccessMessage(1000, this.printFunc);
+
       try {
-        if (this.is_headless)await this.disableCSS();
-        await wa.consoleOn("[SOLA] アクセス中...");
+        if (this.is_headless) await this.disableCSS();
+        await wa.consoleOn("[SOLA] サイトにアクセスしています...");
         await this.page.goto(this.target_URL, { waitUntil: 'domcontentloaded', timeout: 0 });
         await wa.consoleOff();
         this.printFunc(`${cl.fg_green}[SOLA] アクセス完了${cl.fg_reset}`);
         await wa.consoleOn("[SOLA] ログイン中・・・");
 
-        const username_input = await this.page.waitForSelector(selectors.username_input, {timeout: 30000});
-        const submit_btn = await this.page.waitForSelector(selectors.submit_btn, {timeout: 30000});
-        await username_input?.click();
-        await username_input?.type(this.userdata.username);//username入力
-        await submit_btn?.click();//submitクリック
-        const password_input = await this.page.waitForSelector(selectors.password_input, {timeout: 30000});
-        await password_input?.click();
-        await password_input?.type(this.userdata.password);//password入力
+        const selectors = this.selectors.SOLA;
+        const username_input = await this.page.waitForSelector(selectors.username_input, { timeout: 30000 });
+        const submit_btn = await this.page.waitForSelector(selectors.submit_btn, { timeout: 30000 });
 
-        // SOLAのsubmitボタンが押せないバグの暫定解決法
-        // "sola.sus.ac.jp"という文字の入ったresponseを受け取るまでクリックループ
-        await errorLoop(20,async()=>{
-          if (!this.page)throw new Error("PAGE:UNDEFINED");
+        await username_input?.click();
+        await username_input?.type(this.userdata.username);
+        await submit_btn?.click();
+
+        const password_input = await this.page.waitForSelector(selectors.password_input, { timeout: 30000 });
+        await password_input?.click();
+        await password_input?.type(this.userdata.password);
+
+        await errorLoop(20, async () => {
+          if (!this.page) throw new Error("PAGE:UNDEFINED");
           await sleep(200);
           await submit_btn?.click();
-          await this.page.waitForResponse((res)=>{
-            return  !!(res.url().match("sola.sus.ac.jp"));
-          },{timeout:2000});
+          await this.page.waitForResponse(res => !!(res.url().match("sola.sus.ac.jp")), { timeout: 2000 });
         });
+
         this.printFunc(`${cl.bg_green}[SOLA] ログイン完了${cl.fg_reset}`);
-        return;
-      }catch (e){
-        let new_e :Error;
-        new_e = (e instanceof Error)?e
-            :(typeof e === "string")?new Error(e)
-                :new Error("SOLA:UNKNOWN_ERROR");
-        switch ((<Error>e).message) {
-          case `net::ERR_CONNECTION_REFUSED at ${this.target_URL}`:{
-            new_e.message = "SOLA:CONNECTION_REFUSED";
-            break;
-          }
-        }
-        throw new_e;
-      }finally {
+      } catch (e) {
+        throw this.handleError(e, "SOLA");
+      } finally {
         await wa.consoleOff();
       }
     }
-    protected async openEUC() {
-      if (!this.page)throw new Error("PAGE:UNDEFINED");//ページ未定義エラー
-      if (!this.EUC)throw new Error("EUC:EUC_UNDEFINED");//EUC未定義エラー
+
+    // EUCサイトにアクセスし登録
+    protected async openEUC(): Promise<void> {
+      if (!this.page) throw new Error("PAGE:UNDEFINED");
+      if (!this.EUC) throw new Error("EUC:EUC_UNDEFINED");
       this.printFunc("[EUC登録を行います]");
-      //アクセス待機メッセージ
-      const wa = new WaitAccessMessage(1000,this.printFunc);
+      const wa = new WaitAccessMessage(1000, this.printFunc);
       const selectors = this.selectors.EUC;
+
       try {
-        //SCLASSにヘッドレスでアクセス
         await this.openSCLASS();
-        //ダイアログを押すイベントを登録
-        this.page.once("dialog", async dialog => {
-          await dialog.accept(); // OK
-        });
+        this.page.once("dialog", async dialog => await dialog.accept());
+
         await wa.consoleOn("[EUC] 登録中...");
         const risyuu_div = await this.page.waitForSelector(selectors.risyuu_div);
-        await risyuu_div?.hover();//「履修関連」をホバー
-        //「履修登録」のタブが増えてたりしたときのため
-        const EUC_link = await this.page.waitForSelector(selectors.EUC_link)
-        await EUC_link?.click();//「EUC学生出欠登録」をクリック
-        const EUC_input = await this.page.waitForSelector(selectors.EUC_input);//EUC入力フォーム
-        const EUC_submit_btn = await this.page.waitForSelector(selectors.EUC_submit_btn);//EUC提出ボタン
-        await EUC_input?.click();//EUCの入力
-        await EUC_input?.type(this.EUC);//EUCの入力
+        await risyuu_div?.hover();
+
+        const EUC_link = await this.page.waitForSelector(selectors.EUC_link);
+        await EUC_link?.click();
+
+        const EUC_input = await this.page.waitForSelector(selectors.EUC_input);
+        const EUC_submit_btn = await this.page.waitForSelector(selectors.EUC_submit_btn);
+        await EUC_input?.click();
+        await EUC_input?.type(this.EUC);
         await EUC_submit_btn?.click();
-        // 結果表示span
+
         const result_text_span = await this.page.waitForSelector(selectors.result_text_span);
-        //EUC登録の結果の文章を取得
-        const result_text = await(await result_text_span?.getProperty("textContent"))?.jsonValue()??"番号が異なります。";
-        //EUC登録した授業名を取得
-        const result_class = await this.page.$eval("span#form1\\:Title", (span) => {
-          return (span)?span.textContent?.replace(/[\t\n]/g, ""):"";
-        }).catch(() => {
-          // 要素がない(番号が異なる)場合は何も返さない
-          return "";
-        });
+        const result_text = (await result_text_span?.evaluate(el => el.textContent)) || "番号が異なります。";
+        const result_class = await this.page.$eval("span#form1\\:Title", span => span?.textContent?.replace(/[\t\n]/g, "") || "");
+
         await wa.consoleOff();
-        this.printFunc(`${cl.fg_cyan}${(result_class)?result_class+"\n":""}${cl.fg_reset}${cl.fg_red}${result_text}${cl.fg_reset}`); //結果をコンソールに表示
-        //「番号が異なります。」が出なかったらスクショ
-        if (result_text === "番号が異なります。")return;
-        // 以下else
+        this.printFunc(`${cl.fg_cyan}${result_class ? result_class + "\n" : ""}${cl.fg_reset}${cl.fg_red}${result_text}${cl.fg_reset}`);
+
+        if (result_text === "番号が異なります。") return;
+
         const shot_target = await this.page.waitForSelector(selectors.shot_target_table);
         const filename = today.getToday();
-        try{
-          // data/imagesがなければ再帰的に作成
-          if (!existsSync("data/images"))mkdirSync("data/images",{recursive:true});
-          // スクリーンショットををとり、data/imagesに保存
-          await shot_target?.screenshot({
-            path: `data/images/${result_class}-${filename}.jpg`,
-            type: 'jpeg',
-            quality: 100
-          });
-        }catch (e) {
-          throw new Error("EUC:SCREENSHOT_ENOENT");
-        }
-        // /logs/euc.logファイルがあるか判定。なければ作成あったら追記
+
+        if (!existsSync("data/images")) mkdirSync("data/images", { recursive: true });
+        await shot_target?.screenshot({ path: `data/images/${result_class}-${filename}.jpg`, type: 'jpeg', quality: 100 });
+
         const todayEUC = `授業名：${result_class},EUC番号:${this.EUC},結果:${result_text},日付:${today.getTodayJP()}\n`;
-        try{
-          // data/logsがなければ再帰的に作成
-          if (!existsSync("data/logs"))mkdirSync("data/logs",{recursive:true});
-          appendFileSync("data/logs/euc.log", todayEUC, "utf-8");
-        }catch (e) {
-          throw new Error("EUC:LOG_ENOENT");
-        }
-      return ;
-      }catch (e){
-        let new_e :Error;
-        new_e = (e instanceof Error)?e
-                :(typeof e === "string")?new Error(e)
-                :new Error("EUC:UNKNOWN_ERROR");
-        throw new_e;
-      }finally {
+        if (!existsSync("data/logs")) mkdirSync("data/logs", { recursive: true });
+        appendFileSync("data/logs/euc.log", todayEUC, "utf-8");
+
+      } catch (e) {
+        throw this.handleError(e, "EUC");
+      } finally {
         await wa.consoleOff();
       }
     }
-    protected async resizeWindow([w, h]: [number, number]) {
-      try {
-        if (!this.page)throw new Error("PAGE:UNDEFINED");
-        // CDPセッションを作成し、ブラウザに直接値を流し込む
-        const session = await this.page.target().createCDPSession();
-          const { windowId } = await session.send("Browser.getWindowForTarget");
-          await session.send("Browser.setWindowBounds", {
-            bounds: {
-              height: h,
-              width: w,
-            },
-            windowId: windowId,
-          });
-          return true;
-      } catch (e) {
-        throw e;
-      }
+
+    // ヘッドレス時のCSS・画像無効化
+    private async disableCSS() {
+      if (!this.page) throw new Error("PAGE:UNDEFINED");
+      await this.page.setRequestInterception(true);
+      this.page.on("request", (req) =>
+          ["image", "stylesheet", "font"].includes(req.resourceType())
+              ? req.abort()
+              : req.continue()
+      );
+    }
+
+    // ウィンドウサイズの変更
+    private async resizeWindow([w, h]: [number, number]) {
+      if (!this.page) throw new Error("PAGE:UNDEFINED");
+      const session = await this.page.createCDPSession();
+      const { windowId } = await session.send("Browser.getWindowForTarget");
+      await session.send("Browser.setWindowBounds", {
+        windowId,
+        bounds: { width: w, height: h },
+      });
     }
   }
 }

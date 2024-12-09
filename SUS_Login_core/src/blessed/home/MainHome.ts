@@ -1,157 +1,181 @@
-import Blessed from "neo-blessed";
-import contrib from "neo-blessed-contrib";
+import Blessed, {Widgets} from "neo-blessed";
+import contrib from "blessed-contrib";
 import EventEmitter from "events";
-import { listeners } from "../listener/listeners";
-import { description } from "../description/description";
-import {EventMap, mainEventMap} from "../commandList/commandList";
-import {SolaLinkData, User} from "../../main/setup";
+import {BlessedListener, ListenerList, listeners, OriginalListener} from "../listener/listeners";
+import {description} from "../description/description";
+import {mainEventMap} from "../commandList/commandList";
+import {EventMap, SolaLinkData, User} from "../../main/setup";
+
+export type TreeNode = {
+  extended?: boolean;
+  children?: Record<string, TreeNode>;
+  name?: string;
+  code?: string;
+  event?: string;
+  [key: string]: any;
+};
+
+type MainArgs = { user: User; links: SolaLinkData };
 
 
-/**
- * @name treeingEventMap
- * @description EventMapデータをcontrib-tree用に整形する関数
- * */
-export function treeingEventMap(EM: any, depth: number = 0) {
-  const except_keys = ["event", "url", "name", "code"];//
-  let EM_treed:any =
-      depth === 0
-          ? { extended: true, children: {}}//depthが0だったらextended,childrenをまず作成
-          : Object.keys(EM).length > 0 ? { children: {} }//depth>0だが子要素があるときはchildrenを作成
-          : {};
-  for (const EM_key in EM) {
-    //EM_keyがexcept_keysに存在するキーの場合は
-    if (except_keys.includes(EM_key)) {
-      EM_treed[EM_key] = EM[EM_key];
-    } else {
-      EM_treed.children[EM_key] = treeingEventMap(<EventMap>EM[EM_key], depth + 1,);
-    }
-  }
-  return EM_treed;
-}
+class FormatData {
+  data: {
+    user: User;
+    main: TreeNode;
+    sub: TreeNode;
+    description:Record<string,string>;
+  };
 
-function FormatData(args:{user:User,links:SolaLinkData}) {
-   const data = {
-      user:args.user,
-      main:treeingEventMap(mainEventMap),
-      sub :treeingEventMap(args.links),
-      description : description
-    }
+  constructor(args: MainArgs) {
+    this.data = {
+      user: args.user,
+      main: this.treeingEventMap(mainEventMap),
+      sub : this.treeingEventMap(args.links),
+      description: description,
+    };
     args.links["{yellow-fg}戻る{/}"] = { event: "return" };
+  }
+  /**
+   * @name treeingEventMap
+   * @description EventMapデータをcontrib-tree用に整形する関数
+   * */
+  public treeingEventMap(EM:Record<string,EventMap|EventMap[]>, depth: number = 0): TreeNode {
+    const except_keys = ["event", "url", "name", "code"];
+    let EM_treed: TreeNode =
+        depth === 0
+            ? { extended: true, children: {} }
+            : Object.keys(EM).length > 0
+                ? { children: {} }
+                : {};
+    for (const EM_key in EM) {
+      if (except_keys.includes(EM_key)) {
+        EM_treed[EM_key] = EM[EM_key];
+      } else {
+        EM_treed.children![EM_key] = this.treeingEventMap(
+            <Record<string,EventMap>>EM[EM_key],
+            depth + 1
+        );
+      }
+    }
+    return EM_treed;
+  }
 }
 
 class Members extends FormatData {
-  status = {
-    inputValue: "",
-    focus: {
-      bef: undefined,
-      now: undefined,
-    },
-    miss_count: 0,
-  };
-  network = {
-    id: undefined,
-    status: undefined,
-  };
-  colors = {
-    fg: "#ffffff",
-    bg: "",
-    border: {
-      fg: "#df00ff",
-      bg: "",
-    },
-    selected: {
-      fg: "#ffffff",
-      bg: "#29a682",
-    },
-    choice: {
-      fg: "#ffffff",
-      bg: "#ff0088",
-    },
-    focus: {
-      border: {
-        fg: "#00ffc4",
-        bg: "",
-      },
-    },
-  };
-  //縦位置,横位置,縦幅,横幅
-  position = {
-    net: [0, 10, 2, 10],
-    info: [12, 0, 8, 20],
-    choice: [10, 0, 2, 10],
-    form: [10, 0, 2, 10],
-    mainTree: [0, 0, 10, 10],
-    subTree: [2, 10, 10, 10],
-  };
-  //コンポーネント管理
-  components = {
-    screen: {},
-    grid: {},
-    net: {},
-    info: {},
-    choice: {},
-    form: {},
-    mainTree: {},
-    subTree: {},
+  status: {
+    inputValue: string;
+    focus: { bef?: Widgets.BlessedElement; now?: Widgets.BlessedElement };
+    miss_count: number;
   };
 
-  constructor(args: any) {
+  network: {
+    id?: NodeJS.Timeout;
+    status?: boolean;
+  };
+
+  readonly colors: {
+    fg: string;
+    bg: string;
+    border: { fg: string; bg: string };
+    selected: { fg: string; bg: string };
+    choice: { fg: string; bg: string };
+    focus: { border: { fg: string; bg: string } };
+  }
+  readonly position: Record<string, [number, number, number, number]>;
+  constructor(args:MainArgs) {
     super(args);
+    this.status = {
+      inputValue: "",
+      focus: {
+        bef: undefined,
+        now: undefined,
+      },
+      miss_count: 0,
+    };
+    this.network = {};
+    this.colors = {
+      fg: "#ffffff",
+      bg: "",
+      border: {
+        fg: "#df00ff",
+        bg: "",
+      },
+      selected: {
+        fg: "#ffffff",
+        bg: "#29a682",
+      },
+      choice: {
+        fg: "#ffffff",
+        bg: "#ff0088",
+      },
+      focus: {
+        border: {
+          fg: "#00ffc4",
+          bg: "",
+        },
+      },
+    };
+    this.position = {
+      net: [0, 10, 2, 10],
+      info: [12, 0, 8, 20],
+      choice: [10, 0, 2, 10],
+      form: [10, 0, 2, 10],
+      mainTree: [0, 0, 10, 10],
+      subTree: [2, 10, 10, 10],
+    };
   }
 }
 
-class SetComponents extends Members {
-  constructor(args: any) {
+type ComponentName = "screen"|"grid"|"net"|"info"|"choice"|"form"|"mainTree"|"subTree";
+
+class Components extends Members {
+
+  components:{
+    screen  :Widgets.Screen,
+    grid    :contrib.grid,
+    net     :Widgets.TextElement,
+    choice  :Widgets.TextElement,
+    info    :Widgets.BoxElement,
+    form    :Widgets.TextboxElement,
+    mainTree:contrib.widget.Tree,
+    subTree :contrib.widget.Tree
+  }
+
+  constructor(args:MainArgs) {
     super(args);
-    this.#makeGrid();
-    this.#makeNet();
-    this.#makeChoice();
-    this.#makeInfo();
-    this.#makeMainTree();
-    this.#makeSubTree();
-    this.#makeForm();
-  }
-
-  /**
-   * @name setFocus
-   * @description フォーカスを切り替える関数
-   * */
-  setFocus(tar) {
-    const focuses = this.status.focus;
-    const c = this.components;
-    focuses.bef = this.status.focus.now; //前フォーカスしてたコンポーネント
-    focuses.now = tar; //これからフォーカスするコンポーネント
-
-    //2度目以降のフォーカスのときtrue
-    if (focuses.bef) {
-      //befの枠線色を初期値に戻す
-      focuses.bef.style.border.fg = this.colors.border.fg;
-      focuses.bef.style.border.bg = this.colors.border.bg;
-      //formが選択されたときにchoiceとformを切り替える処理
-      if (tar.name === "form" || focuses.bef.name === "form") {
-        this.components.choice.toggle();
-        this.components.form.toggle();
-      }
+    const screen      = this.makeScreen();
+    const grid          = this.makeGrid();
+    const net      = this.makeNet(grid);
+    const choice   = this.makeChoice(grid);
+    const info     = this.makeInfo(grid);
+    const form  = this.makeForm(grid);
+    const mainTree      = this.makeMainTree(grid);
+    const subTree       = this.makeSubTree(grid);
+    this.components = {
+      screen:screen,
+      grid:grid,
+      net:net,
+      choice:choice,
+      info:info,
+      form:form,
+      mainTree:mainTree,
+      subTree:subTree
     }
-    //nowの枠線色をfocus時のものに切り替え
-    focuses.now.style.border.fg = this.colors.focus.border.fg;
-    focuses.now.style.border.bg = this.colors.focus.border.bg;
-    //tarをフォーカス
-    tar.focus();
-    //画面のレンダリング
-    c.screen.render();
   }
 
-  #makeGrid() {
+  private makeScreen():Widgets.Screen{
     // スクリーンを生成
-    this.components.screen = Blessed.screen({
+    return Blessed.screen({
       smartCSR: true,
       fullUnicode: true, // ここを追加
       terminal: "xterm-256color",
       tabSize: 2,
     });
+  }
+
+  private makeGrid():contrib.grid {
     // 上で作ったスクリーンを縦横20分割して配置できるようになる
-    this.components.grid = new contrib.grid({
+    return new contrib.grid({
       rows: 20,
       cols: 20,
       screen: this.components.screen,
@@ -162,8 +186,8 @@ class SetComponents extends Members {
    * @name makeNet
    * @description コンポーネントの作成(ネットワーク表示部)
    * */
-  #makeNet() {
-    const net = this.components.grid.set(...this.position.net, Blessed.text, {
+  private makeNet(grid:contrib.grid):Widgets.TextElement {
+    return grid.set(...this.position.net, Blessed.text, {
       keys: false, // キー入力
       parent: this.components.screen, // 必ず指定
       name: "net",
@@ -179,54 +203,43 @@ class SetComponents extends Members {
       tags: true, // 色付けする場合
       wrap: false,
     });
-    this.components.net = net;
-    this.changeNetStatus = (cond) => {
-      net.setContent(
-        `接続状況：${cond ? "{green-bg}良好{/}" : "{red-bg}不良{/}"}`,
-      );
-      this.components.screen.render();
-    };
   }
 
   /**
    * @name makeChoice
    * @description コンポーネントの作成(選択表示部)
    * */
-  #makeChoice() {
-    this.components.choice = this.components.grid.set(
-      ...this.position.choice,
-      Blessed.text,
-      {
-        keys: false, // キー入力
-        parent: this.components.screen, // 必ず指定
-        name: "choice",
-        label: "CHOICE", // 表示する名称
-        align: "left",
-        border: { type: "line" },
-        style: {
-          fg: this.colors.fg, // 通常時の文字色
-          bg: this.colors.bg, // 通常時の背景色
-          border: {
-            fg: this.colors.border.fg,
-            bg: this.colors.border.bg,
+  private makeChoice(grid:contrib.grid):Widgets.TextElement {
+    return grid.set(
+        ...this.position.choice,
+        Blessed.text,
+        {
+          keys: false, // キー入力
+          parent: this.components.screen, // 必ず指定
+          name: "choice",
+          label: "CHOICE", // 表示する名称
+          align: "left",
+          border: { type: "line" },
+          style: {
+            fg: this.colors.fg, // 通常時の文字色
+            bg: this.colors.bg, // 通常時の背景色
+            border: {
+              fg: this.colors.border.fg,
+              bg: this.colors.border.bg,
+            },
           },
+          tags: true, // 色付けする場合
+          wrap: false,
         },
-        tags: true, // 色付けする場合
-        wrap: false,
-      },
     );
-    this.setChoice = (contents) => {
-      this.components.choice.setContent(`{bold}${contents}{/}`);
-      this.components.choice.render();
-    };
   }
 
   /**
    * @name makeInfo
    * @description コンポーネントの作成(情報表示部)
    * */
-  #makeInfo() {
-    const info = this.components.grid.set(...this.position.info, Blessed.text, {
+  private makeInfo(grid:contrib.grid) {
+    const info:Widgets.BoxElement = grid.set(...this.position.info, Blessed.text, {
       keys: true, // キー入力
       mouse: false,
       parent: this.components.screen, // 必ず指定
@@ -257,138 +270,188 @@ class SetComponents extends Members {
       info.scroll(-1);
     });
 
-    this.setInfo = (value) => {
-      info.resetScroll();
-      info.setContent(value);
-      this.components.screen.render();
-    };
-    this.appendInfo = (value) => {
-      const append = info.getContent() + value + "\n";
-      this.setInfo(append);
-      info.setScrollPerc(100);
-      this.components.screen.render();
-    };
-    this.changeInfoLabel = (value = "INFO") => {
-      this.setInfo("");
-      info.setLabel(value);
-      this.components.screen.render();
-    };
-    this.components.info = info;
+    return info;
   }
 
   /**
    * @name makeForm
    * @description コンポーネントの作成(入力フォーム部)
    * */
-  #makeForm() {
-    const form = this.components.grid.set(
-      ...this.position.form,
-      Blessed.textbox,
-      {
-        key: true,
-        parent: this.components.screen,
-        name: "form",
-        label: "INPUT_FORM",
-        border: { type: "line" },
-        inputOnFocus: true,
-        style: {
-          fg: "", // 通常時の文字色
-          bg: "", // 通常時の背景色
-          border: {
-            fg: this.colors.border.fg,
-            bg: this.colors.border.bg,
+  private makeForm(grid:contrib.grid):Widgets.TextboxElement {
+    const form:Widgets.TextboxElement = grid.set(
+        ...this.position.form,
+        Blessed.textbox,
+        {
+          key: true,
+          parent: this.components.screen,
+          name: "form",
+          label: "INPUT_FORM",
+          border: { type: "line" },
+          inputOnFocus: true,
+          style: {
+            fg: "", // 通常時の文字色
+            bg: "", // 通常時の背景色
+            border: {
+              fg: this.colors.border.fg,
+              bg: this.colors.border.bg,
+            },
           },
+          tags: true,
         },
-        tags: true,
-      },
     );
     form.hide();
-    this.components.form = form;
+    return form;
   }
 
   /**
    * @name makeMainTree
    * @description コンポーネントの作成(コマンド選択部)
    * */
-  #makeMainTree() {
-    const main = this.components.grid.set(
-      ...this.position.mainTree,
-      contrib.tree,
-      {
-        key: true,
-        parent: this.components.screen,
-        keys: [],
-        name: "mainTree",
-        label: "COMMANDS",
-        border: { type: "line" },
-        style: {
-          fg: this.colors.fg, // 通常時の文字色
-          bg: this.colors.bg, // 通常時の背景色
-          border: {
-            //枠線の線色
-            fg: this.colors.border.fg,
-            //枠線の背景色
-            bg: this.colors.border.bg,
+  private makeMainTree(grid:contrib.grid) {
+    const mainTree:contrib.widget.Tree = grid.set(
+        ...this.position.mainTree,
+        contrib.tree,
+        {
+          key: true,
+          parent: this.components.screen,
+          keys: [],
+          name: "mainTree",
+          label: "COMMANDS",
+          border: { type: "line" },
+          style: {
+            fg: this.colors.fg, // 通常時の文字色
+            bg: this.colors.bg, // 通常時の背景色
+            border: {
+              //枠線の線色
+              fg: this.colors.border.fg,
+              //枠線の背景色
+              bg: this.colors.border.bg,
+            },
+            selected: {
+              //選択要素の文字色
+              fg: this.colors.selected.fg,
+              //選択要素の背景色
+              bg: this.colors.selected.bg,
+            },
           },
-          selected: {
-            //選択要素の文字色
-            fg: this.colors.selected.fg,
-            //選択要素の背景色
-            bg: this.colors.selected.bg,
-          },
+          tags: true,
         },
-        tags: true,
-      },
     );
     //データをセット
-    main.setData(this.data.main);
-    this.components.mainTree = main;
+    mainTree.setData(this.data.main);
+    return mainTree;
   }
 
   /**
    * @name makeSubTree
    * @description コンポーネントの作成(ページ選択部)
    * */
-  #makeSubTree() {
-    this.components.subTree = this.components.grid.set(
-      ...this.position.subTree,
-      contrib.tree,
-      {
-        key: true,
-        parent: this.components.screen,
-        keys: [],
-        name: "subTree",
-        label: "PAGES",
-        border: { type: "line" },
-        style: {
-          fg: this.colors.fg, // 通常時の文字色
-          bg: this.colors.bg, // 通常時の背景色
-          border: {
-            fg: this.colors.border.fg,
-            bg: this.colors.border.bg,
+  private makeSubTree(grid:contrib.grid):contrib.widget.Tree {
+    const subTree:contrib.widget.Tree = grid.set(
+        ...this.position.subTree,
+        contrib.tree,
+        {
+          key: true,
+          parent: this.components.screen,
+          keys: [],
+          name: "subTree",
+          label: "PAGES",
+          border: { type: "line" },
+          style: {
+            fg: this.colors.fg, // 通常時の文字色
+            bg: this.colors.bg, // 通常時の背景色
+            border: {
+              fg: this.colors.border.fg,
+              bg: this.colors.border.bg,
+            },
+            selected: {
+              fg: this.colors.selected.fg,
+              bg: this.colors.selected.bg,
+            },
           },
-          selected: {
-            fg: this.colors.selected.fg,
-            bg: this.colors.selected.bg,
-          },
+          tags: true,
         },
-        tags: true,
-      },
     );
+    return subTree;
   }
 }
 
-class MainHome extends SetComponents {
-  event = new EventEmitter();
-  listeners = {
-    original: {},
-    blessed: {},
+class Methods extends Components{
+  constructor(args:MainArgs) {
+    super(args);
+  }
+  /**
+   * @name setFocus
+   * @description フォーカスを切り替える関数
+   * */
+  public setFocus(tar:Widgets.BlessedElement) {
+    const focuses = this.status.focus;
+    const c = this.components;
+    focuses.bef = this.status.focus.now; //前フォーカスしてたコンポーネント
+    focuses.now = tar; //これからフォーカスするコンポーネント
+
+    //2度目以降のフォーカスのときtrue
+    if (focuses.bef) {
+      //befの枠線色を初期値に戻す
+      focuses.bef.style.border.fg = this.colors.border.fg;
+      focuses.bef.style.border.bg = this.colors.border.bg;
+      //formが選択されたときにchoiceとformを切り替える処理
+      if (tar.name === "form" || focuses.bef.name === "form") {
+        this.components.choice.toggle();
+        this.components.form.toggle();
+      }
+    }
+    //nowの枠線色をfocus時のものに切り替え
+    focuses.now.style.border.fg = this.colors.focus.border.fg;
+    focuses.now.style.border.bg = this.colors.focus.border.bg;
+    //tarをフォーカス
+    tar.focus();
+    //画面のレンダリング
+    c.screen.render();
+  }
+
+  public changeNetStatus(cond:boolean){
+    this.components.net.setContent(
+        `接続状況：${cond ? "{green-bg}良好{/}" : "{red-bg}不良{/}"}`,
+    );
+    this.components.screen.render();
+  };
+  public setChoice(contents:string){
+    this.components.choice.setContent(`{bold}${contents}{/}`);
+    this.components.choice.render();
   };
 
-  constructor(args) {
+  public setInfo(value:string){
+    this.components.info.resetScroll();
+    this.components.info.setContent(value);
+    this.components.screen.render();
+  };
+  public clearInfo(){
+    this.components.info.resetScroll();
+    this.components.info.setContent("");
+    this.components.screen.render();
+  };
+  public appendInfo(value:string){
+    const append = this.components.info.getContent() + value + "\n";
+    this.setInfo(append);
+    this.components.info.setScrollPerc(100);
+    this.components.screen.render();
+  };
+  public changeInfoLabel(value = "INFO"){
+    this.setInfo("");
+    this.components.info.setLabel(value);
+    this.components.screen.render();
+  };
+}
+
+class MainHome extends Methods {
+  event = new EventEmitter();
+  listeners:ListenerList;
+
+  constructor(args:MainArgs) {
     //this.dataの作成
     super(args);
-    this.#onAllEvents();
+    this.listeners = this.onAllEvents();
     //最初はINFOをフォーカス
     this.setFocus(this.components.mainTree);
     this.setFocus(this.components.info);
@@ -400,15 +463,16 @@ class MainHome extends SetComponents {
     this.components.screen.render();
   }
 
-  #setListnerList() {
-    const l = this.listeners;
-    l.original = listeners.original;
-    l.blessed = listeners.blessed;
+  private setListenerList():ListenerList {
+    return {
+      blessed:listeners.blessed,
+      original:listeners.original,
+    }
   }
 
-  #setBlessedEvents() {
+  private setBlessedEvents(blessedListener:BlessedListener) {
     const c = this.components;
-    const l = this.listeners.blessed;
+    const l = blessedListener;
     //ツリーのイベントの設定
     for (const t of [c.mainTree, c.subTree]) {
       t.rows.on("select item", () => {
@@ -475,10 +539,10 @@ class MainHome extends SetComponents {
             //制御文字とバックスラッシュは除外
             if (key.sequence) {
               const cond =
-                key.sequence.charCodeAt(0) >= 33 &&
-                key.sequence.charCodeAt(0) <= 126 &&
-                key.sequence.charCodeAt(0) !== 92 &&
-                key.sequence.length === 1;
+                  key.sequence.charCodeAt(0) >= 33 &&
+                  key.sequence.charCodeAt(0) <= 126 &&
+                  key.sequence.charCodeAt(0) !== 92 &&
+                  key.sequence.length === 1;
               if (cond) {
                 this.status.inputValue += key.sequence;
               }
@@ -497,33 +561,31 @@ class MainHome extends SetComponents {
     });
   }
 
-  #setOriginalEvents() {
+  private setOriginalEvents(originalListener:OriginalListener) {
     const e = this.event;
-    const lb = this.listeners.blessed;
-    const lo = this.listeners.original;
-    e.on("appinfo", lo.appInfo); //SUS_LOGIN(使用方法)
-    e.on("euc", lo.euc); //EUC
-    e.on("sclass", lo.sclass); //SCLASS
-    e.on("sola", lo.sola); //SOLA
-    e.on("log", lo.logs); //LOG
-    e.on("image", lo.images); //IMAGE
-    e.on("completion", lo.completion); //履修仮組みツール
-    e.on("page", lo.pageEnter); //SOLA_PAGE_LIST
-    e.on("return", lo.pageReturn); //SOLA_PAGE_LISTから戻る
-    e.on("pagereload", async () => {
-      await lo.pageReload(this);
-    }); //SOLA_PAGE_LISTの更新
-    e.on("quit", lo.quit); //QUIT(閉じる)
+    const l = originalListener;
+    e.on("appinfo", l.appInfo); //SUS_LOGIN(使用方法)
+    e.on("euc", l.euc); //EUC
+    e.on("sclass", l.sclass); //SCLASS
+    e.on("sola", l.sola); //SOLA
+    e.on("log", l.logs); //LOG
+    e.on("image", l.images); //IMAGE
+    e.on("completion", l.completion); //履修仮組みツール
+    e.on("page", l.pageEnter); //SOLA_PAGE_LIST
+    e.on("return", l.pageReturn); //SOLA_PAGE_LISTから戻る
+    e.on("pagereload",l.pageReload); //SOLA_PAGE_LISTの更新
+    e.on("quit", l.quit); //QUIT(閉じる)
     e.on("error", (e) => {
-      lo.error(this, e);
+      l.error(this, e);
     }); // イベント内で発生したエラーを拾ってinfo内に表示
-    e.on("network", lo.network); //ネットワーク接続
+    e.on("network", l.network); //ネットワーク接続
   }
 
-  #onAllEvents() {
-    this.#setListnerList();
-    this.#setBlessedEvents();
-    this.#setOriginalEvents();
+  private onAllEvents() {
+    const listenerList = this.setListenerList();
+    this.setBlessedEvents(listenerList.blessed);
+    this.setOriginalEvents(listenerList.original);
+    return listenerList;
   }
 }
 

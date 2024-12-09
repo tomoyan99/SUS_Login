@@ -16,18 +16,20 @@ export type User = {
   username: string;
   password: string;
 };
-
-export type SolaClassRecord = {
+export type EventName = "appinfo"|"euc"|"sclass"|"sola"|"page"|"pagereload"|"log"|"image"|"quit"|string;
+export type EventMap = {
+  event?:EventName;
+  [key:string]:EventMap|string|undefined;
+};
+export type SolaClassRecord = EventMap&{
   name: string;
   view_name: string;
   event: "sola";
   code: string;
   url: string;
 };
-export type SolaLinkData = {
-  "前期": SolaClassRecord[];
-  "後期": SolaClassRecord[];
-};
+export type SolaLinkData = Record<"前期"|"後期"|string,SolaClassRecord[]|EventMap>;
+
 export type LastUpdateData = {
   year: number;
   month: number;

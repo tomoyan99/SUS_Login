@@ -1,4 +1,4 @@
-import { clearInterval } from "timers";
+import {clearInterval} from "timers";
 
 process.stdout.setEncoding("utf8");
 

@@ -1,6 +1,8 @@
 import solaLinkReload from "../../../puppeteer/solaLinkReload.js";
+import MainHome from "../../home/MainHome";
+import {MainData} from "../../../main/setup";
 
-export function pageReload(self) {
+export function pageReload(self:MainHome) {
   const c = self.components;
   const lb = self.listeners.blessed;
   self.appendInfo("[科目ページリストを更新してよろしいですか？(y/n)]");
@@ -13,14 +15,21 @@ export function pageReload(self) {
         c.info.unkey("enter", () => {
           lb.screenTab(self);
         });
-        const newData = await solaLinkReload(self._data, self.appendInfo);
+        const newData = await solaLinkReload(self.data.user, self.appendInfo);
         newData.solaLink["{yellow-fg}戻る{/}"] = { event: "return" };
-        self._data.sub = self._parseListData(newData.solaLink);
-      } catch (e) {
-        self.event.emit(
-          "error",
-          "[ERROR] 科目ページリストの更新に失敗しました\n" + e.stack,
-        );
+        self.data.sub = self.treeingEventMap(newData.solaLink);
+      } catch (e:unknown) {
+        if (e instanceof Error) {
+          self.event.emit(
+              "error",
+              "[ERROR] 科目ページリストの更新に失敗しました\n" + e.stack,
+          );
+        }else{
+          self.event.emit(
+              "error",
+              "[ERROR] 科目ページリストの更新に失敗しました\n" + e,
+          );
+        }
       } finally {
         c.info.key("enter", () => {
           lb.screenTab(self);

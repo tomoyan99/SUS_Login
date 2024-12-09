@@ -1,5 +1,5 @@
-const pkg = require("../package.json")
-const {compile} = require("nexe");
+import pkg from "./package.json";
+import {compile} from "nexe";
 
 const ver = pkg.version;
 const appName = `SUS_Login_v${ver}`;
@@ -25,8 +25,6 @@ compile({
         'PRODUCTVERSION': ver,
         'FILEVERSION': ver,
     }, rc),
-    flags: {
-        "--title":appName
-    },
+    flags: ["--title=appName"],
     mangle:true
 })

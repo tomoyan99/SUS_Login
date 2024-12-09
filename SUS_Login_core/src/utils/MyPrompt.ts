@@ -1,7 +1,7 @@
 import Index from "enquirer";
-import { pause } from "./pause";
-import { control as cl } from "./control";
-import { sleep } from "./myUtils";
+import {pause} from "./pause";
+import {control as cl} from "./control";
+import {sleep} from "./myUtils";
 
 export namespace MyPrompt {
   export type Prompt<T extends "input" | "password" | "confirm"> = {

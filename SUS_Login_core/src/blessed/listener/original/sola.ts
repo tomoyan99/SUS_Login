@@ -1,60 +1,21 @@
-import {
-  openContext,
-  openSola,
-  resizeWindow,
-} from "../../../puppeteer/Openers.js";
-import { isObjEmpty } from "../../../utils/myUtils.js";
-import { control as cl } from "../../../utils/control.js";
+import Opener from "../../../puppeteer/BrowserOpener";
+import MainHome from "../../home/MainHome";
 
-export async function sola(self, node) {
-  self.setInfo("");
-  let miss_count = 0;
-  let context;
+export async function sola(self:MainHome, node:{url:string}) {
+  self.clearInfo();
+  let BO = new Opener.BrowserOpener(self.data.user);
   try {
-    context = await openContext("SOLA");
-  } catch (e) {
-    self.event.emit(
-      "error",
-      "[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります",
-    );
-    return;
-  }
-  do {
-    try {
-      if (!isObjEmpty(await context.pages())) {
-        const page = await openSola(
-          context,
-          self._data.user,
-          false,
-          node.url,
-          self.appendInfo,
-        );
-        await resizeWindow(page, [1200, 700]);
-      }
-      return;
-    } catch (e) {
-      //ブラウザウィンドウが途中で閉じられた場合
-      if (isObjEmpty(await context.pages())) {
-        self.setInfo(
-          "{yellow-fg}[BROWSER INFO]\nブラウザが閉じられたことで中断されました{/}",
-        );
-        return;
-      }
-      //ミスした場合は0~3の全4回実行
-      if (miss_count < 3) {
-        miss_count++;
-        self.appendInfo(
-          `[SOLA\ ERROR] ${cl.bg_yellow}${cl.fg_black}* 接続エラー${cl.bg_reset}${cl.fg_reset}(${miss_count})`,
-        );
-      } else {
-        //4回やってもだめだったらエラー
-        self.event.emit(
+    BO = await BO.launch({is_headless:true,printFunc:self.appendInfo,clearFunc:self.clearInfo}).catch(()=>{
+      self.event.emit(
           "error",
-          `[SOLA　ERROR]\n${cl.bg_red}* 4度接続を試みましたが失敗しました。${cl.bg_reset}\n${cl.bg_red}ネットワークを確認してください${cl.bg_reset}\n${e.stack}`,
-        );
-        await context.close();
-        return;
-      }
-    }
-  } while (true);
+          "[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります",
+      );
+      throw "";
+    });
+    await BO.open({mode:"SOLA",solaLink_URL:node.url});
+  }catch (e) {
+    self.event.emit("error",e);
+  }finally {
+    await BO.close();
+  }
 }

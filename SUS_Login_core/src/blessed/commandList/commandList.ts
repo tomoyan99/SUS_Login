@@ -1,9 +1,6 @@
-export type EventMap = {
-  event?:string;
-  [key:string]:EventMap|string|undefined;
-}
+import {EventMap} from "../../main/setup";
 
-export const mainEventMap:EventMap =
+export const mainEventMap:Record<string,EventMap> =
 {
   SUS_LOGIN: {
     event: "appinfo",
