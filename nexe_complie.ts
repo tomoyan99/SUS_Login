@@ -18,13 +18,15 @@ compile({
     input: `bundle/main.cjs`,
     output: `./EXE/main.exe`,
     python: "C:/Python312/python.exe",
-    // build:true,
-    targets:["14.15.3"],
+    build:true,
+    targets:["20.18.1"],
+    // targets:["14.15.3"],
+    verbose:true,
     name:appName,
     rc: Object.assign({
         'PRODUCTVERSION': ver,
         'FILEVERSION': ver,
     }, rc),
-    flags: ["--title=appName"],
+    // flags: ["--title=appName"],
     mangle:true
 })

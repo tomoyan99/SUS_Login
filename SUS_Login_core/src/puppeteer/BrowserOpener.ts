@@ -31,12 +31,12 @@ namespace Opener {
     private mode?: SiteMode;                // サイトモードを保持
     private readonly userdata: User;        // ユーザー情報
     private target_URL = "";          // ターゲットURL
-    private readonly selectors:Selectors;
+    protected readonly selectors:Selectors;
     private EUC?: string;                   // EUC専用のプロパティ
     private solaLink_URL?: string;          // SOLA専用のプロパティ
-    private browser?: puppeteer.Browser;    // PuppeteerのBrowserインスタンス
-    private page?: puppeteer.Page;          // PuppeteerのPageインスタンス
-    private printFunc: Function;            // ログ出力関数
+    protected browser?: puppeteer.Browser;    // PuppeteerのBrowserインスタンス
+    protected page?: puppeteer.Page;          // PuppeteerのPageインスタンス
+    printFunc: Function;            // ログ出力関数
     private clearFunc: Function;            // 画面クリア関数
     private is_headless: boolean | "shell" = false; // ヘッドレスモードフラグ
     private is_app: boolean = true;         // アプリモードフラグ
@@ -111,8 +111,8 @@ namespace Opener {
       return [
         ...(this.is_app ? ["--app=https://www.google.co.jp/"] : []),
         ...(this.is_headless || !this.is_secret ? [] : ["--incognito"]),
-        "--window-position=0,0",
-        this.is_headless ? "--window-size=1200,1200" : "--window-size=200,300",
+        "--window-position=9999,9999",
+        this.is_headless ? "--window-size=1200,1200" : "--window-size=0,0",
         "--proxy-server='direct://'",
         "--proxy-bypass-list=*",
         "--test-type",
@@ -140,11 +140,18 @@ namespace Opener {
     // モードを変更し、ターゲットURLを設定
     private changeMode(option: ModeOption<SiteMode>): void {
       this.mode = option.mode;
-      this.target_URL =
-          option.mode === "SOLA" && option.solaLink_URL
-              ? option.solaLink_URL
-              : "https://s-class.admin.sus.ac.jp/up/faces/login/Com00504A.jsp";
-      if (option.mode === "EUC") this.EUC = option.EUC;
+      switch (option.mode) {
+        case "SCLASS":
+          this.target_URL = "https://s-class.admin.sus.ac.jp/";
+          break;
+        case "SOLA":
+          this.target_URL = option.solaLink_URL ?option.solaLink_URL:"https://sola.sus.ac.jp/";
+          break;
+        case "EUC":
+          this.target_URL = "https://s-class.admin.sus.ac.jp/";
+          this.EUC = option.EUC;
+          break;
+      }
     }
     // エラーハンドリング共通関数
     private handleError(e: unknown, source: string): Error {
@@ -237,7 +244,8 @@ namespace Opener {
           await submit_btn?.click();
           await this.page.waitForResponse(res => !!(res.url().match("sola.sus.ac.jp")), { timeout: 2000 });
         });
-
+        // SOLAのbodyの表示を待つ
+        await this.page.waitForSelector("body#page-site-index",{timeout: 10000});
         this.printFunc(`${cl.bg_green}[SOLA] ログイン完了${cl.fg_reset}`);
       } catch (e) {
         throw this.handleError(e, "SOLA");
@@ -298,7 +306,7 @@ namespace Opener {
     }
 
     // ヘッドレス時のCSS・画像無効化
-    private async disableCSS() {
+    protected async disableCSS() {
       if (!this.page) throw new Error("PAGE:UNDEFINED");
       await this.page.setRequestInterception(true);
       this.page.on("request", (req) =>
@@ -315,7 +323,7 @@ namespace Opener {
       const { windowId } = await session.send("Browser.getWindowForTarget");
       await session.send("Browser.setWindowBounds", {
         windowId,
-        bounds: { width: w, height: h },
+        bounds: { width: w, height: h,left: 0, top: 0 },
       });
     }
   }

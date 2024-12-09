@@ -4,7 +4,7 @@ import {control as cl} from "../utils/control";
 import {setup} from "./setup";
 import {sleep, writeJSON} from "../utils/myUtils";
 import {existChromePath} from "../utils/existChromePath";
-import * as pkg from "../../package.json";
+import * as pkg from "../../../package.json";
 
 //main
 (async function main() {

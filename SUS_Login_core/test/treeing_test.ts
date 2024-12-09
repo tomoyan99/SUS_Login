@@ -1,6 +1,5 @@
-import {EventMap,mainEventMap} from "../src/blessed/commandList/commandList";
+import {EventMap, mainEventMap} from "../src/blessed/commandList/commandList";
 import {readJSON} from "../src/utils/myUtils";
-import * as path from "node:path";
 
 /**
  * @name treeingEventMap

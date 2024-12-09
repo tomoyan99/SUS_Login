@@ -1,6 +1,5 @@
 import solaLinkReload from "../../../puppeteer/solaLinkReload.js";
 import MainHome from "../../home/MainHome";
-import {MainData} from "../../../main/setup";
 
 export function pageReload(self:MainHome) {
   const c = self.components;

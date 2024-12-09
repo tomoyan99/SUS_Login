@@ -1,10 +1,11 @@
-import Blessed, {Widgets} from "neo-blessed";
+import Blessed from "neo-blessed";
 import contrib from "blessed-contrib";
 import EventEmitter from "events";
 import {BlessedListener, ListenerList, listeners, OriginalListener} from "../listener/listeners";
 import {description} from "../description/description";
 import {mainEventMap} from "../commandList/commandList";
 import {EventMap, SolaLinkData, User} from "../../main/setup";
+import {Widgets} from "blessed";
 
 export type TreeNode = {
   extended?: boolean;

@@ -1,6 +1,17 @@
-const path = require("path");
-const fs = require("fs");
-const npmVersion = require("../../package.json").version;
+import path from "path";
+import fs from "fs";
+import {version as npmVersion} from "../../package.json";
+type UserConfig = {
+    "defaultWindowSize": {
+        "width" : number,
+        "height": number
+    },
+    "defaultFontSize": number,
+    "defaultTerminalSize":{
+        cols:number,
+        rows:number,
+    }
+};
 // const __PREFIX = "resources/";
 const __PREFIX = "";
 const termRC = {
@@ -9,7 +20,7 @@ const termRC = {
 };
 const infoPath = "data/info.json";
 const confPath = path.resolve(__PREFIX,"src/boot/userConfig.json");
-let userConfig;
+let userConfig:UserConfig;
 
 if (!fs.existsSync(confPath)){
     userConfig = {
@@ -25,10 +36,10 @@ if (!fs.existsSync(confPath)){
     }
     fs.writeFileSync(confPath,JSON.stringify(userConfig),{encoding:"utf8"});
 }else{
-    userConfig = require(confPath);
+    userConfig = <UserConfig><unknown>import(confPath);
 }
 
-module.exports = {
+export {
     npmVersion,
     __PREFIX,
     termRC,

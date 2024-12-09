@@ -1,5 +1,3 @@
-import {isAsyncFunction} from "util/types";
-
 function errortest(){
     throw Error("test");
 }

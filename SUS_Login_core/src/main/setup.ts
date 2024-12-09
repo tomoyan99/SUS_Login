@@ -23,7 +23,7 @@ export type EventMap = {
 };
 export type SolaClassRecord = EventMap&{
   name: string;
-  view_name: string;
+  view_name?: string;
   event: "sola";
   code: string;
   url: string;

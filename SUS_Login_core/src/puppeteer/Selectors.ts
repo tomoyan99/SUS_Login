@@ -30,7 +30,11 @@ type SelectorsSCHEDULE = {
     search_input: string;
     schedule_bf_table: string;
     schedule_af_table: string;
-  };
+  },
+  SOLA:{
+    last_aalink:string;
+
+  }
 };
 
 
@@ -67,6 +71,10 @@ class Selectors{
       search_input: "input#form1\\:search",
       schedule_bf_table: "table#form1\\:standardJugyoTimeSchedule00List",
       schedule_af_table: "table#form1\\:standardJugyoTimeSchedule01List"
+    },
+    SOLA:{
+      last_aalink:"div.last a.aalink",
+
     }
   };
 }

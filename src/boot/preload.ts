@@ -1,11 +1,12 @@
-const {contextBridge, ipcRenderer} = require("electron");
-const {Terminal} = require("xterm")
-const {FitAddon} = require("xterm-addon-fit")
-const WebfontLoader = require("@liveconfig/xterm-webfont");
-const {CanvasAddon} = require("xterm-addon-canvas")
-const {WebglAddon} = require("xterm-addon-webgl")
-const {WebLinksAddon} = require("xterm-addon-web-links");
-const {userConfig} = require("./boot_config.cjs");
+import {contextBridge, ipcRenderer} from "electron";
+import {Terminal} from "xterm";
+import {FitAddon} from "xterm-addon-fit";
+import XtermWebfont from "./xtermWebfont";
+import {CanvasAddon} from "xterm-addon-canvas";
+import {WebglAddon} from "xterm-addon-webgl";
+import {WebLinksAddon} from "xterm-addon-web-links";
+import {userConfig} from "./boot_config";
+
 
 const term = new Terminal({
     cols:userConfig.defaultTerminalSize.cols,
@@ -21,11 +22,13 @@ const term = new Terminal({
         background:"rgb(0,0,0)"
     },
 })
+
 function termer() {
     const termContent = document.getElementById('terminal');
     const fitAddon = new FitAddon();
-    const loadA = new WebfontLoader();
+    const loadFont = new XtermWebfont();
     const webLink = new WebLinksAddon();
+    let timeoutID: string | number | NodeJS.Timeout | undefined;
     // const canvasAddon = new CanvasAddon();
     const webGLAddon = new WebglAddon();
     webGLAddon.onContextLoss(e => {
@@ -33,13 +36,14 @@ function termer() {
     });
     // アドオンをロード
     term.loadAddon(fitAddon);
-    term.loadAddon(loadA);
+    term.loadAddon(loadFont);
     term.loadAddon(webLink);
     // term.loadAddon(canvasAddon);
     term.loadAddon(webGLAddon);
-    //コンテンツをロード
-    term.loadWebfontAndOpen(termContent);
-
+    if (termContent && "loadWebfontAndOpen" in term) {
+        //コンテンツをロード
+        term.loadWebfontAndOpen(termContent);
+    }
     //Ctrl+Cで選択範囲をクリップボードにコピー可能にする
     term.attachCustomKeyEventHandler((arg) => {
         if (arg.ctrlKey && arg.code === "KeyC" && arg.type === "keydown") {
@@ -75,7 +79,9 @@ function termer() {
                term.options.fontSize += delta;
             }
         }
-        clearTimeout(timeoutID);
+        if (timeoutID){
+            clearTimeout(timeoutID);
+        }
         timeoutID = setTimeout(()=>{
             //フォントサイズに合わせてターミナルサイズを合わせる
             fitAddon.fit();
@@ -100,9 +106,10 @@ function termer() {
 
     //画面がリサイズされたらそれに合わせてターミナルサイズをフィットさせる
     //リサイズが終了してから発火
-    let timeoutID;
     window.addEventListener("resize",()=>{
-        clearTimeout(timeoutID);
+        if (timeoutID){
+            clearTimeout(timeoutID);
+        }
         timeoutID = setTimeout(()=>{
             fitAddon.fit();
         }, 500);
