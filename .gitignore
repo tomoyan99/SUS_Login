@@ -134,4 +134,7 @@ dist
 Chrome/
 
 EXE/
-
+build/
+*.js
+*.map
+.idea
