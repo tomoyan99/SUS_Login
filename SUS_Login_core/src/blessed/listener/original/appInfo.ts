@@ -1,4 +1,4 @@
-import {description} from "../../description/description.js";
+import {description} from "../../description/description";
 import MainHome from "../../home/MainHome";
 
 export function appInfo(self:MainHome) {

@@ -1,4 +1,4 @@
-import {isNetConnected} from "../../../utils/isNetConnected.js";
+import {isNetConnected} from "../../../utils/isNetConnected";
 import MainHome from "../../home/MainHome";
 
 export async function network(self:MainHome) {

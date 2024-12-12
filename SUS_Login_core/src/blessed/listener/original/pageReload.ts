@@ -1,4 +1,4 @@
-import solaLinkReload from "../../../puppeteer/solaLinkReload.js";
+import solaLinkReload from "../../../puppeteer/solaLinkReload";
 import MainHome from "../../home/MainHome";
 
 export function pageReload(self:MainHome) {

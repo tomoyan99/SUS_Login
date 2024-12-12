@@ -1,4 +1,4 @@
-import Blessed from "neo-blessed";
+import Blessed from "blessed";
 import contrib from "blessed-contrib";
 import EventEmitter from "events";
 import {BlessedListener, ListenerList, listeners, OriginalListener} from "../listener/listeners";
@@ -453,12 +453,12 @@ class MainHome extends Methods {
       super(args);
       this.listeners = this.onAllEvents();
       //最初はINFOをフォーカス
-      // this.setFocus(this.components.mainTree);
-      // this.setFocus(this.components.info);
-      // //mainTree一番上の要素を選択
-      // this.components.mainTree.rows.emit("select item");
-      // //ネットワーク判定タイマーを作動
-      // this.event.emit("network", this);
+      this.setFocus(this.components.mainTree);
+      this.setFocus(this.components.info);
+      //mainTree一番上の要素を選択
+      this.components.mainTree.rows.emit("select item");
+      //ネットワーク判定タイマーを作動
+      this.event.emit("network", this);
       //画面のレンダリング
       this.components.screen.render();
     }catch (e:unknown) {
