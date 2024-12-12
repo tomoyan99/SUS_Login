@@ -1,51 +1,50 @@
 import path from "path";
 import fs from "fs";
 import {version as npmVersion} from "../../package.json";
-type UserConfig = {
-    "defaultWindowSize": {
-        "width" : number,
-        "height": number
+import {readJSON} from "../../SUS_Login_core/src/utils/myUtils";
+type ViewConfig = {
+    defaultWindowSize: {
+        width : number,
+        height: number
     },
-    "defaultFontSize": number,
-    "defaultTerminalSize":{
+    defaultFontSize: number,
+    defaultTerminalSize:{
         cols:number,
         rows:number,
     }
 };
-// const __PREFIX = "resources/";
-const __PREFIX = "";
+const __PREFIX = __dirname;
 const termRC = {
     col:80,
     row:30
 };
 const infoPath = "data/info.json";
-const confPath = path.resolve(__PREFIX,"src/boot/userConfig.json");
-let userConfig:UserConfig;
+const confPath = path.join(__dirname,"userConfig.json");
+let viewConfig:ViewConfig;
 
 if (!fs.existsSync(confPath)){
-    userConfig = {
-        "defaultWindowSize": {
-            "width" : 820,
-            "height": 640
+    viewConfig = {
+        defaultWindowSize: {
+            width : 640,
+            height: 480
         },
-        "defaultFontSize": 17,
-        "defaultTerminalSize":{
+        defaultFontSize: 15,
+        defaultTerminalSize:{
             cols:80,
             rows:30
         }
     }
-    fs.writeFileSync(confPath,JSON.stringify(userConfig),{encoding:"utf8"});
+    fs.writeFileSync(confPath,JSON.stringify(viewConfig),{encoding:"utf8"});
 }else{
-    userConfig = <UserConfig><unknown>import(confPath);
+    viewConfig = <ViewConfig><unknown>readJSON(confPath);
 }
 
 export {
     npmVersion,
-    __PREFIX,
     termRC,
     infoPath,
     confPath,
-    userConfig
+    viewConfig
 };
 
 

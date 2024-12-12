@@ -9,6 +9,7 @@ async function test() {
   }
   let BO = new Opener.BrowserOpener(param1);
   BO = await BO.launch({is_headless:false});
+  await BO.open({mode:"SCLASS"});
   await BO.open({mode:"SOLA"});
   await sleep(1000);
   // await BO.close();

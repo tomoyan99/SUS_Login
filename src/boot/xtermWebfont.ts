@@ -15,7 +15,7 @@ class XtermWebfont {
         this.terminal = terminal;
 
         // ターミナルに `loadWebfontAndOpen` メソッドを追加
-        this.terminal.loadWebfontAndOpen = async function (element: HTMLElement): Promise<Terminal> {
+        terminal.loadWebfontAndOpen = async function (element: HTMLElement): Promise<Terminal> {
             const fontFamily = this.options.fontFamily;
 
             if (!fontFamily) {
@@ -55,7 +55,7 @@ class XtermWebfont {
 // Terminalインターフェースを拡張して、新しいメソッドを追加
 declare module "xterm" {
     interface Terminal {
-        loadWebfontAndOpen?(element: HTMLElement): Promise<Terminal>;
+        loadWebfontAndOpen(element: HTMLElement): Promise<Terminal>;
     }
 }
 

@@ -5,6 +5,7 @@ import {setup} from "./setup";
 import {sleep, writeJSON} from "../utils/myUtils";
 import {existChromePath} from "../utils/existChromePath";
 import * as pkg from "../../../package.json";
+import MainHome from "../blessed/home/MainHome";
 
 //main
 (async function main() {
@@ -39,7 +40,7 @@ import * as pkg from "../../../package.json";
       //   );
       //   data = await solaLinkReload(data);
       // }
-      // new MainHome([data.userdata, data.solaLink]);
+      const HOME = new MainHome({user:data.userdata,links:data.solaLink});
       break;
     } catch (e) {
       console.clear();

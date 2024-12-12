@@ -77,7 +77,7 @@ export async function setup():Promise<MainData> {
   writeFileSync(info_path, "");
   await mc.writeCrypt(data); //info.jsonを暗号化して書き込み
   await sleep(2000);
-  console.log("\n設定が完了しました。次回起動時から本機能が使用可能になります。");
+  // console.log("\n設定が完了しました。次回起動時から本機能が使用可能になります。");
   return data;
 }
 

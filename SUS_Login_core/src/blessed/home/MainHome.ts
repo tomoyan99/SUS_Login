@@ -127,11 +127,9 @@ class Members extends FormatData {
   }
 }
 
-type ComponentName = "screen"|"grid"|"net"|"info"|"choice"|"form"|"mainTree"|"subTree";
-
 class Components extends Members {
 
-  components:{
+  public components:{
     screen  :Widgets.Screen,
     grid    :contrib.grid,
     net     :Widgets.TextElement,
@@ -145,12 +143,12 @@ class Components extends Members {
   constructor(args:MainArgs) {
     super(args);
     const screen      = this.makeScreen();
-    const grid          = this.makeGrid();
+    const grid          = this.makeGrid(screen);
     const net      = this.makeNet(grid);
     const choice   = this.makeChoice(grid);
     const info     = this.makeInfo(grid);
     const form  = this.makeForm(grid);
-    const mainTree      = this.makeMainTree(grid);
+    const mainTree      = this.makeMainTree(screen,grid);
     const subTree       = this.makeSubTree(grid);
     this.components = {
       screen:screen,
@@ -174,12 +172,12 @@ class Components extends Members {
     });
   }
 
-  private makeGrid():contrib.grid {
+  private makeGrid(screen:Widgets.Screen):contrib.grid {
     // 上で作ったスクリーンを縦横20分割して配置できるようになる
     return new contrib.grid({
       rows: 20,
       cols: 20,
-      screen: this.components.screen,
+      screen:screen,
     });
   }
 
@@ -190,7 +188,7 @@ class Components extends Members {
   private makeNet(grid:contrib.grid):Widgets.TextElement {
     return grid.set(...this.position.net, Blessed.text, {
       keys: false, // キー入力
-      parent: this.components.screen, // 必ず指定
+      parent: grid.screen, // 必ず指定
       name: "net",
       label: "NETWORK_STATUS", // 表示する名称
       align: "left",
@@ -216,7 +214,7 @@ class Components extends Members {
         Blessed.text,
         {
           keys: false, // キー入力
-          parent: this.components.screen, // 必ず指定
+          parent: grid.screen, // 必ず指定
           name: "choice",
           label: "CHOICE", // 表示する名称
           align: "left",
@@ -243,7 +241,7 @@ class Components extends Members {
     const info:Widgets.BoxElement = grid.set(...this.position.info, Blessed.text, {
       keys: true, // キー入力
       mouse: false,
-      parent: this.components.screen, // 必ず指定
+      parent: grid.screen, // 必ず指定
       name: "info",
       scrollable: true,
       alwaysScroll: true,
@@ -284,7 +282,7 @@ class Components extends Members {
         Blessed.textbox,
         {
           key: true,
-          parent: this.components.screen,
+          parent: grid.screen,
           name: "form",
           label: "INPUT_FORM",
           border: { type: "line" },
@@ -308,13 +306,13 @@ class Components extends Members {
    * @name makeMainTree
    * @description コンポーネントの作成(コマンド選択部)
    * */
-  private makeMainTree(grid:contrib.grid) {
+  private makeMainTree(screen:Widgets.Screen,grid:contrib.grid) {
     const mainTree:contrib.widget.Tree = grid.set(
         ...this.position.mainTree,
         contrib.tree,
         {
           key: true,
-          parent: this.components.screen,
+          parent:screen,
           keys: [],
           name: "mainTree",
           label: "COMMANDS",
@@ -353,7 +351,7 @@ class Components extends Members {
         contrib.tree,
         {
           key: true,
-          parent: this.components.screen,
+          parent: grid.screen,
           keys: [],
           name: "subTree",
           label: "PAGES",
@@ -412,7 +410,7 @@ class Methods extends Components{
   }
 
   public changeNetStatus(cond:boolean){
-    this.components.net.setContent(
+    this.components?.net?.setContent(
         `接続状況：${cond ? "{green-bg}良好{/}" : "{red-bg}不良{/}"}`,
     );
     this.components.screen.render();
@@ -450,18 +448,22 @@ class MainHome extends Methods {
   listeners:ListenerList;
 
   constructor(args:MainArgs) {
-    //this.dataの作成
-    super(args);
-    this.listeners = this.onAllEvents();
-    //最初はINFOをフォーカス
-    this.setFocus(this.components.mainTree);
-    this.setFocus(this.components.info);
-    //mainTree一番上の要素を選択
-    this.components.mainTree.rows.emit("select item");
-    //ネットワーク判定タイマーを作動
-    this.event.emit("network", this);
-    //画面のレンダリング
-    this.components.screen.render();
+    try {
+      //this.dataの作成
+      super(args);
+      this.listeners = this.onAllEvents();
+      //最初はINFOをフォーカス
+      // this.setFocus(this.components.mainTree);
+      // this.setFocus(this.components.info);
+      // //mainTree一番上の要素を選択
+      // this.components.mainTree.rows.emit("select item");
+      // //ネットワーク判定タイマーを作動
+      // this.event.emit("network", this);
+      //画面のレンダリング
+      this.components.screen.render();
+    }catch (e:unknown) {
+      throw e
+    }
   }
 
   private setListenerList():ListenerList {

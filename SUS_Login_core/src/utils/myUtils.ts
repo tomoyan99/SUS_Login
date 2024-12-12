@@ -63,18 +63,20 @@ export async function errorLoop<T>(
     loop_limit: number,
     func:(index:number,loop_limit:number)=>T|Promise<T>,
 ): Promise<T> {
-  let message:Error=new Error("ALL:UNEXPECTED_ERROR");//不明なエラーを初期値に
+  let messages:Error[] = [];//不明なエラーを初期値に
   for (let count = 1; count <= loop_limit; count++) {
     try {
       // コールバックの実行
       return <T>await func(count,loop_limit);
     } catch (e:unknown) {
-      message = (e instanceof Error)?e
+      const message = (e instanceof Error)?e
           :(typeof e === "string")?new Error(e)
-          :message;
+          :new Error("ALL:UNEXPECTED_ERROR");
+      messages.push(message);
     }
   }
-  throw message;
+  console.log(messages);
+  throw new Error("");
 }
 
 

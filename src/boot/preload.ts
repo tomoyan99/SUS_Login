@@ -5,25 +5,23 @@ import XtermWebfont from "./xtermWebfont";
 import {CanvasAddon} from "xterm-addon-canvas";
 import {WebglAddon} from "xterm-addon-webgl";
 import {WebLinksAddon} from "xterm-addon-web-links";
-import {userConfig} from "./boot_config";
-
+import {viewConfig} from "./boot_config";
 
 const term = new Terminal({
-    cols:userConfig.defaultTerminalSize.cols,
-    rows:userConfig.defaultTerminalSize.rows,
+    cols:viewConfig.defaultTerminalSize.cols,
+    rows:viewConfig.defaultTerminalSize.rows,
     cursorStyle:"bar",
     fontFamily:"myFont",
-    fontSize:userConfig.defaultFontSize,
+    fontSize:viewConfig.defaultFontSize,
     fontWeight:"300",
     cursorBlink:false,
     letterSpacing:0,
-    scrollback:0,
+    // scrollback:0,
     theme:{
         background:"rgb(0,0,0)"
     },
 })
-
-function termer() {
+async function termer() {
     const termContent = document.getElementById('terminal');
     const fitAddon = new FitAddon();
     const loadFont = new XtermWebfont();
@@ -42,7 +40,7 @@ function termer() {
     term.loadAddon(webGLAddon);
     if (termContent && "loadWebfontAndOpen" in term) {
         //コンテンツをロード
-        term.loadWebfontAndOpen(termContent);
+      term.loadWebfontAndOpen(termContent);
     }
     //Ctrl+Cで選択範囲をクリップボードにコピー可能にする
     term.attachCustomKeyEventHandler((arg) => {
@@ -112,7 +110,7 @@ function termer() {
         }
         timeoutID = setTimeout(()=>{
             fitAddon.fit();
-        }, 500);
+        }, 50);
     });
 }
 //contextBridgeにtermer関数を接続

@@ -11,11 +11,16 @@ import {errorLoop, sleep} from "../utils/myUtils";
 namespace Opener {
   // Launch時のオプション設定
   export type LaunchOption = {
-    printFunc?: Function;         // ログ出力関数
-    clearFunc?: Function;         // 画面クリア関数
-    is_app?: boolean;             // アプリモードの指定
-    is_headless?: boolean | "shell";  // ヘッドレスモードの指定
-    is_secret?: boolean;          // シークレットモードの指定
+    // ログ出力関数
+    printFunc?: Function;
+    // 画面クリア関数
+    clearFunc?: Function;
+    // アプリモードの指定
+    is_app?: boolean;
+    // ヘッドレスモードの指定
+    is_headless?: boolean | "shell";
+    // シークレットモードの指定
+    is_secret?: boolean;
   };
   export type Contexts = [puppeteer.Browser, puppeteer.Page];
   // モード設定（SCLASS, SOLA, EUC）の型定義
@@ -30,17 +35,18 @@ namespace Opener {
   export class BrowserOpener {
     private mode?: SiteMode;                // サイトモードを保持
     private readonly userdata: User;        // ユーザー情報
-    private target_URL = "";          // ターゲットURL
-    protected readonly selectors:Selectors;
+    private target_URL = "";         // ターゲットURL
+    protected readonly selectors:Selectors; //
     private EUC?: string;                   // EUC専用のプロパティ
     private solaLink_URL?: string;          // SOLA専用のプロパティ
-    protected browser?: puppeteer.Browser;    // PuppeteerのBrowserインスタンス
-    protected page?: puppeteer.Page;          // PuppeteerのPageインスタンス
-    printFunc: Function;            // ログ出力関数
+    protected browser?: puppeteer.Browser;  // PuppeteerのBrowserインスタンス
+    protected page?: puppeteer.Page;        // PuppeteerのPageインスタンス
+    printFunc: Function;                    // ログ出力関数
     private clearFunc: Function;            // 画面クリア関数
     private is_headless: boolean | "shell" = false; // ヘッドレスモードフラグ
     private is_app: boolean = true;         // アプリモードフラグ
     private is_secret: boolean = true;      // シークレットモードフラグ
+    private is_disabledCSS: boolean = false;// rejectResourcesが実行されたかのフラグ
 
     // コンストラクタ
     constructor(userdata: User) {
@@ -155,25 +161,29 @@ namespace Opener {
     }
     // エラーハンドリング共通関数
     private handleError(e: unknown, source: string): Error {
-      let errorMessage = `${source}:UNKNOWN_ERROR`;
+      let errorMessage = `[${source}] UNKNOWN_ERROR`;
 
       if (e instanceof Error) {
         errorMessage = e.message.includes("net::ERR_CONNECTION_REFUSED")
-            ? `${source}:CONNECTION_REFUSED`
-            : `${source}:${e.message}`;
+            ? `[${source}] CONNECTION_REFUSED`
+            : `[${source}] ${e.message}`;
+        e.message = errorMessage;
+        return e;
       } else if (typeof e === "string") {
-        errorMessage = `${source}:${e}`;
+        errorMessage = `[${source}] ${e}`;
+        return new Error(errorMessage);
+      }else{
+        // 不明なエラー
+        return new Error(errorMessage);
       }
-
-      return new Error(errorMessage);
     }
 
     // SCLASSサイトにアクセスしログイン
     protected async openSCLASS(): Promise<void> {
       if (!this.page) throw new Error("PAGE:UNDEFINED");
-      if (this.is_headless) await this.disableCSS();
+      if (this.is_headless) await this.rejectResources();
       this.printFunc("[SCLASSにログインします]");
-      const wa = new WaitAccessMessage(1000, this.printFunc);
+      const wa = new WaitAccessMessage(5000, this.printFunc);
 
       try {
         await wa.consoleOn("[SCLASS] サイトにアクセスしています...");
@@ -183,8 +193,8 @@ namespace Opener {
         await wa.consoleOn("[SCLASS] ログイン中・・・");
 
         const selectors = this.selectors.SCLASS;
-        const logout_btn = await this.page.waitForSelector(selectors.logout_btn, { timeout: 30000 });
-        await logout_btn?.click();
+        // const logout_btn = await this.page.waitForSelector(selectors.logout_btn, { timeout: 30000 });
+        // await logout_btn?.click();
 
         const username_input = await this.page.waitForSelector(selectors.username_input, { timeout: 30000 });
         await username_input?.click();
@@ -219,7 +229,7 @@ namespace Opener {
       const wa = new WaitAccessMessage(1000, this.printFunc);
 
       try {
-        if (this.is_headless) await this.disableCSS();
+        if (this.is_headless) await this.rejectResources();
         await wa.consoleOn("[SOLA] サイトにアクセスしています...");
         await this.page.goto(this.target_URL, { waitUntil: 'domcontentloaded', timeout: 0 });
         await wa.consoleOff();
@@ -306,14 +316,19 @@ namespace Opener {
     }
 
     // ヘッドレス時のCSS・画像無効化
-    protected async disableCSS() {
+    protected async rejectResources() {
       if (!this.page) throw new Error("PAGE:UNDEFINED");
-      await this.page.setRequestInterception(true);
-      this.page.on("request", (req) =>
+      // CSS
+      if (this.is_disabledCSS){
+        await this.page.setRequestInterception(true);
+        this.page.on("request", (req) => {
+          // リクエストタイプを確認して処理
           ["image", "stylesheet", "font"].includes(req.resourceType())
-              ? req.abort()
-              : req.continue()
-      );
+              ? req.abort() // ブロック
+              : req.continue(); // 続行
+        });
+      }
+      this.is_disabledCSS = true;
     }
 
     // ウィンドウサイズの変更
