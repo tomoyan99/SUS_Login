@@ -1,11 +1,10 @@
-import Blessed from "blessed";
+import Blessed, {Widgets} from "blessed";
 import contrib from "blessed-contrib";
-import EventEmitter from "events";
+import EventEmitter2 from "eventemitter2";
 import {BlessedListener, ListenerList, listeners, OriginalListener} from "../listener/listeners";
 import {description} from "../description/description";
 import {mainEventMap} from "../commandList/commandList";
-import {EventMap, SolaLinkData, User} from "../../main/setup";
-import {Widgets} from "blessed";
+import {SolaLinkData, TreeEventMap, User} from "../../main/setup";
 
 export type TreeNode = {
   extended?: boolean;
@@ -28,19 +27,19 @@ class FormatData {
   };
 
   constructor(args: MainArgs) {
+    args.links["{yellow-fg}戻る{/}"] = { event: "return" };
     this.data = {
       user: args.user,
       main: this.treeingEventMap(mainEventMap),
       sub : this.treeingEventMap(args.links),
       description: description,
     };
-    args.links["{yellow-fg}戻る{/}"] = { event: "return" };
   }
   /**
    * @name treeingEventMap
    * @description EventMapデータをcontrib-tree用に整形する関数
    * */
-  public treeingEventMap(EM:Record<string,EventMap|EventMap[]>, depth: number = 0): TreeNode {
+  public treeingEventMap(EM:Record<string,TreeEventMap|TreeEventMap[]>, depth: number = 0): TreeNode {
     const except_keys = ["event", "url", "name", "code"];
     let EM_treed: TreeNode =
         depth === 0
@@ -53,7 +52,7 @@ class FormatData {
         EM_treed[EM_key] = EM[EM_key];
       } else {
         EM_treed.children![EM_key] = this.treeingEventMap(
-            <Record<string,EventMap>>EM[EM_key],
+            <Record<string,TreeEventMap>>EM[EM_key],
             depth + 1
         );
       }
@@ -117,12 +116,13 @@ class Members extends FormatData {
       },
     };
     this.position = {
-      net: [0, 10, 2, 10],
+      // row: number, col: number, rowSpan: number, colSpan: number
+      net: [0, 8, 2, 12],
       info: [12, 0, 8, 20],
-      choice: [10, 0, 2, 10],
-      form: [10, 0, 2, 10],
-      mainTree: [0, 0, 10, 10],
-      subTree: [2, 10, 10, 10],
+      choice: [10, 0, 2, 8],
+      form: [10, 0, 2, 8],
+      mainTree: [0, 0, 10, 8],
+      subTree: [2, 8, 10, 12],
     };
   }
 }
@@ -408,7 +408,6 @@ class Methods extends Components{
     //画面のレンダリング
     c.screen.render();
   }
-
   public changeNetStatus(cond:boolean){
     this.components?.net?.setContent(
         `接続状況：${cond ? "{green-bg}良好{/}" : "{red-bg}不良{/}"}`,
@@ -419,7 +418,6 @@ class Methods extends Components{
     this.components.choice.setContent(`{bold}${contents}{/}`);
     this.components.choice.render();
   };
-
   public setInfo(value:string){
     this.components.info.resetScroll();
     this.components.info.setContent(value);
@@ -444,8 +442,8 @@ class Methods extends Components{
 }
 
 class MainHome extends Methods {
-  event = new EventEmitter();
-  listeners:ListenerList;
+  public event = new EventEmitter2();
+  public listeners:ListenerList;
 
   constructor(args:MainArgs) {
     try {
@@ -458,7 +456,7 @@ class MainHome extends Methods {
       //mainTree一番上の要素を選択
       this.components.mainTree.rows.emit("select item");
       //ネットワーク判定タイマーを作動
-      this.event.emit("network", this);
+      this.event.emit("network",this);
       //画面のレンダリング
       this.components.screen.render();
     }catch (e:unknown) {

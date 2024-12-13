@@ -22,7 +22,7 @@ export function euc(self:MainHome) {
     self.clearInfo();
     let BO = new Opener.BrowserOpener(self.data.user);
     try {
-      BO = await BO.launch({is_headless:true,printFunc:self.appendInfo,clearFunc:self.clearInfo}).catch(()=>{
+      BO = await BO.launch({is_headless:true,printFunc:self.appendInfo.bind(self),clearFunc:self.clearInfo.bind(self)}).catch(()=>{
         self.event.emit(
             "error",
             "[BROWSER ERROR]\nブラウザを開くのに失敗しました。\n再度やり直すことで回復する可能性があります",

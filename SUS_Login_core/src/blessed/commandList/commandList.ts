@@ -1,6 +1,6 @@
-import {EventMap} from "../../main/setup";
+import {TreeEventMap} from "../../main/setup";
 
-export const mainEventMap:Record<string,EventMap> =
+export const mainEventMap:Record<string,TreeEventMap> =
 {
   SUS_LOGIN: {
     event: "appinfo",

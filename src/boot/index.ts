@@ -1,7 +1,7 @@
-import {app, BrowserWindow, ipcMain, Menu,MenuItemConstructorOptions} from "electron";
+import {app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions} from "electron";
 import * as pty from "node-pty";
 import path from 'path';
-import {npmVersion, confPath, viewConfig} from "./boot_config";
+import {confPath, npmVersion, viewConfig} from "./boot_config";
 import fs from "fs";
 
 let mainWindow  :BrowserWindow|null = null;
@@ -44,7 +44,7 @@ async function createWindow() {
                     fs.writeFileSync(confPath,JSON.stringify(viewConfig),{encoding:"utf8"});
                     //windowを閉じる
                     //eventはonceなので発動しない
-                    // mainWindow.close();
+                    mainWindow.close();
                 }
             });
             //xtermにリクエストを送るってterm.optionsをもらう

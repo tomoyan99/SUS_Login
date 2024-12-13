@@ -1,5 +1,5 @@
 import FontFaceObserver from "fontfaceobserver";
-import { Terminal } from "xterm";
+import {Terminal} from "xterm";
 
 /**
  * xterm.jsにWebフォントの読み込み機能を追加するユーティリティクラス

@@ -1,6 +1,5 @@
 import {clearInterval} from "timers";
-import ora, {Ora} from "ora";
-import spinners from "cli-spinners";
+import {Ora} from "ora";
 
 process.stdout.setEncoding("utf8");
 

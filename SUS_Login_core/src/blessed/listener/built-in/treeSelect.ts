@@ -1,10 +1,12 @@
 import MainHome, {TreeNode} from "../../home/MainHome";
 import contrib from "blessed-contrib";
+import {Widgets} from "blessed";
 
 export function treeSelect(self:MainHome, t:contrib.widget.Tree) {
   const root = t.rows;
-  const node = <TreeNode><unknown>t.nodeLines![root.getItemIndex(root)];
+  const node = <TreeNode><unknown>t.nodeLines![root.getItemIndex((<Widgets.ListElementStyle><unknown>root).selected)];
   const desc = self.data.description;
+
   if (node && node.name) {
     const reg = /{.+?}(.+?){\/}/g;
     const name_noESC = node.name.replace(reg, "$1");

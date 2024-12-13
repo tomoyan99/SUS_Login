@@ -7,9 +7,9 @@ export const sleep = (msec: number) =>
 /* writeJSON関数 */
 export function writeJSON(filepath: string, data: string | Object,indent:boolean=false) {
   // filepathからディレクトリ部分を抜き出し
-  const dirpath = path.dirname(filepath);
+  const dirPath = path.dirname(filepath);
   // ディレクトリが無ければ再帰的に作成
-  if (existsSync(dirpath))mkdirSync(dirpath,{recursive:true});
+  if (!existsSync(dirPath))mkdirSync(dirPath,{recursive:true});
   if (typeof data === "string") {
     writeFileSync(filepath, data);
   } else {
@@ -63,20 +63,18 @@ export async function errorLoop<T>(
     loop_limit: number,
     func:(index:number,loop_limit:number)=>T|Promise<T>,
 ): Promise<T> {
-  let messages:Error[] = [];//不明なエラーを初期値に
+  let message:Error = new Error("ALL:UNEXPECTED_ERROR");//不明なエラーを初期値に
   for (let count = 1; count <= loop_limit; count++) {
     try {
       // コールバックの実行
       return <T>await func(count,loop_limit);
     } catch (e:unknown) {
-      const message = (e instanceof Error)?e
-          :(typeof e === "string")?new Error(e)
-          :new Error("ALL:UNEXPECTED_ERROR");
-      messages.push(message);
+      message = (e instanceof Error)?e
+          :(typeof e === "string") ?new Error(e)
+          :new Error("ALL:UNEXPECTED_ERROR")
     }
   }
-  console.log(messages);
-  throw new Error("");
+  throw message;
 }
 
 

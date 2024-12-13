@@ -1,11 +1,11 @@
-import EventEmitter from "events";
+import EventEmitter2 from "eventemitter2";
 import {isNumberInRange} from "./myUtils";
 import {control} from "./control";
 
 // キー入力を色々するときのEventクラス
 // ここにenterを押したときとかのeventを登録していく感じ
 // バグある可能性
-export class KeyInputEmitter extends EventEmitter {
+export class KeyInputEmitter extends EventEmitter2 {
   private keyListener: ((char: any, key: any) => void) | undefined;
 
   constructor() {

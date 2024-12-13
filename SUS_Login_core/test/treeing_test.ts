@@ -1,5 +1,6 @@
-import {EventMap, mainEventMap} from "../src/blessed/commandList/commandList";
+import {mainEventMap} from "../src/blessed/commandList/commandList";
 import {readJSON} from "../src/utils/myUtils";
+import {TreeEventMap} from "../src/main/setup";
 
 /**
  * @name treeingEventMap
@@ -17,7 +18,7 @@ function treeingEventMap(EM: any, depth: number = 0) {
         if (except_keys.includes(EM_key)) {
             EM_treed[EM_key] = EM[EM_key];
         } else {
-            EM_treed.children[EM_key] = treeingEventMap(<EventMap>EM[EM_key], depth + 1,);
+            EM_treed.children[EM_key] = treeingEventMap(<TreeEventMap>EM[EM_key], depth + 1,);
         }
     }
     return EM_treed;

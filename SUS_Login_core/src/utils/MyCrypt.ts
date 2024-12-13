@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import * as crypto from "crypto";
 import * as os from "os";
 import {hostname, totalmem} from "os";
 import {readFileSync, writeFileSync} from "fs";

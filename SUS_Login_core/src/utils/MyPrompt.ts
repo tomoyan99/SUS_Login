@@ -1,4 +1,4 @@
-import Index from "enquirer";
+import * as Index from "enquirer";
 import {pause} from "./pause";
 import {control as cl} from "./control";
 import {sleep} from "./myUtils";

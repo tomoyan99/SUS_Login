@@ -2,7 +2,6 @@ import {contextBridge, ipcRenderer} from "electron";
 import {Terminal} from "xterm";
 import {FitAddon} from "xterm-addon-fit";
 import XtermWebfont from "./xtermWebfont";
-import {CanvasAddon} from "xterm-addon-canvas";
 import {WebglAddon} from "xterm-addon-webgl";
 import {WebLinksAddon} from "xterm-addon-web-links";
 import {viewConfig} from "./boot_config";
@@ -16,7 +15,7 @@ const term = new Terminal({
     fontWeight:"300",
     cursorBlink:false,
     letterSpacing:0,
-    // scrollback:0,
+    scrollback:0,
     theme:{
         background:"rgb(0,0,0)"
     },
@@ -110,7 +109,7 @@ async function termer() {
         }
         timeoutID = setTimeout(()=>{
             fitAddon.fit();
-        }, 50);
+        }, 500);
     });
 }
 //contextBridgeにtermer関数を接続

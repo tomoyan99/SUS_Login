@@ -10,10 +10,12 @@ type Schedule = { bf: ScheduleItem[]; af: ScheduleItem[] };
 
 export async function createSolaLinkData(user: User, subOption?: LaunchOption): Promise<SolaLinkData> {
   let scraper = new SolaLinkDataScraper(user);
-  const launchOptions = {
+  const launchOptions:LaunchOption = {
     is_app: subOption?.is_app??true,
     is_secret: subOption?.is_secret??true,
     is_headless: subOption?.is_headless ?? true,
+    printFunc:subOption?.printFunc,
+    clearFunc:subOption?.clearFunc,
   };
 
   return await errorLoop(4, async () => {
@@ -73,29 +75,29 @@ class SolaLinkDataScraper extends Opener.BrowserOpener {
   }
 
   private async extractScheduleData(): Promise<Schedule> {
-    const selector = this.selectors.SCHEDULE.SCLASS;
 
     const extractData = async (term:"bf"|"af",className: string): Promise<string[]> => {
-      const termNum = {"bf":"00","af":"01"}[term];
-      const path = `table#form1\\:standardJugyoTimeSchedule${termNum}List td.${className} span`;
-      return await this.page?.$$eval(path, (elements) =>
-          elements.map((el) => el.textContent?.trim() || "").filter(Boolean)
-      ) ?? [];
+      const termNum = ({"bf":"00","af":"01"})[term];
+      const path = `table#form1\\:standardJugyoTimeSchedule${termNum}List td.${className} span,table#form1\\:IrregularJugyoTimeSchedule${termNum}List td.${className} span`;
+      return await this.page?.$$eval(path, (elements) =>{
+        const rows = new Set(elements.map((el) => el.textContent?.trim() || "").filter(Boolean));
+        return [...rows];
+      }) ?? [];
     };
 
     try {
       const codesBf = await extractData("bf","jugyoCd");
       const namesBf = await extractData("bf","jugyoMei");
-      const codesAf = await extractData("af","jugyoCd_af");
-      const namesAf = await extractData("af","jugyoMei_af");
+      const codesAf = await extractData("af","jugyoCd");
+      const namesAf = await extractData("af","jugyoMei");
 
       const cleanName = (name: string) =>
           name.replace(/ (.*?) .*/g, "$1").replace("\t", "").trim();
-
-      return {
+      const schedules = {
         bf: codesBf.map((code, i) => ({ code, name: cleanName(namesBf[i]) })),
         af: codesAf.map((code, i) => ({ code, name: cleanName(namesAf[i]) })),
       };
+      return schedules;
     } catch (e) {
       throw new Error("SCRAPE_SCLASS:CREATE_SCHEDULE_ERROR");
     }

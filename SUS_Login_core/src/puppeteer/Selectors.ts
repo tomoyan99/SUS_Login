@@ -55,8 +55,8 @@ class Selectors{
   public readonly EUC: SelectorsEUC = {
     risyuu_div: "div::-p-text(履修関連)",
     EUC_link: "div::-p-text(EUC学生出欠登録)",
-    EUC_input: "input.inputText",
-    EUC_submit_btn: "input.button",
+    EUC_input: "input#form1\\:htmlKeyword",
+    EUC_submit_btn: "input#form1\\:update",
     result_text_span: "span#form1\\:htmlTorokuKekka",
     result_class_span: "span#form1\\:Title",
     shot_target_table: "table.sennasi"
@@ -74,7 +74,6 @@ class Selectors{
     },
     SOLA:{
       last_aalink:"div.last a.aalink",
-
     }
   };
 }

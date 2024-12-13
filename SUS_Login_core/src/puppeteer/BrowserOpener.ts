@@ -67,22 +67,30 @@ namespace Opener {
     }
 
     // 指定モードでサイトを開く
-    public async open(option: ModeOption<SiteMode>): Promise<BrowserOpener> {
-      return await errorLoop(4, async () => { // エラーループ付き
-        if (!this.browser || (await this.browser.pages()).length === 0) {
-          throw new Error("BROWSER:CLOSED");
-        }
-        this.changeMode(option);           // モード変更
-        await this.navigateAndResize(option.mode); // サイトアクセスとリサイズ
-        return this;
-      });
+    public async open(option: ModeOption<SiteMode>,retry?:number): Promise<BrowserOpener> {
+      try {
+        const result = await errorLoop(retry??4, async () => { // エラーループ付き
+          if (!this.browser || (await this.browser.pages()).length === 0) {
+            throw new Error("BROWSER:CLOSED");
+          }
+          this.changeMode(option);           // モード変更
+          await this.navigateAndResize(option.mode); // サイトアクセスとリサイズ
+          return this;
+        });
+        return result;
+      }catch (e) {
+        throw e;
+      }
     }
 
     // ブラウザを閉じる
     public async close() {
-      if (!this.browser) throw new Error("BROWSER:UNDEFINED");
-      await this.browser.close();
-      this.browser = undefined;
+      if (this.browser){
+        await this.browser.close();
+        this.browser = undefined;
+      }else{
+        this.printFunc("[WARN] BROWSER IS ALREADY CLOSED");
+      }
     }
 
     // オプション設定を適用
@@ -118,7 +126,8 @@ namespace Opener {
         ...(this.is_app ? ["--app=https://www.google.co.jp/"] : []),
         ...(this.is_headless || !this.is_secret ? [] : ["--incognito"]),
         "--window-position=9999,9999",
-        this.is_headless ? "--window-size=1200,1200" : "--window-size=0,0",
+        // "--window-position=0,0",
+        this.is_headless ? "--start-maximized" : "--window-size=600,600",
         "--proxy-server='direct://'",
         "--proxy-bypass-list=*",
         "--test-type",
@@ -130,15 +139,15 @@ namespace Opener {
       switch (mode) {
         case "SCLASS":
           await this.openSCLASS();
-          await this.resizeWindow([800, 600]);
+          await this.resizeWindow([600, 600]);
           break;
         case "SOLA":
           await this.openSOLA();
-          await this.resizeWindow([800, 600]);
+          await this.resizeWindow([600, 600]);
           break;
         case "EUC":
           await this.openEUC();
-          await this.close();
+          // await this.close();
           break;
       }
     }
@@ -183,7 +192,7 @@ namespace Opener {
       if (!this.page) throw new Error("PAGE:UNDEFINED");
       if (this.is_headless) await this.rejectResources();
       this.printFunc("[SCLASSにログインします]");
-      const wa = new WaitAccessMessage(5000, this.printFunc);
+      const wa = new WaitAccessMessage(3000, this.printFunc);
 
       try {
         await wa.consoleOn("[SCLASS] サイトにアクセスしています...");
@@ -226,7 +235,7 @@ namespace Opener {
       if (!this.page) throw new Error("PAGE:UNDEFINED");
       if (!this.target_URL) throw new Error("SOLA:URL_UNDEFINED");
       this.printFunc("[SOLAにログインします]");
-      const wa = new WaitAccessMessage(1000, this.printFunc);
+      const wa = new WaitAccessMessage(3000, this.printFunc);
 
       try {
         if (this.is_headless) await this.rejectResources();
@@ -255,7 +264,7 @@ namespace Opener {
           await this.page.waitForResponse(res => !!(res.url().match("sola.sus.ac.jp")), { timeout: 2000 });
         });
         // SOLAのbodyの表示を待つ
-        await this.page.waitForSelector("body#page-site-index",{timeout: 10000});
+        await this.page.waitForNavigation({waitUntil:"domcontentloaded", timeout: 30000});
         this.printFunc(`${cl.bg_green}[SOLA] ログイン完了${cl.fg_reset}`);
       } catch (e) {
         throw this.handleError(e, "SOLA");
@@ -269,7 +278,7 @@ namespace Opener {
       if (!this.page) throw new Error("PAGE:UNDEFINED");
       if (!this.EUC) throw new Error("EUC:EUC_UNDEFINED");
       this.printFunc("[EUC登録を行います]");
-      const wa = new WaitAccessMessage(1000, this.printFunc);
+      const wa = new WaitAccessMessage(3000, this.printFunc);
       const selectors = this.selectors.EUC;
 
       try {
@@ -280,10 +289,12 @@ namespace Opener {
         const risyuu_div = await this.page.waitForSelector(selectors.risyuu_div);
         await risyuu_div?.hover();
 
-        const EUC_link = await this.page.waitForSelector(selectors.EUC_link);
-        await EUC_link?.click();
+        const EUC_link = await this.page.waitForSelector(selectors.EUC_link,{timeout: 8000});
+        await EUC_link?.click({delay:100});
 
-        const EUC_input = await this.page.waitForSelector(selectors.EUC_input);
+        const EUC_input = await this.page.waitForSelector(selectors.EUC_input,{
+          timeout: 8000,
+        });
         const EUC_submit_btn = await this.page.waitForSelector(selectors.EUC_submit_btn);
         await EUC_input?.click();
         await EUC_input?.type(this.EUC);
@@ -291,7 +302,7 @@ namespace Opener {
 
         const result_text_span = await this.page.waitForSelector(selectors.result_text_span);
         const result_text = (await result_text_span?.evaluate(el => el.textContent)) || "番号が異なります。";
-        const result_class = await this.page.$eval("span#form1\\:Title", span => span?.textContent?.replace(/[\t\n]/g, "") || "");
+        const result_class = await this.page.$eval("span#form1\\:Title", span => span?.textContent?.replace(/[\t\n]/g, "") || "").catch(()=>"");
 
         await wa.consoleOff();
         this.printFunc(`${cl.fg_cyan}${result_class ? result_class + "\n" : ""}${cl.fg_reset}${cl.fg_red}${result_text}${cl.fg_reset}`);
@@ -307,10 +318,10 @@ namespace Opener {
         const todayEUC = `授業名：${result_class},EUC番号:${this.EUC},結果:${result_text},日付:${today.getTodayJP()}\n`;
         if (!existsSync("data/logs")) mkdirSync("data/logs", { recursive: true });
         appendFileSync("data/logs/euc.log", todayEUC, "utf-8");
-
       } catch (e) {
         throw this.handleError(e, "EUC");
       } finally {
+        this.page.removeAllListeners("dialog");
         await wa.consoleOff();
       }
     }
@@ -319,7 +330,7 @@ namespace Opener {
     protected async rejectResources() {
       if (!this.page) throw new Error("PAGE:UNDEFINED");
       // CSS
-      if (this.is_disabledCSS){
+      if (!this.is_disabledCSS){
         await this.page.setRequestInterception(true);
         this.page.on("request", (req) => {
           // リクエストタイプを確認して処理

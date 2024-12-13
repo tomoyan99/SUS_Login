@@ -4,7 +4,7 @@ import {Widgets} from "blessed";
 
 export function treeEntered(self:MainHome, tree:contrib.widget.Tree) {
   const c = self.components;
-  const root = tree.rows;
+  const root:Widgets.ListElement = tree.rows;
   const node = <TreeNode><unknown>(tree.nodeLines![root.getItemIndex((<Widgets.ListElementStyle><unknown>root).selected)]);
 
   if (node.name && node.event){

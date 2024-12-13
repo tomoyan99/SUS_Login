@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs";
 import {version as npmVersion} from "../../package.json";
 import {readJSON} from "../../SUS_Login_core/src/utils/myUtils";
+
 type ViewConfig = {
     defaultWindowSize: {
         width : number,
