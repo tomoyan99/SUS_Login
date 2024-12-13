@@ -38,7 +38,7 @@ async function termer() {
     // term.loadAddon(canvasAddon);
     term.loadAddon(webGLAddon);
     if (termContent && "loadWebfontAndOpen" in term) {
-        //コンテンツをロード
+        //フォントをロード
       term.loadWebfontAndOpen(termContent);
     }
     //Ctrl+Cで選択範囲をクリップボードにコピー可能にする

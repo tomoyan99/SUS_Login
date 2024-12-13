@@ -105,15 +105,23 @@ namespace Opener {
     // ブラウザとページの作成
     private async createContext(): Promise<[puppeteer.Browser, puppeteer.Page]> {
       try {
-        const browser = await puppeteer.launch({
-          headless: this.is_headless ? "shell" : false,
-          slowMo: this.is_headless ? 0 : 1,
-          defaultViewport: null,
-          channel: "chrome",
-          timeout: 0,
-          ignoreDefaultArgs: ["--disable-extensions", "--enable-automation"],
-          args: this.buildLaunchArgs(),
-        });
+        let browser :puppeteer.Browser;
+        if (process.env.DEBUG_URL) {
+          browser = await puppeteer.connect({
+            browserWSEndpoint: process.env.DEBUG_URL,
+            defaultViewport:null
+          });
+        }else{
+          browser = await puppeteer.launch({
+            headless: this.is_headless ? "shell" : false,
+            slowMo: this.is_headless ? 0 : 1,
+            defaultViewport: null,
+            channel: "chrome",
+            timeout: 0,
+            ignoreDefaultArgs: ["--disable-extensions", "--enable-automation"],
+            args: this.buildLaunchArgs(),
+          });
+        }
         return [browser, (await browser.pages())[0]];
       } catch {
         throw new Error("BROWSER:CANNOT_OPEN");
