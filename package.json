@@ -74,7 +74,8 @@
     "compression": "maximum",
     "files": [
       "src/boot/**/*",
-      "package.json"
+      "package.json",
+      "EXE/*"
     ],
     "extraResources": [
       "EXE/*"

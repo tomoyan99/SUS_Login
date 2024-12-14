@@ -3,16 +3,12 @@ import * as pty from "node-pty";
 import path from "path";
 import { confPath, npmVersion, viewConfig } from "./boot_config";
 import fs from "fs";
+import {ITerminalOptions} from "xterm";
 
 let mainWindow: BrowserWindow | null = null;
-let ptyProcess: pty.IPty;
-let ptyData: pty.IDisposable;
-let ptyExit: pty.IDisposable;
 // let port:Promise<number> = getDebuggerPort(app);
-
 // ウィンドウの初期化
 async function createWindow() {
-
     mainWindow = new BrowserWindow({
         width: viewConfig.defaultWindowSize.width,
         height: viewConfig.defaultWindowSize.height,
@@ -58,27 +54,30 @@ function handleWindowClose() {
         // ウィンドウの設定を保存
         if (mainWindow) {
             saveWindowConfig(options);
-            mainWindow.close();
+            // mainWindow.close();
         }
     });
     mainWindow?.webContents.send("terminal.requestOptions");
 }
 
 // ウィンドウの設定を保存
-function saveWindowConfig(options: any) {
+function saveWindowConfig(options:ITerminalOptions) {
     const contentSize = mainWindow?.getContentSize();
     viewConfig.defaultWindowSize.width = contentSize ? contentSize[0] : viewConfig.defaultWindowSize.width;
     viewConfig.defaultWindowSize.height = contentSize ? contentSize[1] : viewConfig.defaultWindowSize.height;
-    viewConfig.defaultFontSize = options.fontSize;
+    viewConfig.defaultFontSize = options.fontSize??17;
     fs.writeFileSync(confPath, JSON.stringify(viewConfig,null,2), { encoding: "utf8" });
 }
 
 // ターミナルプロセスの初期化
 function initializeTerminalProcess() {
-    if (ptyProcess) {
-        cleanupPreviousPtyProcess();
-    }
+    let ptyProcess: pty.IPty|undefined;
+    let ptyData: pty.IDisposable|undefined;
+    let ptyExit: pty.IDisposable|undefined;
 
+    if (ptyProcess && ptyData && ptyExit) {
+        cleanupPreviousPtyProcess(ptyProcess,ptyData,ptyExit);
+    }
     try {
         const inputFilePath = path.join(__dirname, `../../EXE/main.exe`);
         const cwdPath = "";
@@ -86,28 +85,25 @@ function initializeTerminalProcess() {
             name: "xterm-color",
             cols: viewConfig.defaultTerminalSize.cols,
             rows: viewConfig.defaultTerminalSize.rows,
-            cwd: cwdPath,
-            env: process.env,
+            cwd : cwdPath,
+            env : process.env,
             handleFlowControl: true,
             useConpty: true,
         });
-
         ptyData = ptyProcess.onData((data) => {
             mainWindow?.webContents.send("terminal.incomingData", data);
         });
-
         ptyExit = ptyProcess.onExit(() => {
             mainWindow?.close();
         });
-
-        setupPtyIpcListeners();
+        setupPtyIpcListeners(ptyProcess);
     } catch (error) {
         mainWindow?.webContents.send("terminal.incomingData", error + "\n");
     }
 }
 
 // 以前のPTYプロセスのクリーンアップ
-function cleanupPreviousPtyProcess() {
+function cleanupPreviousPtyProcess(ptyProcess:pty.IPty,ptyData:pty.IDisposable,ptyExit:pty.IDisposable) {
     const PAUSE = "\x13";
     ipcMain.removeAllListeners("terminal.keystroke");
     ipcMain.removeAllListeners("network.changed");
@@ -118,11 +114,10 @@ function cleanupPreviousPtyProcess() {
 }
 
 // IPCイベントリスナーの設定
-function setupPtyIpcListeners() {
+function setupPtyIpcListeners(ptyProcess:pty.IPty) {
     ipcMain.on("terminal.keystroke", (event, key) => {
         ptyProcess.write(key);
     });
-
     ipcMain.on("terminal.resize", (event, resizer) => {
         ptyProcess.resize(resizer[0], resizer[1]);
     });
@@ -160,6 +155,7 @@ async function loadWindowContent() {
     await mainWindow?.loadURL(`file://${__dirname}/render/index.html`);
     mainWindow?.focus();
 }
+
 async function main(){
     setupMenu();
     await createWindow();
