@@ -1,8 +1,5 @@
 import {clearInterval} from "timers";
 import {Ora} from "ora";
-
-process.stdout.setEncoding("utf8");
-
 class WaitAccessMessage {
   private readonly wait_msec: number;
   private wait_access: NodeJS.Timeout|undefined;
@@ -10,6 +7,7 @@ class WaitAccessMessage {
   private spinner : Ora|undefined;
 
   constructor(wait_msec: number, func: Function = console.log) {
+    process.stdout.setEncoding("utf8");
     this.wait_msec = wait_msec;
     this.wait_access = undefined;
     this.print_func = func;
