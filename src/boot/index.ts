@@ -115,10 +115,10 @@ function cleanupPreviousPtyProcess(ptyProcess:pty.IPty,ptyData:pty.IDisposable,p
 
 // IPCイベントリスナーの設定
 function setupPtyIpcListeners(ptyProcess:pty.IPty) {
-    ipcMain.on("terminal.keystroke", (event, key) => {
+    ipcMain.on("terminal.keystroke", (event, key:string) => {
         ptyProcess.write(key);
     });
-    ipcMain.on("terminal.resize", (event, resizer) => {
+    ipcMain.on("terminal.resize", (event, resizer:number[]) => {
         ptyProcess.resize(resizer[0], resizer[1]);
     });
 }
