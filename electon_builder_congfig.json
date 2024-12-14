@@ -1,0 +1,26 @@
+{
+  "productName": "SUS_Login",
+  "appId": "com.electron.SUS_Login",
+  "directories": {
+    "output": "build/"
+  },
+  "compression": "maximum",
+  "files": [
+    "src/boot/**/*",
+    "package.json",
+    "EXE/*"
+  ],
+  "extraResources": [
+    "EXE/*"
+  ],
+  "win": {
+    "icon": "src/assets/icon.ico",
+    "target": "nsis"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": true
+  }
+}
+
