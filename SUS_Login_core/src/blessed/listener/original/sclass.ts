@@ -1,6 +1,5 @@
 import MainHome from "../../home/MainHome";
 import Opener from "../../../puppeteer/BrowserOpener";
-import {ipcMain} from "electron";
 
 export async function sclass(self:MainHome) {
     self.clearInfo();

@@ -1,12 +1,9 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions } from "electron";
+import {app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions} from "electron";
 import * as pty from "node-pty";
 import path from "path";
-import { confPath, npmVersion, viewConfig } from "./boot_config";
-import fs, {appendFileSync, writeFileSync} from "fs";
+import {confPath, npmVersion, viewConfig} from "./boot_config";
+import fs from "fs";
 import {ITerminalOptions} from "xterm";
-import {susLoginCore} from "../../SUS_Login_core/src/main/main"
-import {StdoutCapture} from "../../SUS_Login_core/src/utils/StdoutCapture";
-import MainHome from "../../SUS_Login_core/src/blessed/home/MainHome";
 
 let mainWindow: BrowserWindow | null = null;
 // let port:Promise<number> = getDebuggerPort(app);
@@ -48,8 +45,7 @@ function setupWindowEvents() {
         mainWindow = null;
     });
 
-    // mainWindow.webContents.on("dom-ready", initializeTerminalProcess);
-    mainWindow.webContents.on("dom-ready",aaaa);
+    mainWindow.webContents.on("dom-ready", initializeTerminalProcess);
 }
 
 // ウィンドウのクローズ処理
@@ -58,7 +54,7 @@ function handleWindowClose() {
         // ウィンドウの設定を保存
         if (mainWindow) {
             saveWindowConfig(options);
-            // mainWindow.close();
+            mainWindow.close();
         }
     });
     mainWindow?.webContents.send("terminal.requestOptions");
@@ -72,30 +68,6 @@ function saveWindowConfig(options:ITerminalOptions) {
     viewConfig.defaultFontSize = options.fontSize??17;
     fs.writeFileSync(confPath, JSON.stringify(viewConfig,null,2), { encoding: "utf8" });
 }
-
-async function aaaa() {
-    console.clear();
-    const capture = new StdoutCapture();
-    writeFileSync("./log.log","");
-    // キャプチャ中のデータをリアルタイムで処理するリスナーを設定
-    capture.on("data", (data: string) => {
-        appendFileSync("./log.log",`${new Date()} [Captured]: ${data.trim()}\n`);
-        mainWindow?.webContents.send("terminal.incomingData", data);
-    });
-
-    // キャプチャを開始
-    capture.startCapturing();
-
-    // メイン関数を実行
-    new MainHome({user:{username:"T122063",password:"pz2Gqb9!"},links:{
-        "前期":{},
-        "後期":{}
-    }});
-
-    // キャプチャを終了
-    const capturedOutput = capture.stopCapturing();
-}
-
 
 // ターミナルプロセスの初期化
 function initializeTerminalProcess() {

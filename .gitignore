@@ -138,3 +138,5 @@ build/
 *.js
 *.map
 .idea
+./electon_builder_congfig.json
+/SUS_Login_core/test/

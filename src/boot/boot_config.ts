@@ -1,7 +1,6 @@
 import path from "path";
-import fs from "fs";
+import fs, {readFileSync} from "fs";
 import {version as npmVersion} from "../../package.json";
-import {readJSON} from "../../SUS_Login_core/src/utils/myUtils";
 
 type ViewConfig = {
     defaultWindowSize: {
@@ -37,7 +36,7 @@ if (!fs.existsSync(confPath)){
     }
     fs.writeFileSync(confPath,JSON.stringify(viewConfig),{encoding:"utf8"});
 }else{
-    viewConfig = <ViewConfig><unknown>readJSON(confPath);
+    viewConfig = <ViewConfig><unknown>JSON.parse(readFileSync(confPath,"utf8"));
 }
 
 export {

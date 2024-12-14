@@ -6,7 +6,6 @@ import {User} from "../main/setup";
 import {today} from "../utils/today";
 import {appendFileSync, existsSync, mkdirSync} from "fs";
 import {errorLoop, sleep} from "../utils/myUtils";
-import {app} from "electron";
 
 // Opener namespace定義
 namespace Opener {

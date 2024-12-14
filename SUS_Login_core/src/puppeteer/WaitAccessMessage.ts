@@ -1,5 +1,6 @@
 import {clearInterval} from "timers";
 import {Ora} from "ora";
+
 class WaitAccessMessage {
   private readonly wait_msec: number;
   private wait_access: NodeJS.Timeout|undefined;

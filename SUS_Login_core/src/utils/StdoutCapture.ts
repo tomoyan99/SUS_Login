@@ -1,4 +1,4 @@
-import { EventEmitter2 } from "eventemitter2";
+import {EventEmitter2} from "eventemitter2";
 
 export class StdoutCapture extends EventEmitter2 {
     private originalWrite: typeof process.stdout.write; // 元の標準出力
