@@ -8,13 +8,11 @@ async function test() {
       password: "pZ2Gqb9!",
   }
   let BO = new Opener.BrowserOpener(param1);
-  BO = await BO.launch({is_headless:true});
-  for (let i = 0; i < 10; i++) {
-    await BO.open({mode:"EUC",EUC:"123"});
-  }
-  await BO.close();
-  await sleep(1000);
-  // await BO.close();
+  BO = await BO.launch({is_headless:false});
+  BO.onClose(()=>{
+      console.log("closed");
+  })
+  await BO.open({mode:"SOLA"});
   return;
 }
 

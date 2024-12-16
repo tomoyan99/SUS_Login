@@ -1,11 +1,15 @@
 import {app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions} from "electron";
 import * as pty from "node-pty";
 import path from "path";
-import {confPath, npmVersion, viewConfig} from "./boot_config";
+import {npmVersion, viewConfig} from "./boot_config";
 import fs from "fs";
 import {ITerminalOptions} from "xterm";
 
 let mainWindow: BrowserWindow | null = null;
+let ptyProcess: pty.IPty|undefined;
+let ptyData: pty.IDisposable|undefined;
+let ptyExit: pty.IDisposable|undefined;
+
 // let port:Promise<number> = getDebuggerPort(app);
 // ウィンドウの初期化
 async function createWindow() {
@@ -66,22 +70,17 @@ function saveWindowConfig(options:ITerminalOptions) {
     viewConfig.defaultWindowSize.width = contentSize ? contentSize[0] : viewConfig.defaultWindowSize.width;
     viewConfig.defaultWindowSize.height = contentSize ? contentSize[1] : viewConfig.defaultWindowSize.height;
     viewConfig.defaultFontSize = options.fontSize??17;
-    fs.writeFileSync(confPath, JSON.stringify(viewConfig,null,2), { encoding: "utf8" });
+    fs.writeFileSync(<string>process.env.confPath, JSON.stringify(viewConfig,null,2), { encoding: "utf8" });
 }
 
 // ターミナルプロセスの初期化
 function initializeTerminalProcess() {
-    let ptyProcess: pty.IPty|undefined;
-    let ptyData: pty.IDisposable|undefined;
-    let ptyExit: pty.IDisposable|undefined;
-
     if (ptyProcess && ptyData && ptyExit) {
         cleanupPreviousPtyProcess(ptyProcess,ptyData,ptyExit);
     }
     try {
-        const inputFilePath = path.join(__dirname, `../../EXE/main.exe`);
         const cwdPath = "";
-        ptyProcess = pty.spawn(inputFilePath, [], {
+        ptyProcess = pty.spawn(<string>process.env.inputFilePath, [], {
             name: "xterm-color",
             cols: viewConfig.defaultTerminalSize.cols,
             rows: viewConfig.defaultTerminalSize.rows,
@@ -107,6 +106,7 @@ function cleanupPreviousPtyProcess(ptyProcess:pty.IPty,ptyData:pty.IDisposable,p
     const PAUSE = "\x13";
     ipcMain.removeAllListeners("terminal.keystroke");
     ipcMain.removeAllListeners("network.changed");
+    ipcMain.removeAllListeners("terminal.resize");
     ptyProcess.write(PAUSE);
     ptyData.dispose();
     ptyExit.dispose();
@@ -127,7 +127,7 @@ function setupPtyIpcListeners(ptyProcess:pty.IPty) {
 function setupMenu() {
     const mainMenu: MenuItemConstructorOptions[] = [
         { label: '再起動', role: "reload" },
-        { label: 'DevTool', role: "toggleDevTools" },
+        // { label: 'DevTool', role: "toggleDevTools" },
         { label: "フォント", submenu: [
             { label: "文字大きく", click: () => { changeFontSize(1); }, accelerator: 'CmdOrCtrl+=' },
             { label: "初期値", click: () => { resetFontSize(); } },
@@ -161,6 +161,9 @@ async function main(){
     await createWindow();
 }
 
+ipcMain.handle('getViewConfig', async () => {
+    return viewConfig;
+});
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();

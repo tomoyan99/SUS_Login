@@ -55,7 +55,6 @@ export function pageReload(self:MainHome) {
 }
 
 
-//初回起動設定
 async function solaLinkReload(self:MainHome) {
   const info_path = process.env.infoPath;
   if (!info_path) {

@@ -238,7 +238,7 @@ class Components extends Members {
    * @description コンポーネントの作成(情報表示部)
    * */
   private makeInfo(grid:contrib.grid) {
-    const info:Widgets.BoxElement = grid.set(...this.position.info, Blessed.text, {
+    const info:Widgets.BoxElement = grid.set(...this.position.info, Blessed.text, <Widgets.TextOptions>{
       keys: true, // キー入力
       mouse: false,
       parent: grid.screen, // 必ず指定

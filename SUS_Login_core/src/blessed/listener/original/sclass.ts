@@ -12,6 +12,9 @@ export async function sclass(self:MainHome) {
             );
             throw "";
         });
+        BO.onClose(()=>{
+           self.appendInfo("{yellow-fg}[SCLASS] ブラウザが閉じられました{/}");
+        });
         await BO.open({mode:"SCLASS"});
     }catch (e) {
         self.event.emit("error",e);

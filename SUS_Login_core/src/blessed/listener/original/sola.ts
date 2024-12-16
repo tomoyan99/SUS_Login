@@ -12,6 +12,9 @@ export async function sola(self:MainHome, node:{url:string}) {
       );
       throw "";
     });
+    BO.onClose(()=>{
+      self.appendInfo("{yellow-fg}[SOLA] ブラウザが閉じられました{/}");
+    });
     await BO.open({mode:"SOLA",solaLink_URL:node.url});
   }catch (e) {
     self.event.emit("error",e);

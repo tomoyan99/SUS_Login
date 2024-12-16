@@ -6,6 +6,8 @@ import {User} from "../main/setup";
 import {today} from "../utils/today";
 import {appendFileSync, existsSync, mkdirSync} from "fs";
 import {errorLoop, sleep} from "../utils/myUtils";
+import {BrowserEventObj} from "puppeteer";
+import {Target} from "puppeteer-core";
 
 // Opener namespace定義
 namespace Opener {
@@ -69,20 +71,22 @@ namespace Opener {
     // 指定モードでサイトを開く
     public async open(option: ModeOption<SiteMode>,retry?:number): Promise<BrowserOpener> {
       try {
-        const result = await errorLoop(retry??4, async () => { // エラーループ付き
+        return await errorLoop(retry??4, async () => { // エラーループ付き
           if (!this.browser || (await this.browser.pages()).length === 0) {
-            throw new Error("BROWSER:CLOSED");
+            // throw new Error("BROWSER:CLOSED");
+            return this;
           }
           this.changeMode(option);           // モード変更
           await this.navigateAndResize(option.mode); // サイトアクセスとリサイズ
           return this;
         });
-        return result;
       }catch (e) {
         throw e;
       }
     }
-
+    public onClose(cb:()=>void){
+      this.browser?.on<keyof BrowserEventObj>("disconnected",cb);
+    }
     // ブラウザを閉じる
     public async close() {
       if (this.browser){
@@ -350,6 +354,23 @@ namespace Opener {
       await session.send("Browser.setWindowBounds", {
         windowId,
         bounds: { width: w, height: h,left: 0, top: 0 },
+      });
+      // 現在のページのtargetを取得
+      this.browser?.on<keyof BrowserEventObj>("targetcreated",async(target?:Target)=>{
+        if (target){
+          console.log(this.page?.target());
+          console.log(target.opener());
+          const newPage = await target.page();
+          console.log(target.type())
+          if (newPage && target.type() === "browser"){
+            const newSession = await newPage.createCDPSession();
+            const {windowId} = await newSession.send("Browser.getWindowForTarget");
+            await session.send("Browser.setWindowBounds", {
+              windowId,
+              bounds: { width: w, height: h,left: 0, top: 0 },
+            });
+          }
+        }
       });
     }
   }

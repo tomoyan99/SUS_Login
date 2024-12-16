@@ -15,21 +15,15 @@ class WaitAccessMessage {
   }
   //アクセスメッセージの開始
   async consoleOn(prompt: string = "アクセス中...") {
-    // this.spinner = ora({
-    //   text: prompt,
-    //   spinner: spinners.dots,
-    // });
     //アクセス待機メッセージ
     this.wait_access = setInterval(() => {
       this.print_func(prompt);
-      // this.print_func(`\x1b[2F\x1b[K${this.spinner?.frame()}`);
     }, this.wait_msec);
   }
   //アクセスメッセージの終了
   async consoleOff() {
     if (typeof this.wait_access) {
       clearInterval(this.wait_access);
-      // this.print_func(this.spinner?.succeed());
     }
   }
 }

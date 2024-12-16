@@ -8,7 +8,10 @@
   "files": [
     "src/boot/**/*",
     "package.json",
-    "EXE/*"
+    "!./**/data.json",
+    "!./**/userConfig.json",
+    "!src/**/*.js.map",
+    "!src/**/*.ts"
   ],
   "extraResources": [
     "EXE/*"

@@ -4,23 +4,24 @@ import {FitAddon} from "xterm-addon-fit";
 import XtermWebfont from "./xtermWebfont";
 import {WebglAddon} from "xterm-addon-webgl";
 import {WebLinksAddon} from "xterm-addon-web-links";
-import {viewConfig} from "./boot_config";
 
-const term = new Terminal({
-    cols:viewConfig.defaultTerminalSize.cols,
-    rows:viewConfig.defaultTerminalSize.rows,
-    cursorStyle:"bar",
-    fontFamily:"myFont",
-    fontSize:viewConfig.defaultFontSize,
-    fontWeight:"300",
-    cursorBlink:false,
-    letterSpacing:0,
-    scrollback:0,
-    theme:{
-        background:"rgb(0,0,0)"
-    },
-})
 async function termer() {
+    const viewConfig = await ipcRenderer.invoke("getViewConfig");
+    const term = new Terminal({
+        cols:viewConfig.defaultTerminalSize.cols,
+        rows:viewConfig.defaultTerminalSize.rows,
+        cursorStyle:"bar",
+        fontFamily:"myFont",
+        fontSize:viewConfig.defaultFontSize,
+        fontWeight:"300",
+        cursorBlink:false,
+        letterSpacing:0,
+        scrollback:0,
+        theme:{
+            background:"rgb(0,0,0)"
+        },
+    });
+
     const termContent = document.getElementById('terminal');
     const fitAddon = new FitAddon();
     const loadFont = new XtermWebfont();

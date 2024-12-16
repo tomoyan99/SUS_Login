@@ -74,7 +74,6 @@ export async function setup():Promise<MainData> {
   }
   console.log("認証ファイルの暗号化を行います・・・");
   // ファイルの作成
-  writeFileSync(info_path, "");
   await mc.writeCrypt(data); //info.jsonを暗号化して書き込み
   await sleep(2000);
   // console.log("\n設定が完了しました。次回起動時から本機能が使用可能になります。");
@@ -126,8 +125,6 @@ async function wizardProcess(version: string): Promise<MainData> {
             last_upd:last_upd
           };
         }catch (e:any) {
-          // SETUP:CONTINUE_INNER_LOOPがloop_limit-1回
-          // SETUP:CONTINUE_INNER_LOOP もしくは SETUP:EXITが流れる
           throw e;
         }
       });
