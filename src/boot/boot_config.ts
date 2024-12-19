@@ -18,8 +18,8 @@ type ViewConfig = {
 const userDataPath = app.getPath("userData");
 const infoPath = path.join(userDataPath,"data/info.json");
 const confPath = path.join(userDataPath,"userConfig.json");
-// const inputFilePath = path.join(process.resourcesPath,"EXE/main.exe");
-const inputFilePath = path.join(app.getAppPath(),"EXE/main.exe");
+const inputFilePath = path.join(process.resourcesPath,"EXE/main.exe");
+// const inputFilePath = path.join(app.getAppPath(),"EXE/main.exe");
 
 process.env.appVersion = npmVersion;
 process.env.userDataPath = userDataPath;
