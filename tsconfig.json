@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    // TSはECMAScript 5に変換
+    "target": "ES2022",
+    "module": "CommonJS",
+    // 厳密モードとして設定
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": false,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "lib": ["dom"],
+    "sourceMap": true,
+    "typeRoots": [
+      "node_modules/@types/**/*.d.ts",         // デフォルトではここだけ読む.忘れず書き添える
+      "SUS_Login_core/src/@types/**/*.d.ts"
+    ],
+    "resolveJsonModule": true,
+  },
+  "include": [
+    "src",
+    "SUS_Login_core/src",
+  ],
+}

@@ -134,4 +134,8 @@ dist
 Chrome/
 
 EXE/
-
+build/
+*.js
+*.map
+.idea
+/SUS_Login_core/test/
