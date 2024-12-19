@@ -20,6 +20,7 @@ export function euc(self:MainHome) {
   });
   self.event.once("confirm euc", async (euc:string) => {
     self.clearInfo();
+    self.status.isChangeFocus = false;
     let BO = new Opener.BrowserOpener(self.data.user);
     try {
       BO = await BO.launch({is_headless:true,printFunc:self.appendInfo.bind(self),clearFunc:self.clearInfo.bind(self)}).catch(()=>{
@@ -34,6 +35,7 @@ export function euc(self:MainHome) {
       self.event.emit("error",e);
     }finally {
       await BO.close();
+      self.status.isChangeFocus = true;
     }
   });
 }

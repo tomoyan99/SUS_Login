@@ -65,7 +65,7 @@ class Members extends FormatData {
   status: {
     inputValue: string;
     focus: { bef?: Widgets.BlessedElement; now?: Widgets.BlessedElement };
-    miss_count: number;
+    isChangeFocus:boolean;
   };
 
   network: {
@@ -90,7 +90,7 @@ class Members extends FormatData {
         bef: undefined,
         now: undefined,
       },
-      miss_count: 0,
+      isChangeFocus: true,
     };
     this.network = {};
     this.colors = {

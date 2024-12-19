@@ -14,11 +14,9 @@ export function pageReload(self:MainHome) {
     const value = self.status.inputValue;
     self.setFocus(c.info);
     if (value === "y") {
+      self.status.isChangeFocus = false;
       try {
         self.appendInfo("科目ページリストを更新します");
-        c.info.unkey("enter", () => {
-          lb.screenTab(self);
-        });
         self.clearInfo();
         const newData = await solaLinkReload(self);
         newData.solaLink["{yellow-fg}戻る{/}"] = { event: "return" };
@@ -36,9 +34,7 @@ export function pageReload(self:MainHome) {
           );
         }
       } finally {
-        c.info.key("enter", () => {
-          lb.screenTab(self);
-        });
+        self.status.isChangeFocus = true;
         c.form.removeAllListeners("cancel");
       }
     } else {

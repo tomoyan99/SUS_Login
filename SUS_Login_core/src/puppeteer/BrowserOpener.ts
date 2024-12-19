@@ -49,6 +49,8 @@ namespace Opener {
     private is_app: boolean = true;         // アプリモードフラグ
     private is_secret: boolean = true;      // シークレットモードフラグ
     private is_disabledCSS: boolean = false;// rejectResourcesが実行されたかのフラグ
+    private wam:WaitAccessMessage;
+
 
     // コンストラクタ
     constructor(userdata: User) {
@@ -56,6 +58,7 @@ namespace Opener {
       this.printFunc = console.log;
       this.clearFunc = console.clear;
       this.selectors = new Selectors();
+      this.wam = new WaitAccessMessage(3000,this.printFunc);
     }
 
     // ブラウザ起動
@@ -86,6 +89,9 @@ namespace Opener {
     }
     public onClose(cb:()=>void){
       this.browser?.on<keyof BrowserEventObj>("disconnected",cb);
+      this.browser?.on<keyof BrowserEventObj>("disconnected",()=>{
+        this.wam.consoleOff();
+      });
     }
     // ブラウザを閉じる
     public async close() {
@@ -104,6 +110,7 @@ namespace Opener {
       this.is_headless = option.is_headless ?? false;
       this.is_app = option.is_app ?? true;
       this.is_secret = option.is_secret ?? true;
+      this.wam = new WaitAccessMessage(3000,this.printFunc);
     }
 
     // ブラウザとページの作成
@@ -196,14 +203,13 @@ namespace Opener {
       if (!this.page) throw new Error("PAGE:UNDEFINED");
       if (this.is_headless) await this.rejectResources();
       this.printFunc("[SCLASSにログインします]");
-      const wa = new WaitAccessMessage(3000, this.printFunc);
 
       try {
-        await wa.consoleOn("[SCLASS] サイトにアクセスしています...");
+        this.wam.consoleOn("[SCLASS] サイトにアクセスしています...");
         await this.page.goto(this.target_URL, { waitUntil: "domcontentloaded", timeout: 0 });
-        await wa.consoleOff();
+        this.wam.consoleOff();
         this.printFunc(`${cl.fg_green}[SCLASS] アクセス完了${cl.fg_reset}`);
-        await wa.consoleOn("[SCLASS] ログイン中・・・");
+        this.wam.consoleOn("[SCLASS] ログイン中・・・");
 
         const selectors = this.selectors.SCLASS;
         // const logout_btn = await this.page.waitForSelector(selectors.logout_btn, { timeout: 30000 });
@@ -230,7 +236,7 @@ namespace Opener {
       } catch (e: unknown) {
         throw this.handleError(e, "SCLASS");
       } finally {
-        await wa.consoleOff();
+        this.wam.consoleOff();
       }
     }
 
@@ -243,11 +249,11 @@ namespace Opener {
 
       try {
         if (this.is_headless) await this.rejectResources();
-        await wa.consoleOn("[SOLA] サイトにアクセスしています...");
+        this.wam.consoleOn("[SOLA] サイトにアクセスしています...");
         await this.page.goto(this.target_URL, { waitUntil: 'domcontentloaded', timeout: 0 });
-        await wa.consoleOff();
+        this.wam.consoleOff();
         this.printFunc(`${cl.fg_green}[SOLA] アクセス完了${cl.fg_reset}`);
-        await wa.consoleOn("[SOLA] ログイン中・・・");
+        this.wam.consoleOn("[SOLA] ログイン中・・・");
 
         const selectors = this.selectors.SOLA;
         const username_input = await this.page.waitForSelector(selectors.username_input, { timeout: 30000 });
@@ -273,7 +279,7 @@ namespace Opener {
       } catch (e) {
         throw this.handleError(e, "SOLA");
       } finally {
-        await wa.consoleOff();
+        this.wam.consoleOff();
       }
     }
 
@@ -289,7 +295,7 @@ namespace Opener {
         await this.openSCLASS();
         this.page.once("dialog", async dialog => await dialog.accept());
 
-        await wa.consoleOn("[EUC] 登録中...");
+        this.wam.consoleOn("[EUC] 登録中...");
         const risyuu_div = await this.page.waitForSelector(selectors.risyuu_div);
         await risyuu_div?.hover();
 
@@ -308,7 +314,7 @@ namespace Opener {
         const result_text = (await result_text_span?.evaluate(el => el.textContent)) || "番号が異なります。";
         const result_class = await this.page.$eval("span#form1\\:Title", span => span?.textContent?.replace(/[\t\n]/g, "") || "").catch(()=>"");
 
-        await wa.consoleOff();
+        this.wam.consoleOff();
         this.printFunc(`${cl.fg_cyan}${result_class ? result_class + "\n" : ""}${cl.fg_reset}${cl.fg_red}${result_text}${cl.fg_reset}`);
 
         if (result_text === "番号が異なります。") return;
@@ -326,7 +332,7 @@ namespace Opener {
         throw this.handleError(e, "EUC");
       } finally {
         this.page.removeAllListeners("dialog");
-        await wa.consoleOff();
+        this.wam.consoleOff();
       }
     }
 
@@ -350,28 +356,43 @@ namespace Opener {
     private async resizeWindow([w, h]: [number, number]) {
       if (!this.page) throw new Error("PAGE:UNDEFINED");
       const session = await this.page.createCDPSession();
-      const { windowId } = await session.send("Browser.getWindowForTarget");
+      const { windowId:originID } = await session.send("Browser.getWindowForTarget");
       await session.send("Browser.setWindowBounds", {
-        windowId,
+        windowId:originID,
         bounds: { width: w, height: h,left: 0, top: 0 },
       });
-      // 現在のページのtargetを取得
-      this.browser?.on<keyof BrowserEventObj>("targetcreated",async(target?:Target)=>{
+      /*
+      * -> chromeのwindowのデフォルトの位置が9999,9999から変わったわけではないので、
+      * 別のタブが開かれるとウィンドウは9999,9999に生成されてしまう
+      * これを防ぐために、appモードではないウィンドウが生成された際のboundsの設定処理が必要
+      */
+      async function onCreatedNewTarget(target?:Target){
         if (target){
-          console.log(this.page?.target());
-          console.log(target.opener());
-          const newPage = await target.page();
-          console.log(target.type())
-          if (newPage && target.type() === "browser"){
-            const newSession = await newPage.createCDPSession();
-            const {windowId} = await newSession.send("Browser.getWindowForTarget");
-            await session.send("Browser.setWindowBounds", {
-              windowId,
-              bounds: { width: w, height: h,left: 0, top: 0 },
+          const page = await target.page();
+          const pages = await target.browser().pages();
+          const oldPage = pages[pages.length - 2];
+          if (page){
+            const newSession = await page.createCDPSession();
+            const oldSession = await oldPage.createCDPSession();
+            const { windowId:oldID } = await oldSession.send("Browser.getWindowForTarget");
+            const { windowId:newID } = await newSession.send("Browser.getWindowForTarget");
+            const {bounds} = await oldSession.send("Browser.getWindowBounds",{
+              windowId:oldID,
+            });
+            if (pages.length === 2){
+              bounds.left = bounds.left !== undefined ? bounds.left+30 : 0;
+              bounds.top  = bounds.top  !== undefined ? bounds.top+30  : 0;
+            }
+            await newSession.send("Browser.setWindowBounds", {
+              windowId:newID,
+              bounds:bounds,
             });
           }
         }
-      });
+      }
+
+      // 現在のページのtargetを取得
+      this.browser?.on<keyof BrowserEventObj>("targetcreated",onCreatedNewTarget);
     }
   }
 }

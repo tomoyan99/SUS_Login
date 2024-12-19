@@ -14,14 +14,14 @@ class WaitAccessMessage {
     this.print_func = func;
   }
   //アクセスメッセージの開始
-  async consoleOn(prompt: string = "アクセス中...") {
+  consoleOn(prompt: string = "アクセス中...") {
     //アクセス待機メッセージ
     this.wait_access = setInterval(() => {
       this.print_func(prompt);
     }, this.wait_msec);
   }
   //アクセスメッセージの終了
-  async consoleOff() {
+  consoleOff() {
     if (typeof this.wait_access) {
       clearInterval(this.wait_access);
     }

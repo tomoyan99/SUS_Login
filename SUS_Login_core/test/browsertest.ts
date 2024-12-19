@@ -12,7 +12,7 @@ async function test() {
   BO.onClose(()=>{
       console.log("closed");
   })
-  await BO.open({mode:"SOLA"});
+  await BO.open({mode:"SOLA",solaLink_URL:"https://sola.sus.ac.jp/course/view.php?id=6612"});
   return;
 }
 

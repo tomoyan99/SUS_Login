@@ -3,6 +3,7 @@ import MainHome from "../../home/MainHome";
 
 export async function sola(self:MainHome, node:{url:string}) {
   self.clearInfo();
+  self.status.isChangeFocus = false;
   let BO = new Opener.BrowserOpener(self.data.user);
   try {
     BO = await BO.launch({is_headless:false,printFunc:self.appendInfo.bind(self),clearFunc:self.clearInfo.bind(self)}).catch(()=>{
@@ -18,5 +19,7 @@ export async function sola(self:MainHome, node:{url:string}) {
     await BO.open({mode:"SOLA",solaLink_URL:node.url});
   }catch (e) {
     self.event.emit("error",e);
+  }finally {
+    self.status.isChangeFocus = true;
   }
 }

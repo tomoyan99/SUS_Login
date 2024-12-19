@@ -3,6 +3,7 @@ import Opener from "../../../puppeteer/BrowserOpener";
 
 export async function sclass(self:MainHome) {
     self.clearInfo();
+    self.status.isChangeFocus = false;
     let BO = new Opener.BrowserOpener(self.data.user);
     try {
         BO = await BO.launch({is_headless:false,printFunc:self.appendInfo.bind(self),clearFunc:self.clearInfo.bind(self)}).catch(()=>{
@@ -18,5 +19,7 @@ export async function sclass(self:MainHome) {
         await BO.open({mode:"SCLASS"});
     }catch (e) {
         self.event.emit("error",e);
+    }finally {
+        self.status.isChangeFocus = true;
     }
 }
