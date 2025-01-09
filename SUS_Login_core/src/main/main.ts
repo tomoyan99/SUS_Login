@@ -35,7 +35,9 @@ import path from "path";
       //   );
       //   data = await solaLinkReload(data);
       // }
-      const HOME = new MainHome({user:data.userdata,links:data.solaLink});
+      const Home = new MainHome({user:data.userdata,links:data.solaLink});
+      // 開始
+      Home.init();
       break;
     } catch (e) {
       console.clear();

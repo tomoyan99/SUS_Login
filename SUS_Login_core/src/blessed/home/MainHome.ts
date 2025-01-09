@@ -450,17 +450,22 @@ class MainHome extends Methods {
       //this.dataの作成
       super(args);
       this.listeners = this.onAllEvents();
+    }catch (e:unknown) {
+      throw e
+    }
+  }
+  public init(){
+    try{
       //最初はINFOをフォーカス
       this.setFocus(this.components.mainTree);
-      this.setFocus(this.components.info);
       //mainTree一番上の要素を選択
       this.components.mainTree.rows.emit("select item");
       //ネットワーク判定タイマーを作動
       this.event.emit("network",this);
       //画面のレンダリング
       this.components.screen.render();
-    }catch (e:unknown) {
-      throw e
+    }catch (e) {
+      throw e;
     }
   }
 

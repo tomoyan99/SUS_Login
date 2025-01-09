@@ -102,6 +102,10 @@ async function termer() {
         ipcRenderer.send("terminal.resize", resizer);
     });
 
+    window.addEventListener("DOMContentLoaded", ()=>{
+       fitAddon.fit();
+    });
+
     //画面がリサイズされたらそれに合わせてターミナルサイズをフィットさせる
     //リサイズが終了してから発火
     window.addEventListener("resize",()=>{
