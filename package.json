@@ -7,7 +7,6 @@
   "scripts": {
     "all_build:ins": "run-s ts_compile nexe:build electron:ins",
     "all_build:dir": "run-s ts_compile nexe:build electron:dir",
-    "test": "echo %npm_package_version%",
     "postinstall": "electron-builder install-app-deps --platform win32 --arch x64",
     "package:update": "ncu -u && npm i",
     "ts_compile":"tsc",
