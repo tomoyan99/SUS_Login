@@ -121,7 +121,16 @@ async function terminalHandler() {
     });
     window.dispatchEvent(new Event("resize"));
 }
+
+declare global{
+    interface Window {
+        xtermAPI:{
+            terminalHandler: typeof terminalHandler,
+        }
+    }
+}
+
 //contextBridgeにterminalHandler関数を接続
-contextBridge.exposeInMainWorld('testapi', {
+contextBridge.exposeInMainWorld('xtermAPI', {
     terminalHandler: terminalHandler,
 })
