@@ -4,9 +4,10 @@ import {FitAddon} from "xterm-addon-fit";
 import XtermWebfont from "./xtermWebfont";
 import {WebglAddon} from "xterm-addon-webgl";
 import {WebLinksAddon} from "xterm-addon-web-links";
+import {ViewConfig} from "./types";
 
-async function termer() {
-    const viewConfig = await ipcRenderer.invoke("getViewConfig");
+async function terminalHandler() {
+    const viewConfig:ViewConfig = await ipcRenderer.invoke("getViewConfig");
     const term = new Terminal({
         cols:viewConfig.defaultTerminalSize.cols,
         rows:viewConfig.defaultTerminalSize.rows,
@@ -36,12 +37,13 @@ async function termer() {
     term.loadAddon(fitAddon);
     term.loadAddon(loadFont);
     term.loadAddon(webLink);
-    // term.loadAddon(canvasAddon);
     term.loadAddon(webGLAddon);
+
+    //フォントをロード
     if (termContent && "loadWebfontAndOpen" in term) {
-        //フォントをロード
       term.loadWebfontAndOpen(termContent);
     }
+
     //Ctrl+Cで選択範囲をクリップボードにコピー可能にする
     term.attachCustomKeyEventHandler((arg) => {
         if (arg.ctrlKey && arg.code === "KeyC" && arg.type === "keydown") {
@@ -55,6 +57,7 @@ async function termer() {
     });
 
     let isFocused = false;
+
     //node-ptyの標準出力をブラウザに表示する
     ipcRenderer.on("terminal.incomingData", (event, data) => {
         if (!isFocused){
@@ -116,8 +119,9 @@ async function termer() {
             fitAddon.fit();
         }, 500);
     });
+    window.dispatchEvent(new Event("resize"));
 }
-//contextBridgeにtermer関数を接続
+//contextBridgeにterminalHandler関数を接続
 contextBridge.exposeInMainWorld('testapi', {
-    termer: termer,
+    terminalHandler: terminalHandler,
 })

@@ -2,18 +2,7 @@ import path from "path";
 import fs, {readFileSync} from "fs";
 import {version as npmVersion} from "../../package.json";
 import {app} from "electron";
-
-type ViewConfig = {
-    defaultWindowSize: {
-        width : number,
-        height: number
-    },
-    defaultFontSize: number,
-    defaultTerminalSize:{
-        cols:number,
-        rows:number,
-    }
-};
+import {ViewConfig} from "./types";
 
 const userDataPath = app.getPath("userData");
 const infoPath = path.join(userDataPath,"data/info.json");
