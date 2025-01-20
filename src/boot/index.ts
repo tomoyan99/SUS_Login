@@ -93,7 +93,10 @@ function initializeTerminalProcess() {
             mainWindow?.webContents.send("terminal.incomingData", data);
         });
         ptyExit = ptyProcess.onExit(() => {
-            mainWindow?.close();
+            // 開発環境ではエラーが起きても閉じない
+            if (app.isPackaged){
+                mainWindow?.close();
+            }
         });
         setupPtyIpcListeners(ptyProcess);
     } catch (error) {

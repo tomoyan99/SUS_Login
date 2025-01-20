@@ -9,7 +9,7 @@
     "all_build:dir": "run-s ts_compile nexe:build electron:dir",
     "postinstall": "electron-builder install-app-deps --platform win32 --arch x64",
     "package:update": "ncu -u && npm i",
-    "ts_compile":"tsc",
+    "ts_compile": "tsc",
     "electron:start": "tsc && electron .",
     "electron:rebuild": "electron-rebuild -p -m -s",
     "electron:dir": "electron-builder --win --x64 --dir --config electon_builder_congfig.json",
@@ -18,7 +18,8 @@
     "webpack": "webpack",
     "nexe:pkg": "ts-node nexe_complie.ts",
     "nexe:build": "run-s webpack nexe:pkg",
-    "nexe:start": "npm run nexe:build && powershell EXE/main.exe"
+    "nexe:start": "npm run nexe:build && powershell EXE/main.exe",
+    "browserTest": "tsc && ts-node ./SUS_Login_core/test/browsertest.ts"
   },
   "author": "Tomoya Sano",
   "license": "ISC",

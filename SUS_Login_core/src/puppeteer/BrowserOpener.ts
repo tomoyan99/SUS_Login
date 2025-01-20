@@ -64,11 +64,15 @@ namespace Opener {
     // ブラウザ起動
     public async launch(option: LaunchOption) {
       this.applyLaunchOptions(option);      // オプションの適用
-      [this.browser, this.page] = await errorLoop<Contexts>( // エラーループ付きでブラウザ起動
-          4,
-          this.createContext.bind(this)
-      );
-      return this;
+      try{
+        [this.browser, this.page] = await errorLoop<Contexts>( // エラーループ付きでブラウザ起動
+            4,
+            this.createContext.bind(this)
+        );
+        return this;
+      }catch(e){
+        throw e;
+      }
     }
 
     // 指定モードでサイトを開く
@@ -87,12 +91,15 @@ namespace Opener {
         throw e;
       }
     }
+
+    // ブラウザを閉じたときのイベント
     public onClose(cb:()=>void){
       this.browser?.on<keyof BrowserEventObj>("disconnected",cb);
       this.browser?.on<keyof BrowserEventObj>("disconnected",()=>{
         this.wam.consoleOff();
       });
     }
+
     // ブラウザを閉じる
     public async close() {
       if (this.browser){
@@ -179,6 +186,7 @@ namespace Opener {
           break;
       }
     }
+
     // エラーハンドリング共通関数
     private handleError(e: unknown, source: string): Error {
       let errorMessage = `[${source}] UNKNOWN_ERROR`;
@@ -383,9 +391,11 @@ namespace Opener {
               bounds.left = bounds.left !== undefined ? bounds.left+30 : 0;
               bounds.top  = bounds.top  !== undefined ? bounds.top+30  : 0;
             }
+            // 新しく開いたwindowがappモードの場合、windowStateプロパティがなくてエラー出るっぽいので分離
+            const {windowState,...windowBounds} = bounds;
             await newSession.send("Browser.setWindowBounds", {
               windowId:newID,
-              bounds:bounds,
+              bounds:windowBounds,
             });
           }
         }

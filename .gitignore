@@ -139,3 +139,5 @@ build/
 *.map
 .idea
 /SUS_Login_core/test/
+./bundle
+./package-lock.json

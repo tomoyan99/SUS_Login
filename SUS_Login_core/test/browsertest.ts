@@ -12,13 +12,9 @@ async function test() {
   BO.onClose(()=>{
       console.log("closed");
   })
-  await BO.open({mode:"SOLA",solaLink_URL:"https://sola.sus.ac.jp/course/view.php?id=6612"});
+  // await BO.open({mode:"SOLA",solaLink_URL:"https://sola.sus.ac.jp/course/view.php?id=6612"});
+  await BO.open({mode:"SCLASS"});
   return;
 }
 
-async function test2(){
-    for (let i = 0; i < 1; i++) {
-        await test();
-    }
-}
-test2()
+test();
