@@ -7,6 +7,8 @@ import {ViewConfig} from "./types";
 const userDataPath = app.getPath("userData");
 const infoPath = path.join(userDataPath,"data/info.json");
 const confPath = path.join(userDataPath,"userConfig.json");
+const logFilePath = path.join(userDataPath,"data/euc.log");
+const imagesDirPath = path.join(userDataPath,"data/images");
 
 const inputFilePath = app.isPackaged
     ? path.join(process.resourcesPath,"EXE/main.exe")
@@ -17,7 +19,8 @@ process.env.userDataPath = userDataPath;
 process.env.infoPath = infoPath;
 process.env.confPath = confPath;
 process.env.inputFilePath = inputFilePath;
-
+process.env.imagesDirPath = imagesDirPath;
+process.env.logFilePath = logFilePath;
 
 let viewConfig:ViewConfig;
 if (!fs.existsSync(confPath)){

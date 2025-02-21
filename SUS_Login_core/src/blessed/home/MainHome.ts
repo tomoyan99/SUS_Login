@@ -458,6 +458,7 @@ class MainHome extends Methods {
     try{
       //最初はINFOをフォーカス
       this.setFocus(this.components.mainTree);
+      this.setFocus(this.components.info);
       //mainTree一番上の要素を選択
       this.components.mainTree.rows.emit("select item");
       //ネットワーク判定タイマーを作動

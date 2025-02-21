@@ -17,11 +17,9 @@ import path from "path";
     await pause("exit", "[何かキーを押して終了]");
   }
   // imagesフォルダを作成
-  fs.mkdirSync(path.join(<string>process.env.userDataPath,"data/images"), { recursive: true });
-  // logsフォルダを作成
-  fs.mkdirSync(path.join(<string>process.env.userDataPath,"data/logs"), { recursive: true });
+  fs.mkdirSync(process.env.imagesDirPath, { recursive: true });
   // logs.txtを作成
-  fs.appendFileSync(path.join(<string>process.env.userDataPath,"data/logs/euc.log"), "");
+  fs.appendFileSync(process.env.logFilePath, "");
   while (true) {
     try {
       console.clear();

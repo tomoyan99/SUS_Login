@@ -13,7 +13,8 @@
     "sourceMap": true,
     "typeRoots": [
       "node_modules/@types/**/*.d.ts",         // デフォルトではここだけ読む.忘れず書き添える
-      "SUS_Login_core/src/@types/**/*.d.ts"
+      "src/@types/**/*.d.ts",
+      "SUS_Login_core/src/@types/**/*.d.ts",
     ],
     "resolveJsonModule": true,
   },
