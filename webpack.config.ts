@@ -23,7 +23,7 @@ const config2: Configuration = {
     entry: { main: path.resolve("SUS_Login_core/src/main/main.ts") },
     output: {
         filename: `[name].cjs`,
-        path: path.resolve(process.cwd(), "bundle/"),
+        path: path.resolve(process.cwd(), "dist/webpack_bundle"),
         library: {
             type: "commonjs",
         },

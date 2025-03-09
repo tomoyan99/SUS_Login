@@ -2,19 +2,16 @@
   "productName": "SUS_Login",
   "appId": "com.electron.SUS_Login",
   "directories": {
-    "output": "build/"
+    "output": "dist/app_build/"
   },
   "compression": "maximum",
   "files": [
-    "src/boot/**/*",
-    "package.json",
-    "!./**/data.json",
-    "!./**/userConfig.json",
-    "!src/**/*.js.map",
-    "!src/**/*.ts"
+    "dist/ts_compiled/src/**/*.js",
+    "src/assets/*",
+    "package.json"
   ],
   "extraResources": [
-    "EXE/*"
+    "dist/app_exe/main.exe"
   ],
   "win": {
     "icon": "src/assets/icon.ico",

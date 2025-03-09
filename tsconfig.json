@@ -14,9 +14,10 @@
     "typeRoots": [
       "node_modules/@types/**/*.d.ts",         // デフォルトではここだけ読む.忘れず書き添える
       "src/@types/**/*.d.ts",
-      "SUS_Login_core/src/@types/**/*.d.ts",
+      "SUS_Login_core/src/@types/**/*.d.ts"
     ],
     "resolveJsonModule": true,
+    "outDir": "dist/ts_compiled"
   },
   "include": [
     "src",

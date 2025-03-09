@@ -141,7 +141,7 @@ namespace Opener {
     // Puppeteerの引数を生成
     private buildLaunchArgs(): string[] {
       return [
-        ...(this.is_app ? ["--app=https://www.google.co.jp/"] : []),
+        ...(this.is_app ? ["--main=https://www.google.co.jp/"] : []),
         ...(this.is_headless || !this.is_secret ? [] : ["--incognito"]),
         "--window-position=9999,9999",
         // "--window-position=0,0",

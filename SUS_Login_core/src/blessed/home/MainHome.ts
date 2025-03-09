@@ -169,6 +169,7 @@ class Components extends Members {
       fullUnicode: true, // ここを追加
       terminal: "xterm-256color",
       tabSize: 2,
+
     });
   }
 
@@ -379,11 +380,8 @@ class Methods extends Components{
   constructor(args:MainArgs) {
     super(args);
   }
-  /**
-   * @name setFocus
-   * @description フォーカスを切り替える関数
-   * */
   public setFocus(tar:Widgets.BlessedElement) {
+    //focusを切り替える関数
     const focuses = this.status.focus;
     const c = this.components;
     focuses.bef = this.status.focus.now; //前フォーカスしてたコンポーネント

@@ -1,7 +1,7 @@
 import {app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions} from "electron";
 import * as pty from "node-pty";
 import path from "path";
-import {npmVersion, viewConfig} from "./boot_config";
+import viewConfig from "./config/viewConfig";
 import fs from "fs";
 import {ITerminalOptions} from "xterm";
 
@@ -10,7 +10,6 @@ let ptyProcess: pty.IPty|undefined;
 let ptyData: pty.IDisposable|undefined;
 let ptyExit: pty.IDisposable|undefined;
 
-// let port:Promise<number> = getDebuggerPort(app);
 // ウィンドウの初期化
 async function createWindow() {
     mainWindow = new BrowserWindow({
@@ -25,7 +24,8 @@ async function createWindow() {
         minWidth: 300,
         minHeight: 300,
         useContentSize: true,
-        title: `SUS_Login_v${npmVersion}`,
+        title: `SUS_Login_v${viewConfig.npmVersion}`,
+        icon: path.join(__dirname, "./assets/icon.png"),
     });
 
     if (mainWindow) {

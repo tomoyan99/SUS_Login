@@ -15,8 +15,8 @@ const rc = {
 };
 
 compile({
-    input: `bundle/main.cjs`,
-    output: `./EXE/main.exe`,
+    input: `dist/webpack_bundle/main.cjs`,
+    output: `dist/app_exe/main.exe`,
     python: "C:/Python312/python.exe",
     build:true,
     targets:["20.18.1"],

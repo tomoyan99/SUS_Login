@@ -21,9 +21,9 @@ export async function createSolaLinkData(user: User, subOption?: LaunchOption): 
   return await errorLoop(4, async () => {
     scraper = await scraper.launch(launchOptions);
     try {
-      const schedule = await scraper.searchSclass();
+      const schedule = await scraper.fetchSchedule();
       scraper.printFunc("続いて、SOLAから科目ページリンクの取得を行います");
-      const solaLinks: SolaLinkData = await scraper.searchSola(schedule);
+      const solaLinks: SolaLinkData = await scraper.fetchSolaLinks(schedule);
       scraper.printFunc("履修科目データの登録が完了しました");
       return solaLinks;
     } catch (e) {
@@ -37,19 +37,6 @@ export async function createSolaLinkData(user: User, subOption?: LaunchOption): 
 class SolaLinkDataScraper extends Opener.BrowserOpener {
   constructor(option: User & LaunchOption) {
     super(option);
-  }
-
-  async searchSclass(): Promise<Schedule> {
-    if (!this.page) throw new Error("PAGE:UNDEFINED");
-    try {
-      await this.open({ mode: "SCLASS" });
-      await this.navigateToSchedulePage();
-      const schedule = await this.extractScheduleData();
-      this.printFunc(cl.fg_green + "履修科目コード及び科目名取得完了" + cl.fg_reset);
-      return schedule;
-    } catch (e) {
-      throw e;
-    }
   }
 
   private async navigateToSchedulePage(): Promise<void> {
@@ -103,31 +90,6 @@ class SolaLinkDataScraper extends Opener.BrowserOpener {
     }
   }
 
-  async searchSola(schedule: Schedule): Promise<SolaLinkData> {
-    if (!this.page) throw new Error("PAGE:UNDEFINED");
-    await this.open({ mode: "SOLA" });
-
-    const fetchLinks = async (items: ScheduleItem[]): Promise<SolaClassRecord[]> => {
-      return Promise.all(
-          items.map(async (item, index):Promise<SolaClassRecord> => {
-            await sleep(index * 800);
-            const url = await this.fetchSolaPageUrl(item);
-            return { ...item, event: "sola", url };
-          })
-      );
-    };
-
-    this.printFunc("前期科目ページURLを取得します・・・");
-    const bfLinks = await fetchLinks(schedule.bf);
-    this.printFunc(cl.fg_green + "前期科目ページURL取得完了" + cl.fg_reset);
-
-    this.printFunc("後期科目ページURLを取得します・・・");
-    const afLinks = await fetchLinks(schedule.af);
-    this.printFunc(cl.fg_green + "後期科目ページURL取得完了" + cl.fg_reset);
-
-    return { "前期": bfLinks, "後期": afLinks };
-  }
-
   private async fetchSolaPageUrl(item: ScheduleItem): Promise<string> {
     if (!this.browser) throw new Error("BROWSER:UNDEFINED");
 
@@ -155,7 +117,45 @@ class SolaLinkDataScraper extends Opener.BrowserOpener {
     }
   }
 
-  getBrowser() {
+  public async fetchSchedule(): Promise<Schedule> {
+    if (!this.page) throw new Error("PAGE:UNDEFINED");
+    try {
+      await this.open({ mode: "SCLASS" });
+      await this.navigateToSchedulePage();
+      const schedule = await this.extractScheduleData();
+      this.printFunc(cl.fg_green + "履修科目コード及び科目名取得完了" + cl.fg_reset);
+      return schedule;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  public async fetchSolaLinks(schedule: Schedule): Promise<SolaLinkData> {
+    if (!this.page) throw new Error("PAGE:UNDEFINED");
+    await this.open({ mode: "SOLA" });
+
+    const fetchLinks = async (items: ScheduleItem[]): Promise<SolaClassRecord[]> => {
+      return Promise.all(
+          items.map(async (item, index):Promise<SolaClassRecord> => {
+            await sleep(index * 800);
+            const url = await this.fetchSolaPageUrl(item);
+            return { ...item, event: "sola", url };
+          })
+      );
+    };
+
+    this.printFunc("前期科目ページURLを取得します・・・");
+    const bfLinks = await fetchLinks(schedule.bf);
+    this.printFunc(cl.fg_green + "前期科目ページURL取得完了" + cl.fg_reset);
+
+    this.printFunc("後期科目ページURLを取得します・・・");
+    const afLinks = await fetchLinks(schedule.af);
+    this.printFunc(cl.fg_green + "後期科目ページURL取得完了" + cl.fg_reset);
+
+    return { "前期": bfLinks, "後期": afLinks };
+  }
+
+  public getBrowser() {
     return this.browser;
   }
 }

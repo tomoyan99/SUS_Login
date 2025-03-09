@@ -4,10 +4,10 @@ import {FitAddon} from "xterm-addon-fit";
 import XtermWebfont from "./xtermWebfont";
 import {WebglAddon} from "xterm-addon-webgl";
 import {WebLinksAddon} from "xterm-addon-web-links";
-import {ViewConfig} from "./types";
+import {IpcManager} from "../managers/IpcManager";
 
 async function terminalHandler() {
-    const viewConfig:ViewConfig = await ipcRenderer.invoke("getViewConfig");
+    const viewConfig = await IpcManager.invokeIPC("getViewConfig");
     const term = new Terminal({
         cols:viewConfig.defaultTerminalSize.cols,
         rows:viewConfig.defaultTerminalSize.rows,
@@ -95,14 +95,14 @@ async function terminalHandler() {
     });
 
     //ブラウザ側でのキー入力をnode-ptyに送る
-    term.onData(e => {
-        ipcRenderer.send("terminal.keystroke", e);
+    term.onData(key => {
+        IpcManager.invokeIPC("terminal.keystroke",{key});
     });
 
     //xtermのresizeをnode-ptyに伝播。fitされたら発火
     term.onResize((size) => {
         const resizer = [size.cols, size.rows];
-        ipcRenderer.send("terminal.resize", resizer);
+        IpcManager.invokeIPC("terminal.resize",{resizer});
     });
 
     window.addEventListener("DOMContentLoaded", ()=>{

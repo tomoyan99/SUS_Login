@@ -136,7 +136,7 @@ Chrome/
 EXE/
 build/
 *.js
-*.map
+*.js.map
 .idea
 /SUS_Login_core/test/
 ./bundle
