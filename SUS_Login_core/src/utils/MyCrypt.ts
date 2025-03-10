@@ -130,8 +130,10 @@ class MyCrypt {
   private readBuffer() {
     const Z = readFileSync(this.PATH, { encoding: "binary" });
     const A = Z.split("$$$$", -1);
-    this.IV = Buffer.from(A[0], "binary");
-    this.BUF = Buffer.from(A[1], "binary");
+    if (typeof A[0] === "string" && typeof A[1] === "string") {
+      this.IV = Buffer.from(A[0], "binary");
+      this.BUF = Buffer.from(A[1], "binary");
+    }
   }
 
   // メンバをクリアするやつ

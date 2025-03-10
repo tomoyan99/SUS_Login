@@ -1,3 +1,3 @@
 export function quit() {
-  process.exit(0);
+    process.exit(0);
 }

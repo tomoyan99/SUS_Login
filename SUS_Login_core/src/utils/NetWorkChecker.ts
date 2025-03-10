@@ -122,6 +122,8 @@ export class NetWorkStatus {
         event: NetWorkEvent,
         option: { id: string; listener: (...args: any) => any }
     ) {
+        if (!this.listener_table[event])return;
+
         // Setを利用してidの重複チェック
         const ids = [...new Set(this.listener_table[event].map((item) => item.id))];
         if (ids.length > 0 && ids.includes(option.id)) {
@@ -139,6 +141,8 @@ export class NetWorkStatus {
      * @param id 削除対象のリスナーID
      */
     public removeEvent(event: NetWorkEvent, id: string) {
+        if (!this.listener_table[event])return;
+
         // 指定IDのリスナーを検索
         const record = this.listener_table[event].find((r) => r.id === id);
         if (!record) return;

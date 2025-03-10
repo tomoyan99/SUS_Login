@@ -1,25 +1,27 @@
-import {contextBridge, ipcRenderer} from "electron";
+import {contextBridge} from "electron";
 import {Terminal} from "xterm";
 import {FitAddon} from "xterm-addon-fit";
 import XtermWebfont from "./xtermWebfont";
 import {WebglAddon} from "xterm-addon-webgl";
 import {WebLinksAddon} from "xterm-addon-web-links";
 import {IpcManager} from "../managers/IpcManager";
+import {MyIPCEvents} from "../config/IpcEvents";
+
 
 async function terminalHandler() {
-    const viewConfig = await IpcManager.invokeIPC("getViewConfig");
+    const viewConfig = await IpcManager.invokeIPC<MyIPCEvents,"getViewConfig">("getViewConfig");
     const term = new Terminal({
-        cols:viewConfig.defaultTerminalSize.cols,
-        rows:viewConfig.defaultTerminalSize.rows,
-        cursorStyle:"bar",
-        fontFamily:"myFont",
-        fontSize:viewConfig.defaultFontSize,
-        fontWeight:"300",
-        cursorBlink:false,
-        letterSpacing:0,
-        scrollback:0,
-        theme:{
-            background:"rgb(0,0,0)"
+        cols: viewConfig.defaultTerminalSize.cols,
+        rows: viewConfig.defaultTerminalSize.rows,
+        cursorStyle: "bar",
+        fontFamily: "myFont",
+        fontSize: viewConfig.defaultFontSize,
+        fontWeight: "300",
+        cursorBlink: false,
+        letterSpacing: 0,
+        scrollback: 0,
+        theme: {
+            background: "rgb(0,0,0)"
         },
     });
 
@@ -41,7 +43,7 @@ async function terminalHandler() {
 
     //フォントをロード
     if (termContent && "loadWebfontAndOpen" in term) {
-      term.loadWebfontAndOpen(termContent);
+        term.loadWebfontAndOpen(termContent);
     }
 
     //Ctrl+Cで選択範囲をクリップボードにコピー可能にする
@@ -59,8 +61,8 @@ async function terminalHandler() {
     let isFocused = false;
 
     //node-ptyの標準出力をブラウザに表示する
-    ipcRenderer.on("terminal.incomingData", (event, data) => {
-        if (!isFocused){
+    IpcManager.receiveFromMain<MyIPCEvents,"terminal.incomingData">("terminal.incomingData",(_event,data)=>{
+        if (!isFocused) {
             //ターミナルをフォーカス
             term.focus();
             //ウィンドウサイズに合わせてターミナルサイズを合わせる
@@ -71,51 +73,51 @@ async function terminalHandler() {
     });
 
     //electron-menuをイジってフォントサイズの変更
-    ipcRenderer.on("terminal.fontsize",(event, delta)=>{
-        if (delta === "default"){
+    IpcManager.receiveFromMain<MyIPCEvents,"terminal.fontsize">("terminal.fontsize", (event, delta) => {
+        if (delta === "default" || !term.options.fontSize) {
             term.options.fontSize = 17;
-        }else{
+        } else {
             const expectedSize = term.options.fontSize + delta;
-            if (expectedSize > 11 && expectedSize < 23){
-               term.options.fontSize += delta;
+            if (expectedSize > 11 && expectedSize < 23) {
+                term.options.fontSize += delta;
             }
         }
-        if (timeoutID){
+        if (timeoutID) {
             clearTimeout(timeoutID);
         }
-        timeoutID = setTimeout(()=>{
+        timeoutID = setTimeout(() => {
             //フォントサイズに合わせてターミナルサイズを合わせる
             fitAddon.fit();
         }, 1000);
     });
 
     //terminalのoptionを送信
-    ipcRenderer.on("terminal.requestOptions",()=>{
-        ipcRenderer.send("terminal.sendOptions", term.options);
+    IpcManager.receiveFromMain<MyIPCEvents,"terminal.requestOptions">("terminal.requestOptions", () => {
+        IpcManager.invokeIPC<MyIPCEvents,"terminal.sendOptions">("terminal.sendOptions", term.options);
     });
 
     //ブラウザ側でのキー入力をnode-ptyに送る
     term.onData(key => {
-        IpcManager.invokeIPC("terminal.keystroke",{key});
+        IpcManager.invokeIPC<MyIPCEvents,"terminal.keystroke">("terminal.keystroke", {key});
     });
 
     //xtermのresizeをnode-ptyに伝播。fitされたら発火
     term.onResize((size) => {
-        const resizer = [size.cols, size.rows];
-        IpcManager.invokeIPC("terminal.resize",{resizer});
+        const resizer:[number,number] = [size.cols, size.rows];
+        IpcManager.invokeIPC<MyIPCEvents,"terminal.resize">("terminal.resize", {resizer});
     });
 
-    window.addEventListener("DOMContentLoaded", ()=>{
-       fitAddon.fit();
+    window.addEventListener("DOMContentLoaded", () => {
+        fitAddon.fit();
     });
 
     //画面がリサイズされたらそれに合わせてターミナルサイズをフィットさせる
     //リサイズが終了してから発火
-    window.addEventListener("resize",()=>{
-        if (timeoutID){
+    window.addEventListener("resize", () => {
+        if (timeoutID) {
             clearTimeout(timeoutID);
         }
-        timeoutID = setTimeout(()=>{
+        timeoutID = setTimeout(() => {
             fitAddon.fit();
         }, 500);
     });

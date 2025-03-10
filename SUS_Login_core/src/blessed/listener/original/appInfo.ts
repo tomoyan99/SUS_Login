@@ -1,6 +1,6 @@
 import {description} from "../../description/description";
-import MainHome from "../../home/MainHome";
+import {UIManager} from "../../ui/UIManager";
 
-export function appInfo(self:MainHome) {
-  self.setInfo(description.SUS_LOGIN);
+export function appInfo(self: UIManager) {
+    self.setInfo(description.SUS_LOGIN);
 }

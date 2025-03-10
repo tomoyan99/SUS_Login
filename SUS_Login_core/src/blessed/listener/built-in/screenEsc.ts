@@ -1,8 +1,8 @@
-import MainHome from "../../home/MainHome";
+import {UIManager} from "../../ui/UIManager";
 
-export function screenEsc(self:MainHome) {
-  const f_now_name = self.status.focus.now?.name;
-  if (f_now_name && f_now_name === "info" && self.status.focus.bef) {
-    self.setFocus(self.status.focus.bef);
-  }
+export function screenEsc(self: UIManager) {
+    const f_now_name = self.state.focus.now?.name;
+    if (f_now_name && f_now_name === "info" && self.state.focus.bef) {
+        self.setFocus(self.state.focus.bef);
+    }
 }

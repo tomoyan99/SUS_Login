@@ -1,6 +1,6 @@
 import {control as cl} from "../utils/control";
 import {createSolaLinkData} from "../puppeteer/createSolaLinkData";
-import {existsSync, unlinkSync, writeFileSync} from "fs";
+import {existsSync, unlinkSync} from "fs";
 import MyCrypt from "../utils/MyCrypt";
 import {errorLoop, sleep} from "../utils/myUtils";
 import {MyPrompt} from "../utils/MyPrompt";

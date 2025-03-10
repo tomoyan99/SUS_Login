@@ -8,6 +8,7 @@
     "allowImportingTsExtensions": false,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "lib": ["dom"],
     "sourceMap": true,

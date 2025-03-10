@@ -16,6 +16,7 @@ export class AppManager {
             this.windowManager.setupMenu();
             await this.windowManager.createWindow();
             await this.terminalManager.initialize(this.windowManager.getMainWindow());
+            await this.windowManager.loadContent();
         }
     }
 }

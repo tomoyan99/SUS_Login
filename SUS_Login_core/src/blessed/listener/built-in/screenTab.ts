@@ -1,11 +1,11 @@
-import MainHome from "../../home/MainHome";
+import {UIManager} from "../../ui/UIManager";
 
-export function screenTab(self:MainHome) {
-  if (self.status.isChangeFocus){
-    if (self.status.focus.now?.name !== "info") {
-      self.setFocus(self.components.info);
-    } else if (self.status.focus.bef){
-      self.setFocus(self.status.focus.bef);
+export function screenTab(self: UIManager) {
+    if (self.state.isChangeFocus) {
+        if (self.state.focus.now?.name !== "info") {
+            self.setFocus(self.components.info);
+        } else if (self.state.focus.bef) {
+            self.setFocus(self.state.focus.bef);
+        }
     }
-  }
 }

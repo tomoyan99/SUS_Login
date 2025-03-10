@@ -4,8 +4,7 @@ import {control as cl} from "../utils/control";
 import {setup} from "./setup";
 import {sleep} from "../utils/myUtils";
 import {existChromePath} from "../utils/existChromePath";
-import MainHome from "../blessed/home/MainHome";
-import path from "path";
+import {initApp} from "../blessed/ui/MainApp";
 
 //main
 (async function main() {
@@ -33,9 +32,8 @@ import path from "path";
       //   );
       //   data = await solaLinkReload(data);
       // }
-      const Home = new MainHome({user:data.userdata,links:data.solaLink});
       // 開始
-      Home.init();
+      await initApp(data.userdata,data.solaLink);
       break;
     } catch (e) {
       console.clear();

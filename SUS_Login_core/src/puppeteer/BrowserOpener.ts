@@ -1,4 +1,5 @@
 import * as puppeteer from "puppeteer-core";
+import {Target} from "puppeteer-core";
 import {control as cl} from "../utils/control";
 import WaitAccessMessage from "./WaitAccessMessage";
 import Selectors from "./Selectors";
@@ -7,7 +8,6 @@ import {today} from "../utils/today";
 import {appendFileSync, existsSync, mkdirSync} from "fs";
 import {errorLoop, sleep} from "../utils/myUtils";
 import {BrowserEventObj} from "puppeteer";
-import {Target} from "puppeteer-core";
 
 // Opener namespace定義
 namespace Opener {
@@ -35,12 +35,10 @@ namespace Opener {
 
   // ブラウザを制御するクラス
   export class BrowserOpener {
-    private mode?: SiteMode;                // サイトモードを保持
     private readonly userdata: User;        // ユーザー情報
     private target_URL = "";         // ターゲットURL
     protected readonly selectors:Selectors; //
     private EUC?: string;                   // EUC専用のプロパティ
-    private solaLink_URL?: string;          // SOLA専用のプロパティ
     protected browser?: puppeteer.Browser;  // PuppeteerのBrowserインスタンス
     protected page?: puppeteer.Page;        // PuppeteerのPageインスタンス
     printFunc: Function;                    // ログ出力関数
@@ -132,7 +130,12 @@ namespace Opener {
           ignoreDefaultArgs: ["--disable-extensions", "--enable-automation"],
           args: this.buildLaunchArgs(),
         });
-        return [browser, (await browser.pages())[0]];
+        const pages = await browser.pages();
+        if (pages[0]) {
+          return [browser, pages[0]];
+        }else{
+          throw new Error("");
+        }
       } catch {
         throw new Error("BROWSER:CANNOT_OPEN");
       }
@@ -141,7 +144,7 @@ namespace Opener {
     // Puppeteerの引数を生成
     private buildLaunchArgs(): string[] {
       return [
-        ...(this.is_app ? ["--main=https://www.google.co.jp/"] : []),
+        ...(this.is_app ? ["--app=https://www.google.co.jp/"] : []),
         ...(this.is_headless || !this.is_secret ? [] : ["--incognito"]),
         "--window-position=9999,9999",
         // "--window-position=0,0",
@@ -172,7 +175,6 @@ namespace Opener {
 
     // モードを変更し、ターゲットURLを設定
     private changeMode(option: ModeOption<SiteMode>): void {
-      this.mode = option.mode;
       switch (option.mode) {
         case "SCLASS":
           this.target_URL = "https://s-class.admin.sus.ac.jp/";
@@ -253,7 +255,6 @@ namespace Opener {
       if (!this.page) throw new Error("PAGE:UNDEFINED");
       if (!this.target_URL) throw new Error("SOLA:URL_UNDEFINED");
       this.printFunc("[SOLAにログインします]");
-      const wa = new WaitAccessMessage(3000, this.printFunc);
 
       try {
         if (this.is_headless) await this.rejectResources();
@@ -379,7 +380,7 @@ namespace Opener {
           const page = await target.page();
           const pages = await target.browser().pages();
           const oldPage = pages[pages.length - 2];
-          if (page){
+          if (page && oldPage){
             const newSession = await page.createCDPSession();
             const oldSession = await oldPage.createCDPSession();
             const { windowId:oldID } = await oldSession.send("Browser.getWindowForTarget");

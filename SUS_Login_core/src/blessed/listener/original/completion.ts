@@ -1,5 +1,5 @@
-import MainHome from "../../home/MainHome";
+import {UIManager} from "../../ui/UIManager";
 
-export function completion(self:MainHome) {
-  self.setInfo("completion!");
+export function completion(self: UIManager) {
+    self.setInfo("completion!");
 }

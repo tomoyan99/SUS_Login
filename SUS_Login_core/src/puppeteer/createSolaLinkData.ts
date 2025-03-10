@@ -78,8 +78,10 @@ class SolaLinkDataScraper extends Opener.BrowserOpener {
       const codesAf = await extractData("af","jugyoCd");
       const namesAf = await extractData("af","jugyoMei");
 
-      const cleanName = (name: string) =>
-          name.replace(/ (.*?) .*/g, "$1").replace("\t", "").trim();
+      const cleanName = (name: string|undefined) =>{
+        if (!name)return "取得エラー";
+        return name.replace(/ (.*?) .*/g, "$1").replace("\t", "").trim();
+      }
       const schedules = {
         bf: codesBf.map((code, i) => ({ code, name: cleanName(namesBf[i]) })),
         af: codesAf.map((code, i) => ({ code, name: cleanName(namesAf[i]) })),

@@ -4,6 +4,7 @@ import viewConfig from '../config/viewConfig';
 import { ITerminalOptions } from 'xterm';
 import fs from "fs";
 import {IpcManager} from "./IpcManager";
+import {MyIPCEvents} from "../config/IpcEvents";
 
 export class WindowManager {
     private mainWindow: BrowserWindow | null = null;
@@ -26,11 +27,16 @@ export class WindowManager {
 
         if (this.mainWindow) {
             this.setupWindowEvents();
-            IpcManager.handleIPC("getViewConfig",async ()=>{
+            IpcManager.handleIPC<MyIPCEvents,"getViewConfig">("getViewConfig",async ()=>{
                 return viewConfig;
             });
-            await this.mainWindow?.loadURL(`file://${__dirname}/../render/index.html`);
-            this.mainWindow?.focus();
+        }
+    }
+
+    public async loadContent() {
+        if (this.mainWindow) {
+            await this.mainWindow.loadURL(`file://${__dirname}/../render/index.html`);
+            this.mainWindow.focus();
         }
     }
 
@@ -42,7 +48,7 @@ export class WindowManager {
                     { label: '初期値', click: () => { this.resetFontSize(); } },
                     { label: '文字小さく', click: () => { this.changeFontSize(-1); }, accelerator: 'CmdOrCtrl+-' }
                 ]},
-            // {label:"devtools",role:"toggleDevTools"}
+            {label:"devtools",role:"toggleDevTools"}
         ];
 
         const menu = Menu.buildFromTemplate(mainMenu);
@@ -63,27 +69,31 @@ export class WindowManager {
     }
 
     private handleWindowClose() {
-        ipcMain.once('terminal.sendOptions', (event, options: ITerminalOptions) => {
+        if (!this.mainWindow)return;
+        IpcManager.handleIPC<MyIPCEvents,'terminal.sendOptions'>('terminal.sendOptions', (_event, options) => {
             this.saveWindowConfig(options);
-            this.mainWindow?.close();
+            this.mainWindow?.destroy();
         });
-        this.mainWindow?.webContents.send('terminal.requestOptions');
+        IpcManager.sendToRenderer<MyIPCEvents,'terminal.requestOptions'>(this.mainWindow.webContents.id,'terminal.requestOptions');
     }
 
     private changeFontSize(sizeChange: number | 'default') {
-        this.mainWindow?.webContents.send('terminal.fontsize', sizeChange);
+        if (this.mainWindow)
+            IpcManager.sendToRenderer<MyIPCEvents,"terminal.fontsize">(this.mainWindow.webContents.id,"terminal.fontsize",sizeChange);
     }
 
     private resetFontSize() {
-        this.mainWindow?.webContents.send('terminal.fontsize', 'default');
+        if (this.mainWindow)
+            IpcManager.sendToRenderer<MyIPCEvents,'terminal.fontsize'>(this.mainWindow.webContents.id,'terminal.fontsize', 'default');
     }
 
     private saveWindowConfig(options: ITerminalOptions) {
-        const contentSize = this.mainWindow?.getContentSize();
+        if (!this.mainWindow)return;
+        const contentSize = this.mainWindow.getContentSize() as [number,number];
         viewConfig.defaultWindowSize.width = contentSize ? contentSize[0] : viewConfig.defaultWindowSize.width;
         viewConfig.defaultWindowSize.height = contentSize ? contentSize[1] : viewConfig.defaultWindowSize.height;
         viewConfig.defaultFontSize = options.fontSize ?? 17;
-        fs.writeFileSync(<string>process.env.confPath, JSON.stringify(viewConfig, null, 2), { encoding: 'utf8' });
+        fs.writeFileSync(<string>process.env.confPath, JSON.stringify(viewConfig), { encoding: 'utf8' });
     }
 
     public getMainWindow() {
