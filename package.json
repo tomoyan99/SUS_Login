@@ -21,7 +21,6 @@
     "nexe:pkg": "ts-node nexe_complie.ts",
     "nexe:build": "run-s webpack nexe:pkg",
     "nexe:start": "npm run nexe:build && powershell dist/app_exe/main.exe",
-    "browserTest": "tsc && ts-node ./SUS_Login_core/test/browsertest.ts"
   },
   "author": "Tomoya Sano",
   "license": "ISC",
