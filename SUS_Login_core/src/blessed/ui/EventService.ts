@@ -21,6 +21,9 @@ export class EventService {
         this.listeners = this.initListeners();
         this.setupBlessedEvents();
         this.setupOriginalEvents();
+        process.on('unhandledRejection', (reason) => {
+            this.emit("error", reason);
+        });
     }
 
     /**
@@ -30,11 +33,8 @@ export class EventService {
     private detectError(listener: (...args: any[]) => any): (...args: any[]) => void {
         return (...args: any[]) => {
             try {
-                const result = listener(...args);
-                // 非同期関数であればcatchでエラー捕捉
-                if (result instanceof Promise) {
-                    result.catch((e) => this.emit('error', e));
-                }
+                // リスナー関数を実行し、Promise 化する
+                Promise.resolve(listener(...args)).catch((e) => this.emit('error', e));
             } catch (e) {
                 this.emit('error', e);
             }
@@ -221,7 +221,6 @@ export class EventService {
      */
     private setupOriginalEvents(): void {
         const l = this.listeners.original;
-
         this.on("appinfo", l.appInfo);
         this.on("euc", l.euc);
         this.on("sclass", l.sclass);
@@ -237,5 +236,14 @@ export class EventService {
             l.error(this.uiManager, e);
         });
         this.on("network", l.network);
+        this.on("error_test",()=>{
+            Promise.reject(new Error('意図的な非同期エラー'));
+        });
+        this.on("word_length", ()=>{
+            if (this.uiManager.components.info){
+                const word =  this.uiManager.components.info.getText();
+
+            }
+        })
     }
 }

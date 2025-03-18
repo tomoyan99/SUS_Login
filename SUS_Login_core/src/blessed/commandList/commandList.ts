@@ -16,6 +16,10 @@ export const mainEventMap: Record<string, TreeEventMap> =
                 "{#fcd303-fg}PAGE_RELOAD{/}": {event: "pagereload"},
             },
             // "履修仮組みツール":{"event":"completion"}
+            "エラーテスト":{
+                "event":"error_test",
+                "文字列長表示":{event:"word_length"}
+            }
         },
         LOG: {event: "log"},
         IMAGE: {event: "image"},

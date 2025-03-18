@@ -131,6 +131,7 @@ export class ComponentFactory {
                 scrollbar: true,
                 label: "INFO",
                 align: "left",
+                width:"50%",
                 border: {type: "line"},
                 style: {
                     fg: this.config.colors.fg,
