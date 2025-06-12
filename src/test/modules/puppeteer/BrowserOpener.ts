@@ -14,6 +14,7 @@ export type LaunchOption = {
   is_app?: boolean;
   is_headless?: boolean;
   is_secret?: boolean; // PlaywrightではContextレベルで実現
+  delay?: number;
 };
 
 // モード設定（SCLASS, SOLA, EUC）の型定義
@@ -29,7 +30,6 @@ export type ModeOption<T extends SiteMode> = T extends "SCLASS"
 
 // ブラウザを制御するクラス
 export class BrowserOpener {
-  printFunc: Function;
   protected readonly selectors: Selectors;
   protected browser?: Browser;
   protected context?: BrowserContext;
@@ -37,12 +37,16 @@ export class BrowserOpener {
   private readonly userdata: User;
   private target_URL = "";
   private EUC?: string;
-  private clearFunc: Function;
+  private printFunc: (...args:any)=> void;
+  private clearFunc: (...args:any)=> void;
   private is_headless: boolean = false;
   private is_app: boolean = true;
   private is_secret: boolean = true;
+  private delay: number = 0;
   private is_disabledCSS: boolean = false;
   private wam: WaitAccessMessage;
+  // ウィンドウ管理用のプロパティを追加
+  private isWindowManagementHandlerSet = false;
 
   constructor(userdata: User) {
     this.userdata = userdata;
@@ -178,15 +182,14 @@ export class BrowserOpener {
 
       const resultTextSpan = this.page.locator(selectors.result_text_span);
       const resultText = (await resultTextSpan.textContent()) || "番号が異なります。";
-      const resultClass =
-        (await this.page.locator(selectors.result_class_span).textContent())?.replace(
-          /[\t\n]/g,
-          "",
-        ) || "";
-
+      const resultClassSpan =this.page.locator(selectors.result_class_span);
+      let resultClassText = "";
+      if (await resultClassSpan.isVisible()) {
+        resultClassText = (await resultClassSpan.textContent())?.replace(/[\t\n]/g, "") || "";
+      }
       this.wam.consoleOff();
       this.printFunc(
-        `${cl.fg_cyan}${resultClass ? resultClass + "\n" : ""}${cl.fg_reset}${cl.fg_red}${resultText}${cl.fg_reset}`,
+        `${cl.fg_cyan}${resultClassText ? resultClassText + "\n" : ""}${cl.fg_reset}${cl.fg_red}${resultText}${cl.fg_reset}`,
       );
 
       if (resultText === "番号が異なります。") return;
@@ -196,12 +199,12 @@ export class BrowserOpener {
 
       if (!existsSync("data/images")) mkdirSync("data/images", { recursive: true });
       await shotTarget.screenshot({
-        path: `data/images/${resultClass}-${filename}.jpg`,
+        path: `data/images/${resultClassText}-${filename}.jpg`,
         type: "jpeg",
         quality: 100,
       });
 
-      const todayEUC = `授業名：${resultClass},EUC番号:${this.EUC},結果:${resultText},日付:${today.getTodayJP()}\n`;
+      const todayEUC = `授業名：${resultClassText},EUC番号:${this.EUC},結果:${resultText},日付:${today.getTodayJP()}\n`;
       if (!existsSync("data/logs")) mkdirSync("data/logs", { recursive: true });
       appendFileSync("data/logs/euc.log", todayEUC, "utf-8");
     } catch (e) {
@@ -231,6 +234,7 @@ export class BrowserOpener {
     this.is_headless = option.is_headless ?? false;
     this.is_app = option.is_app ?? true;
     this.is_secret = option.is_secret ?? true;
+    this.delay = option.delay ?? (this.is_headless ? 0 : 50);
     this.wam = new WaitAccessMessage(3000, this.printFunc);
   }
 
@@ -238,12 +242,12 @@ export class BrowserOpener {
     try {
       const browser = await chromium.launch({
         headless: this.is_headless,
-        slowMo: this.is_headless ? 0 : 50,
+        slowMo: this.delay,
         channel: "chrome",
         args: this.buildLaunchArgs(),
       });
       const context = await browser.newContext({
-        viewport: this.is_headless ? { width: 1280, height: 720 } : null,
+        // viewport:{ width: 1280, height: 720 },
         // シークレットモードは newContext で実現
         // is_secret フラグはここで直接は使わないが、argsで --incognito を渡すことで制御
       });
@@ -270,11 +274,11 @@ export class BrowserOpener {
     switch (mode) {
       case "SCLASS":
         await this.openSCLASS();
-        await this.resizeWindow([600, 600]);
+        await this.setupWindowManagement([800, 700]);
         break;
       case "SOLA":
         await this.openSOLA();
-        await this.resizeWindow([600, 600]);
+        await this.setupWindowManagement([800, 700]);
         break;
       case "EUC":
         await this.openEUC();
@@ -312,8 +316,57 @@ export class BrowserOpener {
     return new Error(errorMessage);
   }
 
-  private async resizeWindow([w, h]: [number, number]) {
-    if (!this.page || this.is_headless) return;
-    await this.page.setViewportSize({ width: w, height: h });
+  private async setupWindowManagement([w, h]: [number, number]) {
+    if (this.is_headless || !this.page || !this.context) return;
+
+    // 1. 初期ウィンドウのサイズと位置を設定
+    try {
+      const session = await this.context.newCDPSession(this.page);
+      const { windowId } = await session.send('Browser.getWindowForTarget');
+      await session.send('Browser.setWindowBounds', {
+        windowId,
+        bounds: { width: w, height: h, left: 0, top: 0 },
+      });
+      await session.detach();
+    } catch (e: any) {
+      this.printFunc(`[WARN] Could not resize initial window: ${e.message}`);
+    }
+
+    // 2. 新規ページ用のイベントハンドラをセットアップ (一度だけ)
+    if (this.isWindowManagementHandlerSet) return;
+
+    this.context.on('page', async (newPage) => {
+      try {
+        await newPage.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => {});
+
+        const pages = this.context?.pages() ?? [];
+        if (pages.length < 2) return;
+
+        const previousPage = pages[pages.length - 2];
+        const prevSession = await this.context!.newCDPSession(previousPage);
+        const { windowId: prevWindowId } = await prevSession.send('Browser.getWindowForTarget');
+        const { bounds: prevBounds } = await prevSession.send('Browser.getWindowBounds', { windowId: prevWindowId });
+        await prevSession.detach();
+
+        const newLeft = (prevBounds.left ?? 0) + 30;
+        const newTop = (prevBounds.top ?? 0) + 30;
+
+        const newSession = await this.context!.newCDPSession(newPage);
+        const { windowId: newWindowId } = await newSession.send('Browser.getWindowForTarget');
+
+        // setWindowBoundsが受け付けないwindowStateプロパティを削除 [cite: uploaded:test/puppeteer/BrowserOpener.ts]
+        const { windowState, ...newWindowBounds } = prevBounds;
+
+        await newSession.send('Browser.setWindowBounds', {
+          windowId: newWindowId,
+          bounds: { ...newWindowBounds, left: newLeft, top: newTop },
+        });
+        await newSession.detach();
+      } catch (e: any) {
+        this.printFunc(`[WARN] Could not position new window: ${e.message}`);
+      }
+    });
+
+    this.isWindowManagementHandlerSet = true;
   }
 }

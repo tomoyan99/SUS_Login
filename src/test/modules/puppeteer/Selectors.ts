@@ -51,8 +51,7 @@ class Selectors {
   };
 
   public readonly EUC: SelectorsEUC = {
-    // Puppeteerの `::-p-text()` を Playwright の `:has-text()` に変更
-    risyuu_div: "div:has-text('履修関連')",
+    risyuu_div: "div#menubox div:has-text('履修関連')",
     EUC_link: "a:has-text('EUC学生出欠登録')",
     EUC_input: "input#form1\\:htmlKeyword",
     EUC_submit_btn: "input#form1\\:update",
@@ -63,8 +62,7 @@ class Selectors {
 
   public readonly SCHEDULE: SelectorsSCHEDULE = {
     SCLASS: {
-      // Puppeteerの `::-p-text()` を Playwright の `:has-text()` に変更
-      risyuu_div: "div:has-text('履修関連')",
+      risyuu_div: "div#menubox div:has-text('履修関連')",
       schedule_link: "div#pmenu4 a:has-text('学生時間割表')",
       viewstyle_select: "select#form1\\:HyojiKeishiki",
       term_select: "select#form1\\:htmlGakki",

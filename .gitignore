@@ -6,3 +6,7 @@ out
 *.log*
 /src/test/exec/
 *_test.ts
+.vscode
+.idea
+.yarn
+build
