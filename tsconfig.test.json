@@ -1,0 +1,10 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
+  "include": [
+    "src/test/**/*"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2021",
+  }
+}
