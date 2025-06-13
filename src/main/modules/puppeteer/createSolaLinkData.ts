@@ -1,7 +1,7 @@
 import { today } from "../utils/today";
 import { control as cl } from "../utils/control";
 import { errorLoop, sleep } from "../utils/myUtils";
-import { SolaClassRecord, SolaLinkData, User } from "../types/setup";
+import { SolaClassRecord, SolaLinkData, User } from "../../../types/setup";
 import { BrowserOpener, LaunchOption } from "./BrowserOpener";
 import { Page } from "playwright";
 

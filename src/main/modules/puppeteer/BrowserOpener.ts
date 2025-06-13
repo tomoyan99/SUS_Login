@@ -1,7 +1,7 @@
 import { Browser, BrowserContext, chromium, Page, Response } from "playwright";
 import WaitAccessMessage from "./WaitAccessMessage"; // 修正後のWaitAccessMessageをインポート
 import Selectors from "./Selectors";
-import { User } from "../types/setup";
+import { User } from "../../../types/setup";
 import { today } from "../utils/today";
 import { appendFileSync, existsSync, mkdirSync } from "fs";
 import { errorLoop } from "../utils/myUtils";
@@ -35,7 +35,6 @@ export class BrowserOpener {
 
   readonly selectors: Selectors;
   private readonly userdata: User;
-  private clearFunc: (...args: any) => void;
 
   private is_headless: boolean = false;
   private is_app: boolean = true;
@@ -47,7 +46,6 @@ export class BrowserOpener {
   constructor(userdata: User) {
     this.userdata = userdata;
     this.printFunc = console.log;
-    this.clearFunc = console.clear;
     this.selectors = new Selectors();
     // wamの初期化を削除
   }
@@ -83,7 +81,7 @@ export class BrowserOpener {
 
   public onClose(cb: () => void): void {
     this.context?.on("close", cb);
-    this.browser?.on("disconnected", cb); // wamの呼び出しを削除
+    this.browser?.on("disconnected", cb);
   }
 
   public async close(): Promise<void> {
@@ -237,7 +235,6 @@ export class BrowserOpener {
 
   private applyLaunchOptions(option: LaunchOption): void {
     this.printFunc = option.printFunc ?? console.log;
-    this.clearFunc = option.clearFunc ?? console.clear;
     this.is_headless = option.is_headless ?? false;
     this.is_app = option.is_app ?? true;
     this.is_secret = option.is_secret ?? true;
@@ -254,6 +251,7 @@ export class BrowserOpener {
         slowMo: this.delay,
         channel: "chrome",
         args: this.buildLaunchArgs(),
+
       });
       const context = await browser.newContext({
         viewport: null,
@@ -261,7 +259,6 @@ export class BrowserOpener {
       const page = await context.newPage();
       return [browser, context, page];
     } catch (e) {
-      console.error(e);
       throw new Error("BROWSER:CANNOT_OPEN");
     }
   }

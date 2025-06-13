@@ -23,7 +23,6 @@ export class NetWorkStatus extends AdvancedEventEmitter<NetWorkEventMap> {
 
   private async checkStatus() {
     const currentStatus = await isNetConnected();
-    console.log(currentStatus);
     if (this.status === "ON" && currentStatus !== this.is_connected) {
       this.is_connected = currentStatus;
       this.emit("change", this.is_connected);

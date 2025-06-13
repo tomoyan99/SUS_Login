@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { LastUpdateData } from "../types/setup";
+import { LastUpdateData } from "../../../types/setup";
 
 type Today = {
   value: number;
