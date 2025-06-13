@@ -14,10 +14,11 @@ export async function isNetConnected(): Promise<boolean> {
   try {
     // Promise.anyはいずれかのPromiseが成功したらすぐに解決する
     // これにより、単一のDNSサーバーの障害に影響されにくくなる
-    await Promise.any([
+    const a = await Promise.any([
       resolver.resolve("www.google.com"),
       resolver.resolve("www.cloudflare.com"),
     ]);
+    console.log(a)
     return true;
   } catch (error) {
     // すべての問い合わせが失敗した場合
