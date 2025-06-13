@@ -45,14 +45,14 @@ class Selectors {
   };
 
   public readonly SOLA: SelectorsSOLA = {
-    username_input: "#identifier",
-    password_input: "#password",
+    username_input: "#identifier.form-control",
+    password_input: "#password.form-control",
     submit_btn: "#login button[type=submit]",
   };
 
   public readonly EUC: SelectorsEUC = {
     risyuu_div: "div#menubox div:has-text('履修関連')",
-    EUC_link: "a:has-text('EUC学生出欠登録')",
+    EUC_link: "div#pmenu4 a:has-text('EUC学生出欠登録')",
     EUC_input: "input#form1\\:htmlKeyword",
     EUC_submit_btn: "input#form1\\:update",
     result_text_span: "span#form1\\:htmlTorokuKekka",

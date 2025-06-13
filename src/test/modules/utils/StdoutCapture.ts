@@ -1,8 +1,13 @@
-import { EventEmitter2 } from "eventemitter2";
+import { AdvancedEventEmitter } from "./AdvancedEventEmitter";
 
-export class StdoutCapture extends EventEmitter2 {
-  private originalWrite: typeof process.stdout.write; // 元の標準出力
-  private output: string = ""; // キャプチャされた出力を格納するバッファ
+// StdoutCaptureが発行するイベントの型マップ
+interface StdoutEventMap {
+  data: string;
+}
+
+export class StdoutCapture extends AdvancedEventEmitter<StdoutEventMap> {
+  private originalWrite: typeof process.stdout.write;
+  private output: string = "";
 
   constructor() {
     super();
@@ -10,21 +15,21 @@ export class StdoutCapture extends EventEmitter2 {
   }
 
   startCapturing(): void {
-    this.output = ""; // バッファを初期化
-    // 標準出力をオーバーライド
-    process.stdout.write = (str: string): boolean => {
-      this.output += str; // バッファに追加
-      this.emit("data", str); // イベントを発火
-      return true; // 常に成功として返す
+    this.output = "";
+    process.stdout.write = (str: string | Buffer): boolean => {
+      const stringVal = str.toString();
+      this.output += stringVal;
+      this.emit("data", stringVal);
+      return true;
     };
   }
 
   stopCapturing(): string {
-    process.stdout.write = this.originalWrite; // 元の標準出力に戻す
-    return this.output; // キャプチャされた出力を返す
+    process.stdout.write = this.originalWrite;
+    return this.output;
   }
 
   getCapturedOutput(): string {
-    return this.output; // 現時点までのキャプチャを取得
+    return this.output;
   }
 }

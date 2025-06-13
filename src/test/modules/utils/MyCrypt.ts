@@ -1,141 +1,97 @@
 import * as crypto from "crypto";
-import * as os from "os";
-import { hostname, totalmem } from "os";
+import * as keytar from "keytar";
 import { readFileSync, writeFileSync } from "fs";
-import { replaceNumberWithWord } from "./myUtils";
 
-// 暗号・復号コントローラー
+// 暗号・復号コントローラー (AES-256-GCM と keytar を使用)
 class MyCrypt {
-  private readonly ALGO = "aes-256-cbc";
-  private readonly PASSWORD: string;
-  private readonly SALT: string;
-  private IV: Buffer | undefined;
-  private BUF: Buffer | undefined;
+  private readonly ALGO = "aes-256-gcm";
+  private readonly IV_LENGTH = 16; // GCMでは12バイトが推奨されることが多いが、16バイトも使用可能
+  private readonly AUTH_TAG_LENGTH = 16;
+  private masterKey: Buffer | null = null;
 
-  // 暗号・復号データを保存するパス
-  constructor(private readonly PATH: string) {
-    const long_name = (str: string) => {
-      let a = "";
-      for (let i = 0; i < str.length * 50; i++) {
-        a += str;
-      }
-      return a;
-    };
-    const long_host = long_name(hostname());
-    const long_mem = long_name(totalmem().toString());
-    // cpu名の文字数をコアの分x10ずつ総和
-    const cpu_name_sum = os
-      .cpus()
-      .map((c) => c.model.length + hostname().length * 20)
-      .reduce((a, c) => (a + c) * 10, 1)
-      .toString()
-      .split("");
-    // cpu_nameを数値から文字列に(fivezerozeroone～みたいになる)
-    const cpu_name_sum_word = cpu_name_sum.map((n) => replaceNumberWithWord(parseInt(n))).join("");
-    // cpu_name_sum_wordを一文字ずつの配列に
-    const cpu_name_sum_array = cpu_name_sum_word.split("");
-    // データを冗長化するための余計な文字列
-    const extension = cpu_name_sum_array
-      .reduce(
-        (a, c) => {
-          const s = `${(c.codePointAt(0) ?? 0) ** 2}`
-            .split("")
-            .map((d) => {
-              return `${(d.codePointAt(0) ?? 0) ** (c.codePointAt(0) ?? 0)}`;
-            })
-            .join("");
-          const ss = s
-            .split("")
-            .map((d) => {
-              return `${((d.codePointAt(0) ?? 0) ** parseInt(d)).toString(16).toUpperCase()}`;
-            })
-            .join("");
-          return [...a, ss];
-        },
-        <string[]>[],
-      )
-      .join("");
-    // パスワードのハッシュ
-    this.PASSWORD = this.createHush512(
-      long_host + Buffer.from(extension, "binary").toString("base64"),
-    );
-    // ソルトのハッシュ
-    this.SALT = this.createHush512(long_mem + Buffer.from(extension, "binary").toString("hex"));
+  /**
+   * @param cryptDataPath 暗号化されたデータを保存するパス
+   * @param serviceName キーチェーンに保存する際のサービス名
+   * @param accountName キーチェーンに保存する際のアカウント名
+   */
+  constructor(
+    private readonly cryptDataPath: string,
+    private readonly serviceName: string,
+    private readonly accountName: string,
+  ) {}
+
+  /**
+   * キーチェーンからマスターキーを取得または生成して初期化する
+   */
+  private async initializeKey(): Promise<void> {
+    if (this.masterKey) return;
+
+    let keyHex = await keytar.getPassword(this.serviceName, this.accountName);
+
+    if (!keyHex) {
+      console.log(`[MyCrypt] Master key not found in keychain. Generating a new key for service "${this.serviceName}".`);
+      const newKey = crypto.randomBytes(32); // 32バイト (256ビット) のマスターキー
+      keyHex = newKey.toString("hex");
+      await keytar.setPassword(this.serviceName, this.accountName, keyHex);
+    }
+
+    this.masterKey = Buffer.from(keyHex, "hex");
   }
 
-  //暗号書くやつ
+  /**
+   * データを暗号化してファイルに書き込む
+   * @param inputData 文字列またはオブジェクト形式のデータ
+   */
   public async writeCrypt(inputData: any): Promise<void> {
-    if (typeof inputData !== "string") {
-      inputData = JSON.stringify(inputData);
-    }
-    const string_data = Buffer.from(inputData).toString("binary");
-    const A = this.encrypt(string_data);
-    this.IV = A.iv;
-    this.BUF = A.encryptedData;
-    const outputData = `${this.IV.toString("binary")}$$$$${this.BUF.toString("binary")}`;
-    writeFileSync(this.PATH, outputData, { encoding: "binary" });
-    this.clearMember();
+    await this.initializeKey();
+    if (!this.masterKey) throw new Error("Master key could not be initialized.");
+
+    const dataString = typeof inputData === "string" ? inputData : JSON.stringify(inputData);
+
+    const iv = crypto.randomBytes(this.IV_LENGTH);
+    const cipher = crypto.createCipheriv(this.ALGO, this.masterKey, iv);
+
+    const encrypted = Buffer.concat([cipher.update(dataString, "utf8"), cipher.final()]);
+    const authTag = cipher.getAuthTag();
+
+    // IV、認証タグ、暗号化データを結合して保存
+    const outputData = `${iv.toString("hex")}$$$$${authTag.toString("hex")}$$$$${encrypted.toString("hex")}`;
+    writeFileSync(this.cryptDataPath, outputData, "utf-8");
   }
 
-  //平文出すやつ
+  /**
+   * ファイルからデータを読み込み、復号して返す
+   * @returns 復号された平文文字列
+   */
   public async readPlane(): Promise<string> {
-    this.readBuffer();
-    const DE = this.decrypt();
-    const Plane = Buffer.from(DE.toString(), "binary").toString("utf8");
-    return Plane;
-  }
+    await this.initializeKey();
+    if (!this.masterKey) throw new Error("Master key could not be initialized.");
 
-  // 暗号化メソッド
-  private encrypt(string_data: string) {
-    // 鍵を生成
-    const key = crypto.scryptSync(this.PASSWORD, this.SALT, 32);
-    // IV を生成
-    const iv = crypto.randomBytes(16);
-    // 暗号器を生成
-    const cipher = crypto.createCipheriv(this.ALGO, key, iv);
-    // data を暗号化
-    let encryptedData = cipher.update(string_data);
-    encryptedData = Buffer.concat([encryptedData, cipher.final()]);
-    return { iv, encryptedData };
-  }
+    const fileContent = readFileSync(this.cryptDataPath, "utf-8");
+    const [ivHex, authTagHex, encryptedHex] = fileContent.split("$$$$");
 
-  // 復号メソッド
-  private decrypt() {
-    if (this.BUF && this.IV) {
-      // 鍵を生成
-      const key = crypto.scryptSync(this.PASSWORD, this.SALT, 32);
-      // 復号器を生成
-      const decipher = crypto.createDecipheriv(this.ALGO, key, this.IV);
-      // encryptedData を復号
-      let decryptedData = decipher.update(this.BUF);
-      decryptedData = Buffer.concat([decryptedData, decipher.final()]);
-      return decryptedData;
-    } else {
-      throw "this.BUF or this.IV is undefined";
+    if (!ivHex || !authTagHex || !encryptedHex) {
+      throw new Error("Invalid crypt file format.");
     }
-  }
 
-  // ハッシュを生成するやつ
-  private createHush512(data: string, encoding = "utf8") {
-    const sha512 = crypto.createHash("sha512");
-    sha512.update(data);
-    return sha512.digest(<crypto.BinaryToTextEncoding>encoding);
-  }
+    const iv = Buffer.from(ivHex, "hex");
+    const authTag = Buffer.from(authTagHex, "hex");
 
-  // ファイルからBUFとIVを読み出すやつ
-  private readBuffer() {
-    const Z = readFileSync(this.PATH, { encoding: "binary" });
-    const A = Z.split("$$$$", -1);
-    if (typeof A[0] === "string" && typeof A[1] === "string") {
-      this.IV = Buffer.from(A[0], "binary");
-      this.BUF = Buffer.from(A[1], "binary");
+    if (iv.length !== this.IV_LENGTH || authTag.length !== this.AUTH_TAG_LENGTH) {
+      throw new Error("Invalid crypt file format: IV or AuthTag length mismatch.");
     }
-  }
 
-  // メンバをクリアするやつ
-  private clearMember() {
-    this.BUF = undefined;
-    this.IV = undefined;
+    const encryptedData = Buffer.from(encryptedHex, "hex");
+
+    try {
+      const decipher = crypto.createDecipheriv(this.ALGO, this.masterKey, iv);
+      decipher.setAuthTag(authTag);
+      const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
+      return decrypted.toString("utf8");
+    } catch (error) {
+      // 認証タグが一致しない（データが改ざんされている）場合、エラーが発生する
+      throw new Error("Failed to decrypt data. It may be corrupted or tampered with.");
+    }
   }
 }
 

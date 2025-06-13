@@ -24,7 +24,7 @@ export namespace MyPrompt {
     switch (prompt.type) {
       case "input":
       case "password": {
-        let answerCheckList = [];
+        let answerCheckList:string[] = [];
         const answer: MyPrompt.Answer<string> = { result: "" };
         let result: { response: string };
         do {

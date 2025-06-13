@@ -34,6 +34,7 @@ export function replaceNumberWithWord(number: number) {
   if (number >= 0 && number <= 9) {
     return words[number];
   }
+  return undefined;
 }
 
 // 配列Bに存在しない要素を抽出する

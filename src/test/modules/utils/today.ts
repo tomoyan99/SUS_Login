@@ -1,10 +1,5 @@
-"use strict";
-/* 
-	[today.js]
-	日付関連をまとめたモジュール。年度の判定なども行う。
-*/
-
-import { LastUpdateData } from "../main/setup";
+import dayjs from "dayjs";
+import { LastUpdateData } from "../types/setup";
 
 type Today = {
   value: number;
@@ -14,68 +9,54 @@ type Today = {
   hour: number;
   minute: number;
   sec: number;
-  yearl2d: number; //年の下二桁
-  getToday(): string; //YYYY-MM-DD-hh-mm-ss
-  getTodayJP(): string; //YYYY年MM月DD日hh時mm分ss秒
+  getToday(separater?: string): string;
+  getTodayJP(): string;
   getNend(): number;
   whichTerm(): "bf" | "af";
   isStartNend(lastUpdate: LastUpdateData): boolean;
 };
+
+// dayjsのインスタンスを一度だけ生成して使い回すことで、全プロパティの時刻を統一
+const now = dayjs();
+
 export const today: Today = {
-  value: new Date().valueOf(),
-  year: new Date().getFullYear(),
-  month: new Date().getMonth() + 1,
-  date: new Date().getDate(),
-  hour: new Date().getHours(), //0~23
-  minute: new Date().getMinutes(),
-  sec: new Date().getSeconds(),
-  yearl2d: parseInt(new Date().getFullYear().toString().slice(-2)),
-  getToday: function getToday(separater: string = "-") {
-    return (
-      `${this.year}${separater}` +
-      `${this.month.toString().padStart(2, "0")}${separater}` +
-      `${this.date.toString().padStart(2, "0")}${separater}` +
-      `${this.hour.toString().padStart(2, "0")}${separater}` +
-      `${this.minute.toString().padStart(2, "0")}` +
-      `${separater}${this.sec.toString().padStart(2, "0")}`
-    );
+  value: now.valueOf(),
+  year: now.year(),
+  month: now.month() + 1, // monthは0から始まるため+1
+  date: now.date(),
+  hour: now.hour(),
+  minute: now.minute(),
+  sec: now.second(),
+
+  getToday: function (separater: string = "-"): string {
+    return now.format(`YYYY${separater}MM${separater}DD${separater}HH${separater}mm${separater}ss`);
   },
-  getTodayJP: function getToday() {
-    return (
-      `${this.year}年` +
-      `${this.month.toString().padStart(2, "0")}月` +
-      `${this.date.toString().padStart(2, "0")}日` +
-      `${this.hour.toString().padStart(2, "0")}時` +
-      `${this.minute.toString().padStart(2, "0")}分` +
-      `${this.sec.toString().padStart(2, "0")}秒`
-    );
+
+  getTodayJP: function (): string {
+    return now.format("YYYY年MM月DD日HH時mm分ss秒");
   },
-  getNend: function getNend() {
-    let nend = this.year;
-    if (1 <= this.month && this.month <= 3) {
-      nend--;
-    }
-    return parseInt(nend.toString().slice(-2));
+
+  getNend: function (): number {
+    // 1月〜3月の場合は前年度とする
+    const nendYear = this.month >= 1 && this.month <= 3 ? this.year - 1 : this.year;
+    return parseInt(nendYear.toString().slice(-2));
   },
-  //前期か後期か
-  whichTerm: function whichTerm() {
-    if (this.month >= 4 && this.month <= 9) {
-      return "bf"; //4月から9月の間はbf(前期)
-    } else {
-      return "af"; //10月から3月の間はaf(後期)
-    }
+
+  whichTerm: function (): "bf" | "af" {
+    // 4月〜9月は前期(bf)、10月〜3月は後期(af)
+    return this.month >= 4 && this.month <= 9 ? "bf" : "af";
   },
-  //学期始まりか否か
-  isStartNend: function isStartNend(lastUpdate: LastUpdateData) {
-    // 半年分の秒数
-    const half_year_msec = 2629800000 * 6;
+
+  isStartNend: function (lastUpdate: LastUpdateData): boolean {
+    // 半年分のミリ秒 (おおよその値)
+    const HALF_YEAR_MSEC = 6 * 30 * 24 * 60 * 60 * 1000;
     const newValue = this.value;
     const oldValue = lastUpdate.value;
-    //最終更新から6ヶ月以上が過ぎたときや、最終更新のときと学期が違うときに年度が切り替わったとみなす
-    if (newValue - oldValue >= half_year_msec) {
+
+    // 最終更新から半年以上経過しているか、学期が変わっていれば true
+    if (newValue - oldValue >= HALF_YEAR_MSEC) {
       return true;
-    } else {
-      return lastUpdate.term !== this.whichTerm();
     }
+    return lastUpdate.term !== this.whichTerm();
   },
 };
